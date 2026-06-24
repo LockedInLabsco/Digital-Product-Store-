@@ -113,8 +113,8 @@ export default function ProductPage({ params }: ProductPageProps) {
     <>
       <Navbar />
       <main>
-        {/* Header */}
-        <section className="py-8 sm:py-12">
+        {/* Hero Section */}
+        <section className="py-12 sm:py-16">
           <Container>
             <Link
               href="/products"
@@ -122,6 +122,18 @@ export default function ProductPage({ params }: ProductPageProps) {
             >
               ← Back to Products
             </Link>
+            <div className="max-w-3xl">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
+                {product.title}
+              </h1>
+              <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
+                {product.description}
+              </p>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <span className="text-4xl sm:text-5xl font-bold">${product.price}</span>
+                <span className="text-gray-600 text-sm sm:text-base">One-time payment</span>
+              </div>
+            </div>
           </Container>
         </section>
 
@@ -129,7 +141,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Gallery & Product Info */}
+              {/* Gallery */}
               <div className="lg:col-span-2">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12">
                   What's Inside
@@ -138,22 +150,6 @@ export default function ProductPage({ params }: ProductPageProps) {
                   images={product.galleryImages}
                   productTitle={product.title}
                 />
-
-                {/* Product Info Below Gallery */}
-                <div className="mt-12 sm:mt-16">
-                  <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-                    {product.title}
-                  </h1>
-                  <p className="text-lg sm:text-xl text-gray-700 mb-6 leading-relaxed">
-                    {product.description}
-                  </p>
-                  <div className="flex items-center gap-4 sm:gap-6 mb-8">
-                    <span className="text-4xl sm:text-5xl font-bold">${product.price}</span>
-                    <span className="text-gray-600 text-sm sm:text-base">
-                      One-time payment
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Sidebar */}
