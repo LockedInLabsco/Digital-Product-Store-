@@ -6,30 +6,7 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import Button from '@/src/components/Button'
-
-const featuredProducts = [
-  {
-    id: '1',
-    title: 'Email Marketing Guide',
-    description: 'Master modern email strategies that convert',
-    price: 29,
-    slug: 'email-marketing-guide',
-  },
-  {
-    id: '2',
-    title: 'Content Calendar Template',
-    description: 'Plan your content for an entire year',
-    price: 19,
-    slug: 'content-calendar-template',
-  },
-  {
-    id: '3',
-    title: 'Social Media Playbook',
-    description: 'Proven strategies for growing your audience',
-    price: 39,
-    slug: 'social-media-playbook',
-  },
-]
+import { products } from '@/src/lib/products'
 
 export default function Home() {
   return (
@@ -37,58 +14,93 @@ export default function Home() {
       <Navbar />
       <main>
         {/* Hero Section */}
-        <section className="py-20 sm:py-32">
+        <section className="py-24 sm:py-32">
           <Container>
-            <div className="max-w-2xl">
-              <h1 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-                Digital Products Built for You
+            <div className="max-w-3xl">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                Simple tools for better habits
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Download premium resources instantly. No subscriptions. No recurring charges. Own it forever.
+              <p className="text-lg sm:text-xl text-gray-700 mb-12 leading-relaxed">
+                We believe building good habits shouldn't be complicated. Our tools help you focus on what matters: showing up, one day at a time.
               </p>
               <Link href="/products">
-                <Button className="text-lg px-8 py-4">
-                  Browse Products
+                <Button size="lg">
+                  See Our Product
                 </Button>
               </Link>
             </div>
           </Container>
         </section>
 
-        {/* Featured Products */}
+        {/* Why This Matters */}
+        <section className="py-20 border-t border-gray-200">
+          <Container>
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+                Most people fail at habits for a simple reason
+              </h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                They try to change everything at once. New habits are hard. But they don't have to be complicated.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <h3 className="text-xl font-bold mb-3">Simple</h3>
+                <p className="text-gray-700">
+                  No complex systems. No motivation hacks. Just straightforward guides that work.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold mb-3">Doable</h3>
+                <p className="text-gray-700">
+                  Start small. Start today. Our guides are designed for real people with real lives.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold mb-3">Yours Forever</h3>
+                <p className="text-gray-700">
+                  Buy once, own forever. No subscriptions. No recurring charges. Just yours.
+                </p>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* Featured Product */}
         <section className="py-20 bg-gray-50">
           <Container>
-            <h2 className="text-4xl font-bold mb-4">Featured Products</h2>
-            <p className="text-gray-600 mb-12 text-lg">
-              Start with our most popular digital products
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  title={product.title}
-                  description={product.description}
-                  price={product.price}
-                  slug={product.slug}
-                />
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20">
-          <Container>
-            <div className="bg-black text-white rounded-lg p-12 text-center">
-              <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
-              <p className="text-gray-300 mb-8 text-lg">
-                Browse our complete collection of digital products
-              </p>
-              <Link href="/products">
-                <Button className="bg-white text-black hover:bg-gray-200">
-                  View All Products
-                </Button>
-              </Link>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-12">Our Product</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <div>
+                {products.map((product) => (
+                  <div key={product.id}>
+                    <h3 className="text-3xl sm:text-4xl font-bold mb-4">
+                      {product.title}
+                    </h3>
+                    <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+                      {product.description}
+                    </p>
+                    <p className="text-5xl font-bold mb-8">${product.price}</p>
+                    <Link href={`/products/${product.slug}`}>
+                      <Button size="lg">
+                        Learn More
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">
+                <h4 className="text-xl font-bold mb-6">What You Get</h4>
+                <ul className="space-y-4">
+                  {products[0]?.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="text-2xl text-black">✓</span>
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </Container>
         </section>

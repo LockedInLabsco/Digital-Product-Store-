@@ -1,54 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
-import ProductCard from '@/src/components/ProductCard'
-
-const allProducts = [
-  {
-    id: '1',
-    title: 'Email Marketing Guide',
-    description: 'Master modern email strategies that convert',
-    price: 29,
-    slug: 'email-marketing-guide',
-  },
-  {
-    id: '2',
-    title: 'Content Calendar Template',
-    description: 'Plan your content for an entire year',
-    price: 19,
-    slug: 'content-calendar-template',
-  },
-  {
-    id: '3',
-    title: 'Social Media Playbook',
-    description: 'Proven strategies for growing your audience',
-    price: 39,
-    slug: 'social-media-playbook',
-  },
-  {
-    id: '4',
-    title: 'LinkedIn Growth Course',
-    description: 'Build your professional brand on LinkedIn',
-    price: 49,
-    slug: 'linkedin-growth-course',
-  },
-  {
-    id: '5',
-    title: 'Personal Brand Workbook',
-    description: 'Define and communicate your unique value',
-    price: 24,
-    slug: 'personal-brand-workbook',
-  },
-  {
-    id: '6',
-    title: 'Sales Email Templates',
-    description: 'Ready-to-use email templates that sell',
-    price: 34,
-    slug: 'sales-email-templates',
-  },
-]
+import Button from '@/src/components/Button'
+import { products } from '@/src/lib/products'
 
 export default function ProductsPage() {
   return (
@@ -57,20 +14,39 @@ export default function ProductsPage() {
       <main>
         <section className="py-20">
           <Container>
-            <h1 className="text-5xl font-bold mb-4">All Products</h1>
-            <p className="text-xl text-gray-600 mb-12">
-              Browse our entire collection of digital products
+            <h1 className="text-5xl sm:text-6xl font-bold mb-4">Our Tools</h1>
+            <p className="text-lg text-gray-700 mb-16 max-w-2xl">
+              Simple, practical guides to help you build better habits and stay focused on what matters.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  title={product.title}
-                  description={product.description}
-                  price={product.price}
-                  slug={product.slug}
-                />
+            <div className="space-y-8">
+              {products.map((product) => (
+                <Link key={product.id} href={`/products/${product.slug}`}>
+                  <div className="border border-gray-200 rounded-lg p-8 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+                      <div className="flex-1">
+                        <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                          {product.title}
+                        </h2>
+                        <p className="text-lg text-gray-700 mb-4">
+                          {product.description}
+                        </p>
+                        <ul className="space-y-2 mb-6">
+                          {product.features.map((feature, index) => (
+                            <li key={index} className="text-gray-600 flex items-start gap-2">
+                              <span className="text-gray-400">→</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="flex flex-col items-end justify-between">
+                        <p className="text-4xl font-bold mb-6">${product.price}</p>
+                        <Button>View Details</Button>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </Container>
