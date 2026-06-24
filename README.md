@@ -5,6 +5,7 @@ A clean, minimal digital products e-commerce store built with Next.js, TypeScrip
 ## Features
 
 - 🛍️ Product catalog with detailed product pages
+- 🖼️ Product preview gallery with thumbnail selection
 - 💳 Checkout functionality (Lemon Squeezy integration - coming soon)
 - 📧 Email delivery (Resend integration - coming soon)
 - 📊 Admin dashboard (coming soon)
