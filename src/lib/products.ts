@@ -5,6 +5,12 @@ export interface GalleryImage {
   alt: string
 }
 
+export interface PreviewItem {
+  id: string
+  label: string
+  icon: string
+}
+
 export interface Product {
   id: string
   title: string
@@ -14,6 +20,7 @@ export interface Product {
   longDescription: string
   features: string[]
   format: string
+  previews: PreviewItem[]
   galleryImages: GalleryImage[]
 }
 
@@ -33,6 +40,28 @@ export const products: Product[] = [
       'Simple daily routine system',
     ],
     format: 'PDF + Printables',
+    previews: [
+      {
+        id: 'beginner-guide',
+        label: 'Beginner Guide',
+        icon: '📖',
+      },
+      {
+        id: '7-day-plan',
+        label: '7-Day Reset Plan',
+        icon: '📅',
+      },
+      {
+        id: 'habit-tracker',
+        label: 'Printable Tracker',
+        icon: '✓',
+      },
+      {
+        id: 'daily-routine',
+        label: 'Daily Routine System',
+        icon: '⏰',
+      },
+    ],
     galleryImages: [
       {
         id: 'beginner-guide',

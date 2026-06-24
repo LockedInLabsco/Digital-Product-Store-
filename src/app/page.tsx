@@ -71,25 +71,18 @@ export default function Home() {
         <section className="py-20 bg-gray-50">
           <Container>
             <h2 className="text-3xl sm:text-4xl font-bold mb-12">Our Product</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div>
-                {products.map((product) => (
-                  <div key={product.id}>
-                    <h3 className="text-3xl sm:text-4xl font-bold mb-4">
-                      {product.title}
-                    </h3>
-                    <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                      {product.description}
-                    </p>
-                    <p className="text-5xl font-bold mb-8">${product.price}</p>
-                    <Link href={`/products/${product.slug}`}>
-                      <Button size="lg">
-                        Learn More
-                      </Button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  title={product.title}
+                  description={product.description}
+                  price={product.price}
+                  slug={product.slug}
+                  previews={product.previews}
+                  features={product.features}
+                />
+              ))}
               <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">
                 <h4 className="text-xl font-bold mb-6">What You Get</h4>
                 <ul className="space-y-4">
