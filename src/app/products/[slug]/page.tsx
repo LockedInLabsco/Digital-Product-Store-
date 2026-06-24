@@ -28,13 +28,12 @@ const faqItems = [
   },
   {
     question: 'Will this actually work for me?',
-    answer:
-      'This guide works if you're willing to start small and show up. It's not a magic solution, but a practical system that has helped many people restart their habits.',
+    answer: `This guide works if you're willing to start small and show up. It's not a magic solution, but a practical system that has helped many people restart their habits.`,
   },
   {
-    question: 'What if I don't like it?',
+    question: 'What if I don\'t like it?',
     answer:
-      'We offer a 30-day money-back guarantee. No questions asked. If it doesn't help, you get your money back.',
+      'We offer a 30-day money-back guarantee. No questions asked. If it doesn\'t help, you get your money back.',
   },
   {
     question: 'Can I share this with friends?',
@@ -44,7 +43,7 @@ const faqItems = [
   {
     question: 'Do I need an account?',
     answer:
-      'Nope. You buy it once, download it, and it's yours forever. No login, no subscription, no hassle.',
+      'Nope. You buy it once, download it, and it\'s yours forever. No login, no subscription, no hassle.',
   },
 ]
 
