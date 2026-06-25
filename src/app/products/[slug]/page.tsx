@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { useState } from 'react'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
+import FAQAccordion from '@/src/components/FAQAccordion'
 import { getProductBySlugWithFallback } from '@/src/lib/supabase/queries'
 
 interface ProductPageProps {
@@ -44,43 +44,6 @@ const faqItems = [
       'Nope. You buy it once, download it, and it\'s yours forever. No login, no subscription, no hassle.',
   },
 ]
-
-interface FAQItem {
-  question: string
-  answer: string
-}
-
-function FAQAccordion() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
-
-  return (
-    <div className="space-y-3">
-      {faqItems.map((item: FAQItem, index: number) => (
-        <button
-          key={index}
-          onClick={() => setOpenIndex(openIndex === index ? null : index)}
-          className="w-full text-left"
-        >
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all">
-            <div className="flex justify-between items-start gap-4">
-              <h4 className="font-bold text-gray-900 text-sm sm:text-base">
-                {item.question}
-              </h4>
-              <span className="text-lg font-bold text-gray-400 flex-shrink-0">
-                {openIndex === index ? '−' : '+'}
-              </span>
-            </div>
-            {openIndex === index && (
-              <p className="text-gray-700 text-sm sm:text-base mt-4 leading-relaxed">
-                {item.answer}
-              </p>
-            )}
-          </div>
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlugWithFallback(params.slug)
@@ -307,7 +270,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               Common Questions
             </h2>
             <div className="max-w-2xl">
-              <FAQAccordion />
+              <FAQAccordion items={faqItems} />
             </div>
           </Container>
         </section>
