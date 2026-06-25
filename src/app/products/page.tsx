@@ -1,12 +1,12 @@
-'use client'
-
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
-import { products } from '@/src/lib/products'
+import { getProductsWithFallback } from '@/src/lib/supabase/queries'
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await getProductsWithFallback()
+
   return (
     <>
       <Navbar />

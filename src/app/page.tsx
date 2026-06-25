@@ -1,14 +1,14 @@
-'use client'
-
 import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import Button from '@/src/components/Button'
-import { products } from '@/src/lib/products'
+import { getProductsWithFallback } from '@/src/lib/supabase/queries'
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProductsWithFallback()
+
   return (
     <>
       <Navbar />

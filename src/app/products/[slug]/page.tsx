@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { useState } from 'react'
 import Container from '@/src/components/Container'
@@ -7,7 +5,7 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
-import { getProductBySlug } from '@/src/lib/products'
+import { getProductBySlugWithFallback } from '@/src/lib/supabase/queries'
 
 interface ProductPageProps {
   params: {
@@ -84,8 +82,8 @@ function FAQAccordion() {
   )
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const product = getProductBySlug(params.slug)
+export default async function ProductPage({ params }: ProductPageProps) {
+  const product = await getProductBySlugWithFallback(params.slug)
 
   if (!product) {
     return (
