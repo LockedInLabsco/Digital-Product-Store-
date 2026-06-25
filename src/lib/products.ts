@@ -24,7 +24,8 @@ export interface Product {
   galleryImages: GalleryImage[]
 }
 
-export const products: Product[] = [
+// Fallback hardcoded products for when Supabase is not configured
+const fallbackProducts: Product[] = [
   {
     id: '1',
     title: 'The Simple Habit Reset',
@@ -97,10 +98,21 @@ export const products: Product[] = [
   },
 ]
 
-export function getProductBySlug(slug: string) {
-  return products.find((p) => p.slug === slug)
+/**
+ * Get all products - uses fallback products when Supabase is not configured
+ * In the future, this will fetch from Supabase and fall back to hardcoded products
+ */
+export function getProducts(): Product[] {
+  return fallbackProducts
 }
 
-export function getFeaturedProducts(count: number = 3) {
-  return products.slice(0, count)
+export function getProductBySlug(slug: string): Product | undefined {
+  return fallbackProducts.find((p) => p.slug === slug)
 }
+
+export function getFeaturedProducts(count: number = 3): Product[] {
+  return fallbackProducts.slice(0, count)
+}
+
+// Export products for backward compatibility
+export const products = fallbackProducts
