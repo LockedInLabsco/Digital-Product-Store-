@@ -26,7 +26,6 @@ export async function getProductsWithFallback(): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -89,12 +88,11 @@ export async function getProductBySlugWithFallback(
   }
 
   try {
-    console.log(`🚀 Querying Supabase for slug="${slug}" and is_active=true`)
+    console.log(`🚀 Querying Supabase for slug="${slug}"`)
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('slug', slug)
-      .eq('is_active', true)
       .single()
 
     if (error) {
