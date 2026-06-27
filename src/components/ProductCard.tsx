@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Button from './Button'
 import ProductPreview from './ProductPreview'
 import { PreviewItem } from '@/src/lib/products'
+import { formatPrice, getPriceLabel } from '@/src/lib/utils/format'
 
 interface ProductCardProps {
   title: string
@@ -10,6 +11,7 @@ interface ProductCardProps {
   slug: string
   previews: PreviewItem[]
   features?: string[]
+  coverImageUrl?: string
 }
 
 export default function ProductCard({
@@ -19,12 +21,13 @@ export default function ProductCard({
   slug,
   previews,
   features = [],
+  coverImageUrl,
 }: ProductCardProps) {
   return (
     <Link href={`/products/${slug}`}>
       <div className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer h-full flex flex-col bg-white">
         {/* Preview Image Area */}
-        <ProductPreview previews={previews} productTitle={title} />
+        <ProductPreview previews={previews} productTitle={title} coverImageUrl={coverImageUrl} />
 
         {/* Content */}
         <div className="p-6 flex flex-col flex-1">
@@ -51,9 +54,9 @@ export default function ProductCard({
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold">${price}</span>
+            <span className="text-2xl font-bold">{formatPrice(price)}</span>
             <Button variant="outline" size="sm">
-              View
+              {getPriceLabel(price)}
             </Button>
           </div>
         </div>

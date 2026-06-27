@@ -30,6 +30,7 @@ export default async function ProductsPage() {
                   slug={product.slug}
                   previews={product.previews}
                   features={product.features}
+                  coverImageUrl={product.coverImageUrl}
                 />
               ))}
             </div>

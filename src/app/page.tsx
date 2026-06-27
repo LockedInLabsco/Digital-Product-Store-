@@ -81,6 +81,7 @@ export default async function Home() {
                   slug={product.slug}
                   previews={product.previews}
                   features={product.features}
+                  coverImageUrl={product.coverImageUrl}
                 />
               ))}
               <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">

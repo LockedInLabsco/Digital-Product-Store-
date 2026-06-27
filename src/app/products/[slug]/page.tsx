@@ -5,7 +5,9 @@ import Footer from '@/src/components/Footer'
 import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
 import FAQAccordion from '@/src/components/FAQAccordion'
+import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import { getProductBySlugWithFallback } from '@/src/lib/supabase/queries'
+import { formatPrice } from '@/src/lib/utils/format'
 
 interface ProductPageProps {
   params: {
@@ -70,6 +72,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
     )
   }
 
+  const galleryImages = product.coverImageUrl
+    ? [
+        {
+          id: 'cover',
+          src: product.coverImageUrl,
+          label: 'Product Cover',
+          alt: product.title,
+        },
+        ...product.galleryImages,
+      ]
+    : product.galleryImages
+
   return (
     <>
       <Navbar />
@@ -91,8 +105,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {product.description}
               </p>
               <div className="flex items-center gap-4 sm:gap-6">
-                <span className="text-4xl sm:text-5xl font-bold">${product.price}</span>
-                <span className="text-gray-600 text-sm sm:text-base">One-time payment</span>
+                <span className="text-4xl sm:text-5xl font-bold">{formatPrice(product.price)}</span>
+                {product.price > 0 && (
+                  <span className="text-gray-600 text-sm sm:text-base">One-time payment</span>
+                )}
               </div>
             </div>
           </Container>
@@ -108,7 +124,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   What's Inside
                 </h2>
                 <ProductGallery
-                  images={product.galleryImages}
+                  images={galleryImages}
                   productTitle={product.title}
                 />
               </div>
@@ -116,11 +132,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {/* Sidebar */}
               <div className="lg:col-span-1">
                 <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
-                  <h3 className="text-2xl font-bold mb-6">Get Instant Access</h3>
+                  <h3 className="text-2xl font-bold mb-6">
+                    {product.price === 0 ? 'Get Free Guide' : 'Get Instant Access'}
+                  </h3>
 
-                  <Button size="lg" className="w-full mb-8 bg-black text-white hover:bg-gray-900">
-                    Get Instant Access - $9
-                  </Button>
+                  <div className="mb-8">
+                    {product.price === 0 ? (
+                      <FreeDownloadButton
+                        productSlug={product.slug}
+                        productTitle={product.title}
+                      />
+                    ) : (
+                      <Button size="lg" className="w-full bg-black text-white hover:bg-gray-900">
+                        {`Get Instant Access - ${formatPrice(product.price)}`}
+                      </Button>
+                    )}
+                  </div>
 
                   <div className="space-y-3 mb-8 text-sm">
                     <p className="flex items-start gap-3">
@@ -280,17 +307,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <Container>
             <div className="text-center max-w-2xl mx-auto">
               <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-                Ready to reset?
+                {product.price === 0 ? 'Get your free guide' : 'Ready to reset?'}
               </h2>
               <p className="text-lg text-gray-700 mb-8">
-                Your habits can be simple. Start your reset today—just $9.
+                {product.price === 0
+                  ? 'Your habits can be simple. Get the free guide today.'
+                  : `Your habits can be simple. Start your reset today—just ${formatPrice(product.price)}.`}
               </p>
-              <Button size="lg" className="bg-black text-white hover:bg-gray-900">
-                Get Instant Access - $9
-              </Button>
-              <p className="text-sm text-gray-600 mt-6">
-                30-day money-back guarantee. You've got nothing to lose.
-              </p>
+              {product.price === 0 ? (
+                <FreeDownloadButton
+                  productSlug={product.slug}
+                  productTitle={product.title}
+                />
+              ) : (
+                <Button size="lg" className="bg-black text-white hover:bg-gray-900">
+                  {`Get Instant Access - ${formatPrice(product.price)}`}
+                </Button>
+              )}
+              {product.price > 0 && (
+                <p className="text-sm text-gray-600 mt-6">
+                  30-day money-back guarantee. You've got nothing to lose.
+                </p>
+              )}
             </div>
           </Container>
         </section>

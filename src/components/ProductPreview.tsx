@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 interface PreviewItem {
   id: string
@@ -11,25 +12,44 @@ interface PreviewItem {
 interface ProductPreviewProps {
   previews: PreviewItem[]
   productTitle: string
+  coverImageUrl?: string
 }
 
 export default function ProductPreview({
   previews,
   productTitle,
+  coverImageUrl,
 }: ProductPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     if (previews.length <= 1) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % previews.length)
-    }, 3000) // Change every 3 seconds
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [previews.length])
 
   const currentPreview = previews[currentIndex]
+
+  if (coverImageUrl && !imageError) {
+    return (
+      <div className="bg-gray-100 aspect-square rounded-t-lg overflow-hidden flex items-center justify-center">
+        <Image
+          src={coverImageUrl}
+          alt={productTitle}
+          width={500}
+          height={500}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+          priority
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden transition-all duration-500">

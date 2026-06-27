@@ -80,7 +80,7 @@ export function transformDatabaseProductToProduct(
     title: dbProduct.title,
     description: dbProduct.description,
     shortDescription: dbProduct.short_description,
-    price: dbProduct.price / 100, // Convert from cents to dollars
+    price: dbProduct.price,
     slug: dbProduct.slug,
     format: template.format,
     previews: template.previews,
