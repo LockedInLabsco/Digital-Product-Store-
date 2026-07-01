@@ -12,90 +12,107 @@ export default function FreeDownloadButton({
   productSlug,
   productTitle,
 }: FreeDownloadButtonProps) {
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
-  const handleDownload = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(false)
 
     try {
-      console.log('Starting download for: ' + productSlug)
+      console.log('Submitting email for: ' + productSlug)
 
-      const response = await fetch(`/api/download/free/${productSlug}`)
-
-      console.log('API response status: ' + response.status)
-      console.log('API response ok: ' + response.ok)
+      const response = await fetch(
+        `/api/download/free/${productSlug}/email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        }
+      )
 
       const data = await response.json()
 
       if (!response.ok) {
         console.error('API error:', data)
-
-        if (response.status === 404) {
-          setError('Product not found. Please check the URL.')
-        } else if (response.status === 403) {
-          setError('This product is not free. Please use the purchase button instead.')
-        } else if (response.status === 400) {
-          setError(data.error || 'This product does not have a downloadable file yet.')
-        } else if (response.status === 500) {
-          setError('Server error: Unable to generate download link. Please try again later.')
-        } else {
-          setError(data.error || 'Failed to generate download link')
-        }
+        setError(data.error || 'Failed to send email')
         return
       }
 
-      window.open(data.url, '_blank')
+      console.log('✅ Email sent successfully')
+      setSubmitted(true)
       setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
+      setEmail('')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      console.error('Download error:', errorMessage)
-      setError('Network error: ' + errorMessage + '. Please check your connection and try again.')
+      console.error('Submit error:', errorMessage)
+      setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
+  if (submitted && success) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded p-4">
+        <p className="text-sm font-semibold text-green-900">
+          ✓ Check your email
+        </p>
+        <p className="text-sm text-green-800 mt-2">
+          Your free guide is on the way. Check your email for the download link.
+        </p>
+        <button
+          onClick={() => {
+            setSubmitted(false)
+            setSuccess(false)
+          }}
+          className="mt-3 text-sm font-semibold text-green-700 hover:text-green-900 underline"
+        >
+          Send to another email
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          disabled={loading}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+        />
+      </div>
+
       <Button
+        type="submit"
         size="lg"
         className="w-full bg-black text-white hover:bg-gray-900"
-        onClick={handleDownload}
-        disabled={loading}
+        disabled={loading || !email.trim()}
       >
-        {loading ? 'Preparing download...' : 'Get Free Guide'}
+        {loading ? 'Sending...' : 'Send me the guide'}
       </Button>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded p-4">
           <p className="text-sm font-semibold text-red-900 mb-2">
-            ❌ Download Failed
+            ❌ Error
           </p>
-          <p className="text-sm text-red-800 leading-relaxed">
+          <p className="text-sm text-red-800">
             {error}
           </p>
-          <button
-            onClick={handleDownload}
-            disabled={loading}
-            className="mt-3 text-sm font-semibold text-red-700 hover:text-red-900 underline"
-          >
-            Try again
-          </button>
         </div>
       )}
-
-      {success && (
-        <div className="bg-green-50 border border-green-200 rounded p-4">
-          <p className="text-sm font-semibold text-green-900">
-            ✓ Download starting... Check your downloads folder.
-          </p>
-        </div>
-      )}
-    </div>
+    </form>
   )
 }

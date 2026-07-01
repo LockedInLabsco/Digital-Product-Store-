@@ -28,12 +28,12 @@ const faqItems = [
   },
   {
     question: 'Will this actually work for me?',
-    answer: `This guide works if you're willing to start small and show up. It's not a magic solution, but a practical system that has helped many people restart their habits.`,
+    answer: `This guide works if you&apos;re willing to start small and show up. It&apos;s not a magic solution, but a practical system that has helped many people restart their habits.`,
   },
   {
     question: 'What if I don\'t like it?',
     answer:
-      'We offer a 30-day money-back guarantee. No questions asked. If it doesn\'t help, you get your money back.',
+      'We offer a 30-day money-back guarantee. No questions asked. If it doesn&apos;t help, you get your money back.',
   },
   {
     question: 'Can I share this with friends?',
@@ -43,7 +43,7 @@ const faqItems = [
   {
     question: 'Do I need an account?',
     answer:
-      'Nope. You buy it once, download it, and it\'s yours forever. No login, no subscription, no hassle.',
+      'Nope. You buy it once, download it, and it&apos;s yours forever. No login, no subscription, no hassle.',
   },
 ]
 
@@ -59,7 +59,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="py-20 text-center">
               <h1 className="text-4xl font-bold mb-4">Product Not Found</h1>
               <p className="text-gray-600 mb-8">
-                The product you're looking for doesn't exist.
+                The product you&apos;re looking for doesn&apos;t exist.
               </p>
               <Link href="/products">
                 <Button>Back to Products</Button>
@@ -121,7 +121,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {/* Gallery */}
               <div className="lg:col-span-2">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12">
-                  What's Inside
+                  What&apos;s Inside
                 </h2>
                 <ProductGallery
                   images={galleryImages}
@@ -173,7 +173,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       SATISFACTION GUARANTEED
                     </p>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      30-day money-back guarantee. If this doesn't help, we'll refund you.
+                      30-day money-back guarantee. If this doesn&apos;t help, we&apos;ll refund you.
                     </p>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
             <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12 max-w-2xl">
-              What You're Getting
+              What You&apos;re Getting
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               {product.features.map((feature, index) => (
@@ -216,7 +216,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="space-y-4 text-lg text-gray-700">
                 <p>
                   This guide is for anyone who has tried to build good habits and
-                  struggled. If you've ever:
+                  struggled. If you&apos;ve ever:
                 </p>
                 <ul className="space-y-3 ml-4">
                   <li className="flex gap-3">
@@ -229,7 +229,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   </li>
                   <li className="flex gap-3">
                     <span>•</span>
-                    <span>Wanted to build habits but didn't know where to start</span>
+                    <span>Wanted to build habits but didn&apos;t know where to start</span>
                   </li>
                   <li className="flex gap-3">
                     <span>•</span>
@@ -237,7 +237,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   </li>
                 </ul>
                 <p className="pt-2">
-                  Then this guide is for you. It's designed to be simple, doable, and
+                  Then this guide is for you. It&apos;s designed to be simple, doable, and
                   actually helpful.
                 </p>
               </div>
@@ -253,7 +253,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-xl font-bold mb-3">You'll Learn</h3>
+                <h3 className="text-xl font-bold mb-3">You&apos;ll Learn</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex gap-2">
                     <span>→</span>
@@ -270,7 +270,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </ul>
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-3">You'll Get</h3>
+                <h3 className="text-xl font-bold mb-3">You&apos;ll Get</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex gap-2">
                     <span>→</span>
@@ -326,7 +326,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               )}
               {product.price > 0 && (
                 <p className="text-sm text-gray-600 mt-6">
-                  30-day money-back guarantee. You've got nothing to lose.
+                  30-day money-back guarantee. You&apos;ve got nothing to lose.
                 </p>
               )}
             </div>

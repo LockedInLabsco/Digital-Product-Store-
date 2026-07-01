@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Button from './Button'
 import ProductPreview from './ProductPreview'
-import { PreviewItem } from '@/src/lib/products'
+import { PreviewItem } from '@/src/types/product'
 import { formatPrice, getPriceLabel } from '@/src/lib/utils/format'
 
 interface ProductCardProps {

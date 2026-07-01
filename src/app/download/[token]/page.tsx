@@ -27,7 +27,7 @@ export default function DownloadPage({ params }: DownloadPageProps) {
 
               <div className="border border-gray-200 rounded-lg p-12 bg-gray-50 mb-8">
                 <p className="text-gray-600 mb-6">
-                  If you don't see the email, check your spam folder or try the download button below.
+                  If you don&apos;t see the email, check your spam folder or try the download button below.
                 </p>
 
                 <Button size="lg" className="mb-6">
@@ -35,7 +35,7 @@ export default function DownloadPage({ params }: DownloadPageProps) {
                 </Button>
 
                 <p className="text-sm text-gray-500">
-                  Don't lose your link! Save it somewhere safe.
+                  Don&apos;t lose your link! Save it somewhere safe.
                 </p>
               </div>
 

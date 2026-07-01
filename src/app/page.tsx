@@ -21,7 +21,7 @@ export default async function Home() {
                 Simple tools for better habits
               </h1>
               <p className="text-lg sm:text-xl text-gray-700 mb-12 leading-relaxed">
-                We believe building good habits shouldn't be complicated. Our tools help you focus on what matters: showing up, one day at a time.
+                We believe building good habits shouldn&apos;t be complicated. Our tools help you focus on what matters: showing up, one day at a time.
               </p>
               <Link href="/products">
                 <Button size="lg">
@@ -40,7 +40,7 @@ export default async function Home() {
                 Most people fail at habits for a simple reason
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed">
-                They try to change everything at once. New habits are hard. But they don't have to be complicated.
+                They try to change everything at once. New habits are hard. But they don&apos;t have to be complicated.
               </p>
             </div>
 

@@ -1,45 +1,15 @@
-export interface GalleryImage {
-  id: string
-  src: string
-  label: string
-  alt: string
-}
-
-export interface PreviewItem {
-  id: string
-  label: string
-  icon: string
-}
-
-export interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  slug: string
-  longDescription: string
-  features: string[]
-  format: string
-  previews: PreviewItem[]
-  galleryImages: GalleryImage[]
-}
+import { Product } from '@/src/types/product'
 
 // Fallback hardcoded products for when Supabase is not configured
 const fallbackProducts: Product[] = [
   {
     id: '1',
     title: 'The Simple Habit Reset',
-    description: 'A tiny beginner-friendly guide to help you restart your habits one simple step at a time',
-    price: 9,
-    slug: 'simple-habit-reset',
-    longDescription:
+    description:
       'Most people fail at building habits because they try to change everything at once. This guide helps you restart with a different approach—one that is so simple, anyone can do it. No motivation hacks. No complicated systems. Just the essentials.',
-    features: [
-      'Beginner-friendly habit guide (PDF)',
-      '7-day reset plan you can start today',
-      'Printable habit tracker',
-      'Simple daily routine system',
-    ],
+    shortDescription: 'A tiny beginner-friendly guide to help you restart your habits one simple step at a time',
+    price: 0,
+    slug: 'simple-habit-reset',
     format: 'PDF + Printables',
     previews: [
       {
@@ -95,6 +65,14 @@ const fallbackProducts: Product[] = [
         alt: 'Additional strategies to stay on track',
       },
     ],
+    features: [
+      'Beginner-friendly habit guide (PDF)',
+      '7-day reset plan you can start today',
+      'Printable habit tracker',
+      'Simple daily routine system',
+    ],
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
   },
 ]
 
@@ -114,5 +92,3 @@ export function getFeaturedProducts(count: number = 3): Product[] {
   return fallbackProducts.slice(0, count)
 }
 
-// Export products for backward compatibility
-export const products = fallbackProducts

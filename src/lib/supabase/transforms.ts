@@ -88,7 +88,7 @@ export function transformDatabaseProductToProduct(
     features: template.features,
     coverImageUrl: dbProduct.cover_image_url,
     filePath: dbProduct.file_path,
-    lemmonSqueezyVariantId: dbProduct.lemon_squeezy_variant_id,
+    lemonSqueezyVariantId: dbProduct.lemon_squeezy_variant_id,
     isActive: dbProduct.is_active,
     createdAt: new Date(dbProduct.created_at),
   }

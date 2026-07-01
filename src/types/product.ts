@@ -26,7 +26,7 @@ export interface Product {
   features: string[]
   coverImageUrl?: string
   filePath?: string
-  lemmonSqueezyVariantId?: string
+  lemonSqueezyVariantId?: string
   isActive: boolean
   createdAt: Date
 }
