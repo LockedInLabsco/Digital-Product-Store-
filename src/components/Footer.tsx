@@ -15,7 +15,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex gap-8">
+          <div className="flex flex-wrap gap-6 sm:gap-8">
             <Link
               href="/products"
               className="text-gray-700 hover:text-black transition-colors text-sm"
@@ -27,6 +27,24 @@ export default function Footer() {
               className="text-gray-700 hover:text-black transition-colors text-sm"
             >
               Home
+            </Link>
+            <Link
+              href="/terms"
+              className="text-gray-700 hover:text-black transition-colors text-sm"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-gray-700 hover:text-black transition-colors text-sm"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/refunds"
+              className="text-gray-700 hover:text-black transition-colors text-sm"
+            >
+              Refunds
             </Link>
           </div>
         </div>
