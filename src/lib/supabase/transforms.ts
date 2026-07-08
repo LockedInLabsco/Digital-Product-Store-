@@ -89,6 +89,8 @@ export function transformDatabaseProductToProduct(
     coverImageUrl: dbProduct.cover_image_url,
     filePath: dbProduct.file_path,
     lemonSqueezyVariantId: dbProduct.lemon_squeezy_variant_id,
+    paddleProductId: dbProduct.paddle_product_id,
+    paddlePriceId: dbProduct.paddle_price_id,
     isActive: dbProduct.is_active,
     createdAt: new Date(dbProduct.created_at),
   }

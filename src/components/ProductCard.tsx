@@ -56,7 +56,7 @@ export default function ProductCard({
           <div className="flex justify-between items-center">
             <span className="text-2xl font-bold">{formatPrice(price)}</span>
             <Button variant="outline" size="sm">
-              {getPriceLabel(price)}
+              {price === 0 ? 'Get Free Guide' : 'Get Access'}
             </Button>
           </div>
         </div>

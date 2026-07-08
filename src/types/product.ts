@@ -9,6 +9,8 @@ export interface DatabaseProduct {
   cover_image_url?: string
   file_path?: string
   lemon_squeezy_variant_id?: string
+  paddle_product_id?: string
+  paddle_price_id?: string
   is_active: boolean
   created_at: string
 }
@@ -27,6 +29,8 @@ export interface Product {
   coverImageUrl?: string
   filePath?: string
   lemonSqueezyVariantId?: string
+  paddleProductId?: string
+  paddlePriceId?: string
   isActive: boolean
   createdAt: Date
 }

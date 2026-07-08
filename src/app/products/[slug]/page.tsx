@@ -6,6 +6,7 @@ import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
 import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
+import PaidProductButton from '@/src/components/PaidProductButton'
 import { getProductBySlugWithFallback } from '@/src/lib/supabase/queries'
 import { formatPrice } from '@/src/lib/utils/format'
 
@@ -142,9 +143,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         productSlug={product.slug}
                         productTitle={product.title}
                       />
+                    ) : product.paddlePriceId ? (
+                      <PaidProductButton
+                        productSlug={product.slug}
+                        productTitle={product.title}
+                        paddlePriceId={product.paddlePriceId}
+                        price={product.price}
+                        variant="primary"
+                        size="lg"
+                        fullWidth={true}
+                        buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
+                      />
                     ) : (
-                      <Button size="lg" className="w-full bg-black text-white hover:bg-gray-900">
-                        {`Get Instant Access - ${formatPrice(product.price)}`}
+                      <Button size="lg" className="w-full bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
+                        Not Available
                       </Button>
                     )}
                   </div>
@@ -319,9 +331,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   productSlug={product.slug}
                   productTitle={product.title}
                 />
+              ) : product.paddlePriceId ? (
+                <PaidProductButton
+                  productSlug={product.slug}
+                  productTitle={product.title}
+                  paddlePriceId={product.paddlePriceId}
+                  price={product.price}
+                  variant="primary"
+                  size="lg"
+                  buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
+                />
               ) : (
-                <Button size="lg" className="bg-black text-white hover:bg-gray-900">
-                  {`Get Instant Access - ${formatPrice(product.price)}`}
+                <Button size="lg" className="bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
+                  Not Available
                 </Button>
               )}
               {product.price > 0 && (
