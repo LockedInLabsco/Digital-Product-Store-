@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate required fields
-    const requiredFields = ['title', 'slug', 'description', 'short_description', 'price']
+    const requiredFields = ['title', 'slug', 'description', 'short_description']
     for (const field of requiredFields) {
       if (!body[field]) {
         console.error(`❌ Missing required field: ${field}`)
@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+    }
+
+    if (typeof body.price !== 'number' || body.price < 0) {
+      console.error('❌ Missing or invalid required field: price')
+      return NextResponse.json(
+        { error: 'Missing or invalid required field: price' },
+        { status: 400 }
+      )
     }
 
     console.log(`📦 Creating product: "${body.title}"`)

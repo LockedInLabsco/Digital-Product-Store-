@@ -101,7 +101,7 @@ export default function AdminLoginPage() {
           <div className="mt-8 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
             <p className="font-semibold mb-2">Demo Credentials:</p>
             <p>Email: admin@not4normal.store</p>
-            <p>Password: (From ADMIN_PASSWORD_TEMP in .env.local)</p>
+            <p>Password: (From ADMIN_PASSWORD in .env.local)</p>
           </div>
         </div>
       </Container>

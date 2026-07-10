@@ -6,10 +6,10 @@ A clean, minimal digital products e-commerce store built with Next.js, TypeScrip
 
 - 🛍️ Product catalog with detailed product pages
 - 🖼️ Product preview gallery with thumbnail selection
-- 💳 Checkout functionality (Lemon Squeezy integration - coming soon)
-- 📧 Email delivery (Resend integration - coming soon)
-- 📊 Admin dashboard (coming soon)
-- 🗄️ Database integration (Supabase - coming soon)
+- 💳 Paddle checkout for paid products
+- 📧 Email delivery with Resend
+- 📊 Admin dashboard for product management
+- 🗄️ Product and download data with Supabase
 - 📱 Mobile-first responsive design
 - ♿ Clean and accessible UI
 
@@ -18,10 +18,10 @@ A clean, minimal digital products e-commerce store built with Next.js, TypeScrip
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: Supabase (planned)
-- **Payments**: Lemon Squeezy (planned)
-- **Email**: Resend (planned)
-- **Deployment**: Vercel (planned)
+- **Database**: Supabase
+- **Payments**: Paddle
+- **Email**: Resend
+- **Deployment**: Vercel
 
 ## Getting Started
 
@@ -68,7 +68,8 @@ src/
 │   ├── utils.ts           # Common utilities
 │   ├── supabase/          # Database utilities (WIP)
 │   ├── email/             # Email utilities (WIP)
-│   └── lemonsqueezy.ts    # Payment utilities (WIP)
+│   ├── paddle.ts          # Paddle webhook utilities
+│   └── lemonsqueezy.ts    # Legacy placeholder utilities
 └── types/                 # TypeScript type definitions
     ├── product.ts
     └── order.ts
@@ -96,27 +97,35 @@ src/
 
 ## Next Steps
 
-1. **Add products** - Update `src/lib/products.ts` with your own products
-2. **Integrate Lemon Squeezy** - Set up payment processing
-3. **Integrate Supabase** - Set up database for orders
-4. **Integrate Resend** - Set up email delivery
-5. **Create admin panel** - Build order and product management
-6. **Deploy to Vercel** - Host your store
+1. **Add products** - Use the admin dashboard to manage Supabase products
+2. **Configure Paddle** - Add sandbox or production Paddle credentials
+3. **Configure Resend** - Verify email delivery for free and paid downloads
+4. **Deploy to Vercel** - Host your store
 
 ## Environment Variables
 
 Create a `.env.local` file in the root directory:
 
 ```bash
-# Supabase (when integrated)
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-# Lemon Squeezy (when integrated)
-LEMON_SQUEEZY_API_KEY=
-
-# Resend (when integrated)
+# Resend
 RESEND_API_KEY=
+FROM_EMAIL=hello@not4normal.store
+
+# App
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_ADMIN_EMAIL=admin@not4normal.store
+ADMIN_PASSWORD=
+
+# Paddle
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=
+NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox
+PADDLE_API_KEY=
+PADDLE_WEBHOOK_SECRET=
 ```
 
 ## License

@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
 
     // Get admin credentials from environment
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@not4normal.store'
-    const adminPassword = process.env.ADMIN_PASSWORD_TEMP
+    const adminPassword = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD_TEMP
 
     if (!adminPassword) {
-      console.error('❌ ADMIN_PASSWORD_TEMP not configured')
+      console.error('❌ ADMIN_PASSWORD not configured')
       return NextResponse.json(
         { error: 'Admin system not configured' },
         { status: 500 }

@@ -155,9 +155,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
                       />
                     ) : (
-                      <Button size="lg" className="w-full bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
-                        Not Available
-                      </Button>
+                      <div>
+                        <Button size="lg" className="w-full bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
+                          Checkout Not Configured
+                        </Button>
+                        <p className="mt-3 text-sm text-red-600">
+                          This product is missing its Paddle price ID.
+                        </p>
+                      </div>
                     )}
                   </div>
 
@@ -342,9 +347,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
                 />
               ) : (
-                <Button size="lg" className="bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
-                  Not Available
-                </Button>
+                <div>
+                  <Button size="lg" className="bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
+                    Checkout Not Configured
+                  </Button>
+                  <p className="mt-3 text-sm text-red-600">
+                    This product is missing its Paddle price ID.
+                  </p>
+                </div>
               )}
               {product.price > 0 && (
                 <p className="text-sm text-gray-600 mt-6">

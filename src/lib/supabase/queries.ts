@@ -2,12 +2,15 @@ import { supabase } from './client'
 import { DatabaseProduct, Product } from '@/src/types/product'
 import { transformDatabaseProductToProduct } from './transforms'
 import { getProducts, getProductBySlug as getHardcodedProductBySlug } from '@/src/lib/products'
+import { unstable_noStore as noStore } from 'next/cache'
 
 /**
  * Fetch all active products from Supabase
  * Falls back to hardcoded products if Supabase is not configured or fails
  */
 export async function getProductsWithFallback(): Promise<Product[]> {
+  noStore()
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -26,6 +29,7 @@ export async function getProductsWithFallback(): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -45,6 +49,7 @@ export async function getProductsWithFallback(): Promise<Product[]> {
         id: p.id,
         title: p.title,
         slug: p.slug,
+        price: p.price,
         is_active: p.is_active,
       })))
     }
@@ -75,6 +80,8 @@ export async function getProductsWithFallback(): Promise<Product[]> {
 export async function getProductBySlugWithFallback(
   slug: string
 ): Promise<Product | undefined> {
+  noStore()
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -93,6 +100,7 @@ export async function getProductBySlugWithFallback(
       .from('products')
       .select('*')
       .eq('slug', slug)
+      .eq('is_active', true)
       .single()
 
     if (error) {

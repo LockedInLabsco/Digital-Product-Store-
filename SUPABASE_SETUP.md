@@ -57,7 +57,9 @@ CREATE TABLE products (
   currency TEXT DEFAULT 'USD',
   cover_image_url TEXT,
   file_path TEXT,
-  lemon_squeezy_variant_id TEXT,
+  lemon_squeezy_variant_id TEXT, -- legacy, not used by current Paddle checkout
+  paddle_product_id TEXT,
+  paddle_price_id TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -131,7 +133,7 @@ Once products are loading from Supabase, you can:
 
 1. **Add more products** - Use the Supabase dashboard or insert via SQL
 2. **Add product images** - Store images in Supabase Storage and reference them
-3. **Connect Lemon Squeezy** - Add `lemon_squeezy_variant_id` to each product
+3. **Connect Paddle** - Add `paddle_price_id` to each paid product
 4. **Build the admin panel** - Create forms to manage products directly
 
 ## Troubleshooting
@@ -173,7 +175,9 @@ The `products` table has these columns:
 | `currency` | TEXT | Currency code (USD, EUR, etc.) |
 | `cover_image_url` | TEXT | URL to product cover image |
 | `file_path` | TEXT | Path to downloadable file |
-| `lemon_squeezy_variant_id` | TEXT | For Lemon Squeezy integration |
+| `lemon_squeezy_variant_id` | TEXT | Legacy Lemon Squeezy field, not used by current checkout |
+| `paddle_product_id` | TEXT | Optional Paddle product ID for admin reference |
+| `paddle_price_id` | TEXT | Paddle price ID used by checkout and webhooks |
 | `is_active` | BOOLEAN | Whether product is published |
 | `created_at` | TIMESTAMP | When product was created |
 | `updated_at` | TIMESTAMP | When product was last updated |
