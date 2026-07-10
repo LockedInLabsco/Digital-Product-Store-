@@ -6,6 +6,7 @@ import Button from './Button'
 interface PaidProductButtonProps {
   productSlug: string
   productTitle: string
+  paddleProductId?: string
   paddlePriceId: string
   price: number
   variant?: 'primary' | 'outline'
@@ -17,13 +18,16 @@ interface PaidProductButtonProps {
 declare global {
   interface Window {
     Paddle?: any
+    __not4normalPaddleInitialized?: boolean
   }
 }
 
 const PADDLE_SCRIPT_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js'
 
 function getPaddleEnvironment(): 'production' | 'sandbox' {
-  const configuredEnvironment = process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox'
+  const configuredEnvironment = (
+    process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox'
+  ).trim().toLowerCase()
 
   if (configuredEnvironment === 'live') {
     return 'production'
@@ -32,9 +36,74 @@ function getPaddleEnvironment(): 'production' | 'sandbox' {
   return configuredEnvironment === 'production' ? 'production' : 'sandbox'
 }
 
+function getPaddleClientToken(): string {
+  return process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ''
+}
+
+function logPaddleEvent(event: any) {
+  const eventName = event?.name
+
+  if (
+    eventName === 'checkout.error' ||
+    eventName === 'checkout.payment.error' ||
+    eventName === 'checkout.payment.failed' ||
+    eventName === 'checkout.warning'
+  ) {
+    console.error('[Paddle] Checkout event', eventName, event)
+    return
+  }
+
+  console.log('[Paddle] Checkout event', eventName || 'unknown', event)
+}
+
+function initializePaddle() {
+  const clientToken = getPaddleClientToken()
+  const environment = getPaddleEnvironment()
+
+  if (!clientToken) {
+    console.error('Paddle checkout is not configured: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is missing')
+    return
+  }
+
+  if (!window.Paddle) {
+    console.error('Paddle checkout is not available: Paddle.js did not load')
+    return
+  }
+
+  if (window.__not4normalPaddleInitialized) {
+    console.log('[Paddle] Already initialized', {
+      environment,
+      clientTokenExists: Boolean(clientToken),
+    })
+    return
+  }
+
+  try {
+    if (environment === 'sandbox') {
+      window.Paddle.Environment.set('sandbox')
+    }
+
+    window.Paddle.Initialize({
+      token: clientToken,
+      eventCallback: logPaddleEvent,
+    })
+
+    window.__not4normalPaddleInitialized = true
+
+    console.log('[Paddle] Initialized checkout', {
+      environment,
+      clientTokenExists: Boolean(clientToken),
+      tokenPrefix: clientToken.slice(0, 4),
+    })
+  } catch (error) {
+    console.error('[Paddle] Initialize error', error)
+  }
+}
+
 export default function PaidProductButton({
   productSlug,
   productTitle,
+  paddleProductId,
   paddlePriceId,
   price,
   variant = 'primary',
@@ -45,34 +114,6 @@ export default function PaidProductButton({
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
-    const environment = getPaddleEnvironment()
-
-    const initializePaddle = () => {
-      if (!clientToken) {
-        console.error('Paddle checkout is not configured: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is missing')
-        return
-      }
-
-      if (!window.Paddle) {
-        console.error('Paddle checkout is not available: Paddle.js did not load')
-        return
-      }
-
-      if (window.Paddle.Environment?.set) {
-        window.Paddle.Environment.set(environment)
-      }
-
-      window.Paddle.Initialize({
-        token: clientToken,
-      })
-
-      console.log('[Paddle] Initialized checkout', {
-        environment,
-        clientTokenConfigured: Boolean(clientToken),
-      })
-    }
-
     if (window.Paddle) {
       initializePaddle()
       return
@@ -93,14 +134,15 @@ export default function PaidProductButton({
     script.src = PADDLE_SCRIPT_SRC
     script.async = true
     script.onload = initializePaddle
-    script.onerror = () => {
-      console.error('Paddle checkout is not available: failed to load Paddle.js')
+    script.onerror = (error) => {
+      console.error('Paddle checkout is not available: failed to load Paddle.js', error)
     }
     document.head.appendChild(script)
   }, [])
 
   const handleCheckout = async () => {
     const environment = getPaddleEnvironment()
+    const clientToken = getPaddleClientToken()
 
     if (!window.Paddle) {
       console.error('Paddle checkout is not available: Paddle.js is not loaded')
@@ -108,10 +150,15 @@ export default function PaidProductButton({
       return
     }
 
+    if (!window.__not4normalPaddleInitialized) {
+      initializePaddle()
+    }
+
     if (!paddlePriceId) {
       console.error('Paddle checkout is not configured: missing paddle_price_id', {
         productSlug,
         productTitle,
+        paddleProductId,
       })
       alert('This product is not configured for purchase. Please contact support.')
       return
@@ -121,31 +168,42 @@ export default function PaidProductButton({
       console.error('Paddle checkout is not configured: paddle_price_id must start with pri_', {
         productSlug,
         productTitle,
+        paddleProductId,
         paddlePriceId,
       })
       alert('This product checkout is not configured correctly. Please contact support.')
       return
     }
 
+    const checkoutItems = [
+      {
+        priceId: paddlePriceId,
+        quantity: 1,
+      },
+    ]
+
+    const checkoutOptions = {
+      settings: {
+        displayMode: 'overlay',
+      },
+      items: checkoutItems,
+    }
+
     setIsLoading(true)
     console.log('[Paddle] Opening checkout', {
+      paddleEnvironment: environment,
+      clientTokenExists: Boolean(clientToken),
       productSlug,
       productPrice: price,
+      paddleProductId,
       paddlePriceId,
-      environment,
+      checkoutItems,
     })
 
     try {
-      window.Paddle.Checkout.open({
-        items: [
-          {
-            priceId: paddlePriceId,
-            quantity: 1,
-          },
-        ],
-      })
+      window.Paddle.Checkout.open(checkoutOptions)
     } catch (error) {
-      console.error('Paddle checkout error:', error)
+      console.error('[Paddle] Checkout.open threw an error', error)
       alert('Failed to open checkout. Please try again.')
     } finally {
       setIsLoading(false)

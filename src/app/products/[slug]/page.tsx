@@ -147,6 +147,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <PaidProductButton
                         productSlug={product.slug}
                         productTitle={product.title}
+                        paddleProductId={product.paddleProductId}
                         paddlePriceId={product.paddlePriceId}
                         price={product.price}
                         variant="primary"
@@ -340,6 +341,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <PaidProductButton
                   productSlug={product.slug}
                   productTitle={product.title}
+                  paddleProductId={product.paddleProductId}
                   paddlePriceId={product.paddlePriceId}
                   price={product.price}
                   variant="primary"
