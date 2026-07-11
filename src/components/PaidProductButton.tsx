@@ -36,6 +36,10 @@ function getPaddleEnvironment(): 'production' | 'sandbox' {
   return configuredEnvironment === 'production' ? 'production' : 'sandbox'
 }
 
+function getConfiguredPaddleEnvironment(): string {
+  return process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || ''
+}
+
 function getPaddleClientToken(): string {
   return process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ''
 }
@@ -58,6 +62,7 @@ function logPaddleEvent(event: any) {
 
 function initializePaddle() {
   const clientToken = getPaddleClientToken()
+  const configuredEnvironment = getConfiguredPaddleEnvironment()
   const environment = getPaddleEnvironment()
 
   if (!clientToken) {
@@ -72,6 +77,7 @@ function initializePaddle() {
 
   if (window.__not4normalPaddleInitialized) {
     console.log('[Paddle] Already initialized', {
+      NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
       environment,
       clientTokenExists: Boolean(clientToken),
     })
@@ -79,6 +85,18 @@ function initializePaddle() {
   }
 
   try {
+    console.log('[Paddle] Initializing checkout', {
+      NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
+      normalizedEnvironment: environment,
+      clientTokenExists: Boolean(clientToken),
+      clientTokenPrefix: clientToken.slice(0, 4),
+      initializeUsesTokenFrom: 'NEXT_PUBLIC_PADDLE_CLIENT_TOKEN',
+      environmentAppliedWith:
+        environment === 'sandbox'
+          ? 'Paddle.Environment.set("sandbox") before Paddle.Initialize'
+          : 'Paddle production default',
+    })
+
     if (environment === 'sandbox') {
       window.Paddle.Environment.set('sandbox')
     }
@@ -91,6 +109,7 @@ function initializePaddle() {
     window.__not4normalPaddleInitialized = true
 
     console.log('[Paddle] Initialized checkout', {
+      NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
       environment,
       clientTokenExists: Boolean(clientToken),
       tokenPrefix: clientToken.slice(0, 4),
@@ -141,6 +160,7 @@ export default function PaidProductButton({
   }, [])
 
   const handleCheckout = async () => {
+    const configuredEnvironment = getConfiguredPaddleEnvironment()
     const environment = getPaddleEnvironment()
     const clientToken = getPaddleClientToken()
 
@@ -191,19 +211,33 @@ export default function PaidProductButton({
 
     setIsLoading(true)
     console.log('[Paddle] Opening checkout', {
+      NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
       paddleEnvironment: environment,
       clientTokenExists: Boolean(clientToken),
+      productTitle,
       productSlug,
       productPrice: price,
       paddleProductId,
       paddlePriceId,
       checkoutItems,
+      checkoutOptions,
     })
 
     try {
       window.Paddle.Checkout.open(checkoutOptions)
     } catch (error) {
-      console.error('[Paddle] Checkout.open threw an error', error)
+      console.error('[Paddle] Checkout.open threw an error', {
+        error,
+        checkoutOptions,
+        NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
+        paddleEnvironment: environment,
+        clientTokenExists: Boolean(clientToken),
+        productTitle,
+        productSlug,
+        productPrice: price,
+        paddleProductId,
+        paddlePriceId,
+      })
       alert('Failed to open checkout. Please try again.')
     } finally {
       setIsLoading(false)
