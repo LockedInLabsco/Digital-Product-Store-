@@ -24,6 +24,7 @@ export async function GET(
       .from('products')
       .select('id, title, price, file_path')
       .eq('slug', slug)
+      .eq('is_active', true)
       .single()
 
     if (queryError || !product) {

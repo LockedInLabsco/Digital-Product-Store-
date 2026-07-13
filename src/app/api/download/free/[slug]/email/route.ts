@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/src/lib/supabase/client'
+import { supabaseServer } from '@/src/lib/supabase/server'
 import { getSignedDownloadUrl } from '@/src/lib/supabase/downloads'
 import { sendDownloadEmail } from '@/src/lib/email/resend'
 
@@ -50,10 +50,11 @@ export async function POST(
     console.log(`✅ Email validation passed`)
 
     console.log(`🔍 Fetching product from Supabase with slug: ${slug}`)
-    const { data: product, error: queryError } = await supabase
+    const { data: product, error: queryError } = await supabaseServer
       .from('products')
       .select('id, title, price, file_path')
       .eq('slug', slug)
+      .eq('is_active', true)
       .single()
 
     if (queryError) {

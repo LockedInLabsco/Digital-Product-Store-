@@ -4,10 +4,10 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import Button from '@/src/components/Button'
-import { getProductsWithFallback } from '@/src/lib/supabase/queries'
+import { getActiveProducts } from '@/src/lib/supabase/queries'
 
 export default async function Home() {
-  const products = await getProductsWithFallback()
+  const products = await getActiveProducts()
 
   return (
     <>
@@ -71,31 +71,40 @@ export default async function Home() {
         <section className="py-20 bg-gray-50">
           <Container>
             <h2 className="text-3xl sm:text-4xl font-bold mb-12">Our Product</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  title={product.title}
-                  description={product.description}
-                  price={product.price}
-                  slug={product.slug}
-                  previews={product.previews}
-                  features={product.features}
-                  coverImageUrl={product.coverImageUrl}
-                />
-              ))}
-              <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">
-                <h4 className="text-xl font-bold mb-6">What You Get</h4>
-                <ul className="space-y-4">
-                  {products[0]?.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <span className="text-2xl text-black">✓</span>
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+            {products.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    title={product.title}
+                    description={product.description}
+                    price={product.price}
+                    slug={product.slug}
+                    previews={product.previews}
+                    features={product.features}
+                    coverImageUrl={product.coverImageUrl}
+                  />
+                ))}
+                <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">
+                  <h4 className="text-xl font-bold mb-6">What You Get</h4>
+                  <ul className="space-y-4">
+                    {products[0]?.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="text-2xl text-black">-</span>
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-lg p-8 sm:p-12">
+                <p className="text-lg font-semibold mb-2">No products available yet.</p>
+                <p className="text-gray-600">
+                  Check back soon for new Not4Normal tools.
+                </p>
+              </div>
+            )}
           </Container>
         </section>
       </main>

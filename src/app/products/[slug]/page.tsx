@@ -7,7 +7,7 @@ import ProductGallery from '@/src/components/ProductGallery'
 import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import PaidProductButton from '@/src/components/PaidProductButton'
-import { getProductBySlugWithFallback } from '@/src/lib/supabase/queries'
+import { getActiveProductBySlug } from '@/src/lib/supabase/queries'
 import { formatPrice } from '@/src/lib/utils/format'
 
 interface ProductPageProps {
@@ -49,7 +49,7 @@ const faqItems = [
 ]
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductBySlugWithFallback(params.slug)
+  const product = await getActiveProductBySlug(params.slug)
 
   if (!product) {
     return (
