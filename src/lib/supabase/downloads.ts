@@ -8,31 +8,35 @@ export async function getSignedDownloadUrl(
   expirySeconds: number = DEFAULT_SIGNED_URL_EXPIRY_SECONDS
 ): Promise<string | null> {
   if (!filePath) {
-    console.error('getSignedDownloadUrl: filePath is required')
+    console.error('[Supabase Storage] getSignedDownloadUrl: filePath is required')
     return null
   }
 
   try {
-    console.log(`🔐 Generating signed URL for: ${filePath} (expires in ${expirySeconds}s)`)
+    console.log('[Supabase Storage] Generating signed URL', {
+      bucket: PRODUCT_FILES_BUCKET,
+      filePath,
+      expirySeconds,
+    })
 
     const { data, error } = await supabaseServer.storage
       .from(PRODUCT_FILES_BUCKET)
       .createSignedUrl(filePath, expirySeconds)
 
     if (error) {
-      console.error('❌ Error generating signed URL:', error.message)
+      console.error('[Supabase Storage] Error generating signed URL:', error.message)
       return null
     }
 
     if (!data?.signedUrl) {
-      console.error('❌ No signed URL returned')
+      console.error('[Supabase Storage] No signed URL returned')
       return null
     }
 
-    console.log(`✅ Signed URL generated successfully`)
+    console.log('[Supabase Storage] Signed URL generated successfully')
     return data.signedUrl
   } catch (error) {
-    console.error('❌ Exception generating signed URL:', error)
+    console.error('[Supabase Storage] Exception generating signed URL:', error)
     return null
   }
 }
@@ -43,22 +47,40 @@ export async function verifyProductFileExists(
   if (!filePath) return false
 
   try {
-    console.log(`🔍 Verifying file exists: ${filePath}`)
+    const pathParts = filePath.split('/').filter(Boolean)
+    const fileName = pathParts.pop()
+    const directory = pathParts.join('/')
 
-    const { data, error } = await supabaseServer.storage
-      .from(PRODUCT_FILES_BUCKET)
-      .list('', { limit: 1, search: filePath })
-
-    if (error) {
-      console.error('❌ Error verifying file:', error.message)
+    if (!fileName) {
+      console.error('[Supabase Storage] Invalid file path:', filePath)
       return false
     }
 
-    const exists = data && data.length > 0
-    console.log(`${exists ? '✅' : '⚠️'} File ${exists ? 'exists' : 'not found'}`)
+    console.log('[Supabase Storage] Verifying file exists', {
+      bucket: PRODUCT_FILES_BUCKET,
+      directory,
+      fileName,
+      filePath,
+    })
+
+    const { data, error } = await supabaseServer.storage
+      .from(PRODUCT_FILES_BUCKET)
+      .list(directory, { limit: 100, search: fileName })
+
+    if (error) {
+      console.error('[Supabase Storage] Error verifying file:', error.message)
+      return false
+    }
+
+    const exists = Boolean(data?.some((item) => item.name === fileName))
+    console.log('[Supabase Storage] File existence result', {
+      filePath,
+      exists,
+    })
+
     return exists
   } catch (error) {
-    console.error('❌ Exception verifying file:', error)
+    console.error('[Supabase Storage] Exception verifying file:', error)
     return false
   }
 }

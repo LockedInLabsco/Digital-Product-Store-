@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Button from './Button'
 
 interface PaidProductButtonProps {
+  productId: string
   productSlug: string
   productTitle: string
   paddleProductId?: string
@@ -120,6 +121,7 @@ function initializePaddle() {
 }
 
 export default function PaidProductButton({
+  productId,
   productSlug,
   productTitle,
   paddleProductId,
@@ -207,6 +209,11 @@ export default function PaidProductButton({
         displayMode: 'overlay',
       },
       items: checkoutItems,
+      customData: {
+        product_id: productId,
+        product_slug: productSlug,
+        paddle_price_id: paddlePriceId,
+      },
     }
 
     setIsLoading(true)
@@ -214,6 +221,7 @@ export default function PaidProductButton({
       NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
       paddleEnvironment: environment,
       clientTokenExists: Boolean(clientToken),
+      productId,
       productTitle,
       productSlug,
       productPrice: price,
@@ -232,6 +240,7 @@ export default function PaidProductButton({
         NEXT_PUBLIC_PADDLE_ENVIRONMENT: configuredEnvironment,
         paddleEnvironment: environment,
         clientTokenExists: Boolean(clientToken),
+        productId,
         productTitle,
         productSlug,
         productPrice: price,

@@ -88,7 +88,42 @@ In your Paddle Dashboard:
 
 5. Copy the **Webhook Secret** and add it to both `.env.local` and Vercel
 
-## Step 5: Add Paddle Product Information
+## Step 5: Configure Paddle Checkout Default URL
+
+If Paddle checkout opens but shows:
+
+```
+Something went wrong. Please try again later.
+```
+
+and the browser console shows:
+
+```
+checkout.error
+type: api_error
+code: validation
+detail: transaction_default_checkout_url_not_set
+```
+
+then Paddle needs a default checkout URL configured in the Paddle dashboard.
+
+**For Paddle Sandbox local testing:**
+1. Go to Paddle Sandbox Dashboard
+2. Go to **Checkout -> Checkout settings**
+3. Set **Default payment link / Default checkout URL** to:
+   ```
+   http://localhost:3000
+   ```
+
+**For live production:**
+1. Go to the live Paddle Dashboard
+2. Go to **Checkout -> Checkout settings**
+3. Set **Default payment link / Default checkout URL** to:
+   ```
+   https://www.not4normal.store
+   ```
+
+## Step 6: Add Paddle Product Information
 
 In your Supabase database, for each paid product, update:
 
@@ -234,6 +269,9 @@ Completes                              ↓
 1. Verify `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` is set correctly
 2. Check browser console for JavaScript errors
 3. Ensure `NEXT_PUBLIC_PADDLE_ENVIRONMENT` matches token's environment (sandbox/production)
+4. If console shows `transaction_default_checkout_url_not_set`, configure Paddle Dashboard -> Checkout -> Checkout settings -> Default payment link / Default checkout URL:
+   - Sandbox local testing: `http://localhost:3000`
+   - Live production: `https://www.not4normal.store`
 
 ### Product Not Found in Webhook
 1. Verify `paddle_price_id` is set in Supabase for the product

@@ -86,7 +86,46 @@ NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox
 
 ---
 
-### 5. Add Product IDs to Supabase
+### 5. Configure Paddle Checkout Default URL
+
+If Paddle checkout opens but shows:
+
+```
+Something went wrong. Please try again later.
+```
+
+and the browser console shows:
+
+```
+checkout.error
+type: api_error
+code: validation
+detail: transaction_default_checkout_url_not_set
+```
+
+then Paddle needs a default checkout URL configured in the Paddle dashboard.
+
+**For Paddle Sandbox local testing:**
+1. Go to Paddle Sandbox Dashboard
+2. Go to **Checkout -> Checkout settings**
+3. Set **Default payment link / Default checkout URL** to:
+   ```
+   http://localhost:3000
+   ```
+
+**For live production:**
+1. Go to the live Paddle Dashboard
+2. Go to **Checkout -> Checkout settings**
+3. Set **Default payment link / Default checkout URL** to:
+   ```
+   https://www.not4normal.store
+   ```
+
+**Status: Pending** - Configure default checkout URL in Paddle
+
+---
+
+### 6. Add Product IDs to Supabase
 
 **For each paid product (price > 0):**
 
@@ -112,7 +151,7 @@ paddle_price_id = "pri_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 
 ---
 
-### 6. Test Locally
+### 7. Test Locally
 
 **After adding `.env.local`:**
 
@@ -132,7 +171,7 @@ Test steps:
 
 ---
 
-### 7. Deploy to Vercel
+### 8. Deploy to Vercel
 
 After Vercel has the environment variables set:
 
@@ -148,7 +187,7 @@ Vercel will automatically redeploy (2-5 minutes).
 
 ---
 
-### 8. Test on Vercel (Sandbox)
+### 9. Test on Vercel (Sandbox)
 
 After deployment completes:
 
@@ -222,6 +261,7 @@ products.paddle_price_id (text)
 - Check browser console for errors
 - Verify `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` is set
 - Verify environment is `sandbox` or `production` matches token
+- If console shows `transaction_default_checkout_url_not_set`, configure Paddle Dashboard -> Checkout -> Checkout settings -> Default payment link / Default checkout URL
 
 **Email not received after payment:**
 - Check Vercel logs for webhook (look for "✅ Email sent")
