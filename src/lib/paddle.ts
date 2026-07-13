@@ -194,6 +194,40 @@ export function getPaddlePriceId(transaction: any): string | null {
   return null
 }
 
+export function getPaddleTransactionId(transaction: any): string | null {
+  return transaction?.id || transaction?.transaction_id || null
+}
+
+export function getPaddleTransactionStatus(transaction: any): string {
+  return transaction?.status || 'completed'
+}
+
+export function getPaddleTransactionAmount(transaction: any): string | null {
+  const totals =
+    transaction?.details?.totals ||
+    transaction?.details?.line_items?.[0]?.totals ||
+    transaction?.items?.[0]?.price?.unit_price
+
+  const amount =
+    totals?.grand_total ||
+    totals?.total ||
+    totals?.subtotal ||
+    transaction?.billed_at_amount ||
+    transaction?.amount
+
+  return amount === undefined || amount === null ? null : String(amount)
+}
+
+export function getPaddleTransactionCurrency(transaction: any): string | null {
+  return (
+    transaction?.currency_code ||
+    transaction?.details?.totals?.currency_code ||
+    transaction?.details?.line_items?.[0]?.price?.unit_price?.currency_code ||
+    transaction?.items?.[0]?.price?.unit_price?.currency_code ||
+    null
+  )
+}
+
 export function getPaddleCustomData(transaction: any): Record<string, any> {
   return transaction?.custom_data || transaction?.customData || {}
 }

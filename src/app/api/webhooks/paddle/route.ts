@@ -8,6 +8,10 @@ import {
   getPaddleCustomerEmailFromApi,
   getPaddleCustomerId,
   getPaddlePriceId,
+  getPaddleTransactionAmount,
+  getPaddleTransactionCurrency,
+  getPaddleTransactionId,
+  getPaddleTransactionStatus,
   getPaddleCustomData,
   getPaddleWebhookSecretDebugInfo,
   logPaddleEvent,
@@ -16,6 +20,85 @@ import {
 export const runtime = 'nodejs'
 
 const EMAIL_SIGNED_URL_EXPIRY_SECONDS = 60 * 60 // 1 hour
+
+interface OrderRecordInput {
+  product: any
+  customerEmail: string
+  transactionId: string
+  customerId: string | null
+  priceId: string | null
+  amount: string | null
+  currency: string | null
+  status: string
+  deliveryStatus: 'pending' | 'sent' | 'failed'
+  downloadUrlSent: boolean
+  errorMessage?: string | null
+}
+
+async function getExistingOrder(transactionId: string) {
+  const { data, error } = await supabaseServer
+    .from('orders')
+    .select('*')
+    .eq('paddle_transaction_id', transactionId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[Paddle Webhook] Existing order lookup failed', error)
+  }
+
+  return data || null
+}
+
+async function saveOrderRecord({
+  product,
+  customerEmail,
+  transactionId,
+  customerId,
+  priceId,
+  amount,
+  currency,
+  status,
+  deliveryStatus,
+  downloadUrlSent,
+  errorMessage = null,
+}: OrderRecordInput) {
+  const orderPayload = {
+    product_id: product?.id || null,
+    product_title: product?.title || 'Unknown product',
+    product_slug: product?.slug || '',
+    customer_email: customerEmail,
+    paddle_transaction_id: transactionId,
+    paddle_customer_id: customerId,
+    paddle_price_id: priceId,
+    amount,
+    currency,
+    status,
+    delivery_status: deliveryStatus,
+    download_url_sent: downloadUrlSent,
+    error_message: errorMessage,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabaseServer
+    .from('orders')
+    .upsert(orderPayload, { onConflict: 'paddle_transaction_id' })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('[Paddle Webhook] Order save failed', error)
+    return { order: null, error }
+  }
+
+  console.log('[Paddle Webhook] Order saved', {
+    orderId: data?.id,
+    transactionId,
+    deliveryStatus,
+    downloadUrlSent,
+  })
+
+  return { order: data, error: null }
+}
 
 async function findProductForTransaction(priceId: string | null, customData: Record<string, any>) {
   const selectFields = 'id, title, slug, price, is_active, file_path, paddle_price_id'
@@ -138,6 +221,36 @@ export async function POST(request: NextRequest) {
 
     console.log('[Paddle Webhook] Processing transaction.completed')
 
+    const transactionId = getPaddleTransactionId(transaction)
+    const priceId = getPaddlePriceId(transaction)
+    const amount = getPaddleTransactionAmount(transaction)
+    const currency = getPaddleTransactionCurrency(transaction)
+    const transactionStatus = getPaddleTransactionStatus(transaction)
+
+    console.log('[Paddle Webhook] Transaction identifiers extracted', {
+      transactionId: transactionId || 'not found',
+      priceId: priceId || 'not found',
+      amount: amount || 'not found',
+      currency: currency || 'not found',
+      transactionStatus,
+    })
+
+    if (!transactionId) {
+      console.error('[Paddle Webhook] Paddle transaction ID not found')
+      return NextResponse.json({ error: 'Transaction ID not found' }, { status: 400 })
+    }
+
+    const existingOrder = await getExistingOrder(transactionId)
+
+    if (existingOrder?.delivery_status === 'sent' && existingOrder.download_url_sent) {
+      console.log('[Paddle Webhook] Duplicate completed transaction already delivered', {
+        orderId: existingOrder.id,
+        transactionId,
+      })
+      console.log('[Paddle Webhook] ===== END WEBHOOK: DUPLICATE SUCCESS =====\n')
+      return NextResponse.json({ success: true, duplicate: true })
+    }
+
     let customerEmail = getPaddleCustomerEmail(transaction)
     const customerId = getPaddleCustomerId(transaction)
 
@@ -159,7 +272,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Customer email not found' }, { status: 400 })
     }
 
-    const priceId = getPaddlePriceId(transaction)
     const customData = getPaddleCustomData(transaction)
 
     console.log('[Paddle Webhook] Product identifiers extracted', {
@@ -173,6 +285,23 @@ export async function POST(request: NextRequest) {
       console.error('[Paddle Webhook] No matching Supabase product found', {
         priceId,
         customData,
+      })
+      await saveOrderRecord({
+        product: {
+          id: customData?.product_id || null,
+          title: customData?.product_title || 'Unknown product',
+          slug: customData?.product_slug || '',
+        },
+        customerEmail,
+        transactionId,
+        customerId,
+        priceId,
+        amount,
+        currency,
+        status: transactionStatus,
+        deliveryStatus: 'failed',
+        downloadUrlSent: false,
+        errorMessage: 'Product not found for Paddle transaction',
       })
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
@@ -193,6 +322,19 @@ export async function POST(request: NextRequest) {
         productId: product.id,
         productTitle: product.title,
       })
+      await saveOrderRecord({
+        product,
+        customerEmail,
+        transactionId,
+        customerId,
+        priceId,
+        amount,
+        currency,
+        status: transactionStatus,
+        deliveryStatus: 'failed',
+        downloadUrlSent: false,
+        errorMessage: 'Product file_path is missing',
+      })
       return NextResponse.json({ error: 'Product file not configured' }, { status: 400 })
     }
 
@@ -203,6 +345,19 @@ export async function POST(request: NextRequest) {
     })
 
     if (!fileExists) {
+      await saveOrderRecord({
+        product,
+        customerEmail,
+        transactionId,
+        customerId,
+        priceId,
+        amount,
+        currency,
+        status: transactionStatus,
+        deliveryStatus: 'failed',
+        downloadUrlSent: false,
+        errorMessage: 'Product file not found in Supabase storage',
+      })
       return NextResponse.json({ error: 'Product file not found' }, { status: 500 })
     }
 
@@ -218,6 +373,19 @@ export async function POST(request: NextRequest) {
     })
 
     if (!signedUrl) {
+      await saveOrderRecord({
+        product,
+        customerEmail,
+        transactionId,
+        customerId,
+        priceId,
+        amount,
+        currency,
+        status: transactionStatus,
+        deliveryStatus: 'failed',
+        downloadUrlSent: false,
+        errorMessage: 'Failed to generate signed download URL',
+      })
       return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 })
     }
 
@@ -241,8 +409,35 @@ export async function POST(request: NextRequest) {
         error: emailResult.error,
         to: customerEmail,
       })
+      await saveOrderRecord({
+        product,
+        customerEmail,
+        transactionId,
+        customerId,
+        priceId,
+        amount,
+        currency,
+        status: transactionStatus,
+        deliveryStatus: 'failed',
+        downloadUrlSent: false,
+        errorMessage: emailResult.error || 'Email send failed',
+      })
       return NextResponse.json({ error: 'Email send failed' }, { status: 500 })
     }
+
+    await saveOrderRecord({
+      product,
+      customerEmail,
+      transactionId,
+      customerId,
+      priceId,
+      amount,
+      currency,
+      status: transactionStatus,
+      deliveryStatus: 'sent',
+      downloadUrlSent: true,
+      errorMessage: null,
+    })
 
     console.log('[Paddle Webhook] Paid product delivery completed successfully')
     console.log('[Paddle Webhook] ===== END WEBHOOK: SUCCESS =====\n')

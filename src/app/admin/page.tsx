@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Container from '@/src/components/Container'
-import Button from '@/src/components/Button'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -12,7 +11,6 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if admin token exists
     const token = localStorage.getItem('admin_token')
     if (!token) {
       router.push('/admin/login')
@@ -22,7 +20,8 @@ export default function AdminPage() {
     }
   }, [router])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth/logout', { method: 'POST' })
     localStorage.removeItem('admin_token')
     router.push('/admin/login')
   }
@@ -59,24 +58,26 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link href="/admin/products">
               <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
-                <h3 className="text-lg font-bold mb-2">📦 Products</h3>
+                <h3 className="text-lg font-bold mb-2">Products</h3>
                 <p className="text-gray-600 mb-4">
                   Create, edit, and manage your products
                 </p>
-                <span className="text-sm text-black font-medium">View Products →</span>
+                <span className="text-sm text-black font-medium">View Products -&gt;</span>
+              </div>
+            </Link>
+
+            <Link href="/admin/orders">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
+                <h3 className="text-lg font-bold mb-2">Orders</h3>
+                <p className="text-gray-600 mb-4">
+                  View and manage customer orders
+                </p>
+                <span className="text-sm text-black font-medium">View Orders -&gt;</span>
               </div>
             </Link>
 
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-100 opacity-50 cursor-not-allowed h-full">
-              <h3 className="text-lg font-bold mb-2">📊 Orders</h3>
-              <p className="text-gray-600 mb-4">
-                View and manage customer orders
-              </p>
-              <span className="text-sm text-gray-500">Coming soon</span>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-6 bg-gray-100 opacity-50 cursor-not-allowed h-full">
-              <h3 className="text-lg font-bold mb-2">📈 Analytics</h3>
+              <h3 className="text-lg font-bold mb-2">Analytics</h3>
               <p className="text-gray-600 mb-4">
                 View sales and traffic metrics
               </p>
@@ -84,7 +85,7 @@ export default function AdminPage() {
             </div>
 
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-100 opacity-50 cursor-not-allowed h-full">
-              <h3 className="text-lg font-bold mb-2">⚙️ Settings</h3>
+              <h3 className="text-lg font-bold mb-2">Settings</h3>
               <p className="text-gray-600 mb-4">
                 Configure store settings
               </p>

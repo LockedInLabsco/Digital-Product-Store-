@@ -69,7 +69,8 @@ export default function AdminProductsPage() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth/logout', { method: 'POST' })
     localStorage.removeItem('admin_token')
     router.push('/admin/login')
   }
