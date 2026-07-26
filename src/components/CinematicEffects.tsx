@@ -16,6 +16,7 @@ export default function CinematicEffects() {
   useEffect(() => {
     if (pathname.startsWith('/admin')) return
 
+    const debug = process.env.NODE_ENV === 'development' && pathname === '/'
     let frame = 0
 
     const updateScroll = () => {
@@ -40,6 +41,11 @@ export default function CinematicEffects() {
 
     updateScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
+    if (debug) {
+      console.info(
+        '[Not4Normal animation debug] Major animation created: hero and editorial scroll parallax.'
+      )
+    }
 
     return () => {
       window.removeEventListener('scroll', onScroll)
@@ -50,6 +56,7 @@ export default function CinematicEffects() {
   useEffect(() => {
     if (pathname.startsWith('/admin')) return
 
+    const debug = process.env.NODE_ENV === 'development' && pathname === '/'
     const finePointer = window.matchMedia(
       '(hover: hover) and (pointer: fine)'
     ).matches
@@ -64,6 +71,11 @@ export default function CinematicEffects() {
     if (!cursor || !label) return
 
     document.body.classList.add('cursor-enabled')
+    if (debug) {
+      console.info(
+        '[Not4Normal animation debug] Major animation created: interactive cinematic cursor.'
+      )
+    }
     let pointerFrame = 0
     let pointerX = -100
     let pointerY = -100
@@ -116,6 +128,7 @@ export default function CinematicEffects() {
   useEffect(() => {
     if (pathname.startsWith('/admin')) return
 
+    const debug = process.env.NODE_ENV === 'development' && pathname === '/'
     const onClick = (event: MouseEvent) => {
       if (
         event.defaultPrevented ||
@@ -165,6 +178,14 @@ export default function CinematicEffects() {
     }
 
     document.addEventListener('click', onClick, true)
+    if (debug) {
+      console.info(
+        '[Not4Normal animation debug] Major animation created: internal page transition.'
+      )
+      console.info(
+        '[Not4Normal animation debug] Major animation created: animated film-grain overlay.'
+      )
+    }
     return () => document.removeEventListener('click', onClick, true)
   }, [pathname, router])
 
