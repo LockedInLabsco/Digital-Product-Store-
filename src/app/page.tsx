@@ -12,6 +12,24 @@ export default async function Home() {
 
   return (
     <>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 9999,
+          minHeight: '100vh',
+          background: '#000',
+          color: '#fff',
+          border: '15px solid red',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 'clamp(40px, 10vw, 140px)',
+          fontWeight: 900,
+          textAlign: 'center',
+        }}
+      >
+        CORRECT HOMEPAGE FOUND
+      </div>
       <Navbar />
       <main className="cinematic-home">
         <section className="cinematic-hero" data-nav-theme="dark">
