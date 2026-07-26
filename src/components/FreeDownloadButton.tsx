@@ -68,14 +68,14 @@ export default function FreeDownloadButton({
   if (submitted && success) {
     return (
       <div
-        className="bg-green-50 border border-green-200 rounded-lg p-4"
+        className="border border-black bg-black p-5 text-white"
         role="status"
         aria-live="polite"
       >
-        <p className="text-sm font-semibold text-green-900">
+        <p className="button-label text-sm">
           Success — check your inbox
         </p>
-        <p className="text-sm text-green-800 mt-2">
+        <p className="mt-3 text-sm text-zinc-300">
           {productTitle} is on its way to {submittedEmail}. The download link
           will arrive by email.
         </p>
@@ -86,7 +86,7 @@ export default function FreeDownloadButton({
             setSubmittedEmail('')
             setError(null)
           }}
-          className="mt-3 text-sm font-semibold text-green-700 hover:text-green-900 underline"
+          className="mt-4 text-sm font-semibold text-white underline underline-offset-4"
         >
           Send to another email
         </button>
@@ -108,14 +108,14 @@ export default function FreeDownloadButton({
           aria-label={`Email address for ${productTitle}`}
           required
           disabled={loading}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+          className="w-full border border-black bg-white px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:bg-zinc-100 disabled:text-zinc-500"
         />
       </div>
 
       <Button
         type="submit"
         size="lg"
-        className="w-full bg-black text-white hover:bg-gray-900"
+        className="w-full"
         disabled={loading || !email.trim()}
       >
         {loading ? 'Sending...' : 'Get Free Guide'}
@@ -123,14 +123,14 @@ export default function FreeDownloadButton({
 
       {error && (
         <div
-          className="bg-red-50 border border-red-200 rounded-lg p-4"
+          className="border border-black bg-white p-4 text-black"
           role="alert"
           aria-live="assertive"
         >
-          <p className="text-sm font-semibold text-red-900 mb-2">
+          <p className="button-label mb-2 text-sm">
             We couldn&apos;t send your guide
           </p>
-          <p className="text-sm text-red-800">
+          <p className="text-sm text-zinc-700">
             {error}
           </p>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
 interface PreviewItem {
@@ -26,72 +26,39 @@ export default function ProductPreview({
   useEffect(() => {
     if (previews.length <= 1) return
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % previews.length)
+    const interval = window.setInterval(() => {
+      setCurrentIndex((previous) => (previous + 1) % previews.length)
     }, 3000)
 
-    return () => clearInterval(interval)
+    return () => window.clearInterval(interval)
   }, [previews.length])
 
   const currentPreview = previews[currentIndex]
 
   if (coverImageUrl && !imageError) {
     return (
-      <div
-        className="bg-gray-100 aspect-square rounded-t-lg overflow-hidden flex items-center justify-center"
-        data-reveal="image"
-      >
+      <div className="product-media" data-reveal="image">
         <Image
           src={coverImageUrl}
           alt={productTitle}
-          width={500}
-          height={500}
-          className="product-media-image w-full h-full object-cover"
+          width={800}
+          height={800}
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="product-media-image"
           onError={() => setImageError(true)}
-          priority
         />
-      </div>
-    )
-  }
-
-  if (!currentPreview) {
-    return (
-      <div
-        className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden"
-        data-reveal="fade"
-      >
-        <div className="text-5xl mb-3" aria-hidden="true">📄</div>
-        <h4 className="text-sm font-semibold text-center text-gray-700 px-4">
-          {productTitle}
-        </h4>
+        <div className="product-media-shade" aria-hidden="true" />
       </div>
     )
   }
 
   return (
-    <div
-      className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden transition-all duration-500"
-      data-reveal="fade"
-    >
-      <div className="text-5xl mb-3">{currentPreview.icon}</div>
-      <h4 className="text-sm font-semibold text-center text-gray-700 px-4">
-        {currentPreview.label}
-      </h4>
-      {previews.length > 1 && (
-        <div className="flex gap-1 mt-4">
-          {previews.map((_, index) => (
-            <div
-              key={index}
-              className={`h-1 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'w-4 bg-gray-400'
-                  : 'w-2 bg-gray-300'
-              }`}
-              aria-label={`Preview ${index + 1} of ${previews.length}`}
-            />
-          ))}
-        </div>
-      )}
+    <div className="product-media product-media-fallback" data-reveal="image">
+      <span className="product-media-watermark" aria-hidden="true">
+        N4N
+      </span>
+      <p>{currentPreview?.label || productTitle}</p>
+      <div className="product-media-shade" aria-hidden="true" />
     </div>
   )
 }

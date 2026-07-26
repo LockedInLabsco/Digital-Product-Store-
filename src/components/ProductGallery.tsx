@@ -24,16 +24,14 @@ export default function ProductGallery({
 
   if (!selectedImage) {
     return (
-      <div className="w-full">
-        <div className="bg-gray-100 border border-gray-200 rounded-lg aspect-square flex flex-col items-center justify-center p-8">
-          <div className="text-6xl mb-4" aria-hidden="true">📄</div>
-          <h3 className="text-2xl font-bold text-center mb-2">
-            Preview not available
-          </h3>
-          <p className="text-gray-600 text-center text-sm">
-            A preview for {productTitle} has not been added yet.
-          </p>
-        </div>
+      <div className="product-gallery-empty aspect-square" data-reveal="image">
+        <span className="display-type text-7xl" aria-hidden="true">
+          N4N
+        </span>
+        <h3 className="display-type mt-4 text-3xl">Preview not available</h3>
+        <p className="mt-3 max-w-sm text-center text-sm text-zinc-500">
+          A preview for {productTitle} has not been added yet.
+        </p>
       </div>
     )
   }
@@ -42,49 +40,51 @@ export default function ProductGallery({
 
   return (
     <div className="w-full">
-      {/* Main Image */}
-      <div
-        className="bg-gray-100 border border-gray-200 rounded-lg overflow-hidden mb-6 aspect-square flex items-center justify-center"
-        data-reveal="image"
-      >
+      <div className="product-gallery-main mb-6 aspect-square" data-reveal="image">
         {isImageFile ? (
           <Image
             key={selectedImage.id}
             src={selectedImage.src}
             alt={selectedImage.alt}
-            width={500}
-            height={500}
-            className="gallery-image-swap w-full h-full object-cover"
+            width={1000}
+            height={1000}
+            sizes="(max-width: 1024px) 100vw, 66vw"
+            className="gallery-image-swap h-full w-full object-cover grayscale"
             priority
           />
         ) : (
           <div
             key={selectedImage.id}
-            className="gallery-image-swap w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center p-8"
+            className="gallery-image-swap flex h-full w-full flex-col items-center justify-center bg-zinc-900 p-8 text-white"
           >
-            <div className="text-6xl mb-4">📄</div>
-            <h3 className="text-2xl font-bold text-center mb-2">
+            <span className="display-type text-7xl" aria-hidden="true">
+              N4N
+            </span>
+            <h3 className="display-type mt-4 text-3xl text-center">
               {selectedImage.label}
             </h3>
-            <p className="text-gray-600 text-center text-sm">
+            <p className="mt-3 max-w-md text-center text-sm text-zinc-400">
               {selectedImage.alt}
             </p>
           </div>
         )}
       </div>
 
-      {/* Thumbnail Images */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {images.map((image, index) => {
-          const isThumbnailImage = image.src.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+          const isThumbnailImage = image.src.match(
+            /\.(jpg|jpeg|png|gif|webp)$/i
+          )
+
           return (
             <button
               key={image.id}
+              type="button"
               onClick={() => setSelectedImageIndex(index)}
-              className={`motion-thumbnail aspect-square rounded-lg border-2 overflow-hidden flex flex-col items-center justify-center text-center p-2 ${
+              className={`motion-thumbnail flex aspect-square flex-col items-center justify-center overflow-hidden border text-center ${
                 selectedImageIndex === index
-                  ? 'border-black bg-gray-50'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                  ? 'border-black bg-black text-white'
+                  : 'border-zinc-300 bg-white hover:border-black'
               }`}
               aria-label={`View ${image.label}`}
             >
@@ -92,14 +92,16 @@ export default function ProductGallery({
                 <Image
                   src={image.src}
                   alt={image.label}
-                  width={100}
-                  height={100}
-                  className="w-full h-full object-cover"
+                  width={160}
+                  height={160}
+                  className="h-full w-full object-cover grayscale"
                 />
               ) : (
                 <>
-                  <div className="text-3xl mb-1">📄</div>
-                  <p className="text-xs font-semibold line-clamp-2 leading-tight">
+                  <span className="display-type text-2xl" aria-hidden="true">
+                    N4N
+                  </span>
+                  <p className="mt-1 line-clamp-2 px-2 text-xs font-semibold">
                     {image.label}
                   </p>
                 </>

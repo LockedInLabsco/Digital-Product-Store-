@@ -41,21 +41,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return (
       <>
         <Navbar />
-        <main>
+        <main className="product-missing-page" data-nav-theme="dark">
           <Container>
-            <div className="py-20 text-center">
-              <h1 className="text-4xl font-bold mb-4">
-                {error ? 'Product Temporarily Unavailable' : 'Product Not Found'}
-              </h1>
-              <p className="text-gray-600 mb-8">
-                {error
-                  ? 'We could not load this product. Please try again in a little while.'
-                  : 'The product you\u2019re looking for doesn\u2019t exist or is no longer available.'}
-              </p>
-              <Link href="/products">
-                <Button>Back to Products</Button>
-              </Link>
-            </div>
+            <p className="eyebrow page-intro">
+              {error ? 'Connection interrupted' : '404 / Product'}
+            </p>
+            <h1 className="display-type page-intro page-intro-delay-1">
+              {error ? 'Temporarily unavailable.' : 'This tool is not here.'}
+            </h1>
+            <p className="page-intro page-intro-delay-2">
+              {error
+                ? 'We could not load this product. Please try again in a little while.'
+                : 'The product does not exist or is no longer active.'}
+            </p>
+            <Link
+              href="/products"
+              className="cinematic-cta cinematic-cta-light page-intro page-intro-delay-3"
+              data-cursor="ENTER"
+            >
+              Back to products
+              <span aria-hidden="true">↗</span>
+            </Link>
           </Container>
         </main>
         <Footer />
@@ -68,266 +74,209 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {
           id: 'cover',
           src: product.coverImageUrl,
-          label: 'Product Cover',
+          label: 'Product cover',
           alt: product.title,
         },
         ...product.galleryImages,
       ]
     : product.galleryImages
 
+  const productFeatures =
+    product.features.length > 0
+      ? product.features
+      : [product.shortDescription]
+
+  const PurchaseAction = ({ fullWidth = false }: { fullWidth?: boolean }) =>
+    product.price === 0 ? (
+      <FreeDownloadButton
+        productSlug={product.slug}
+        productTitle={product.title}
+      />
+    ) : product.paddlePriceId ? (
+      <PaidProductButton
+        productId={product.id}
+        productSlug={product.slug}
+        productTitle={product.title}
+        paddleProductId={product.paddleProductId}
+        paddlePriceId={product.paddlePriceId}
+        price={product.price}
+        variant="primary"
+        size="lg"
+        fullWidth={fullWidth}
+        buttonText={`Get Instant Access — ${formatPrice(product.price)}`}
+      />
+    ) : (
+      <div>
+        <Button
+          size="lg"
+          className={fullWidth ? 'w-full cursor-not-allowed opacity-50' : 'cursor-not-allowed opacity-50'}
+          disabled
+        >
+          Checkout not configured
+        </Button>
+        <p className="mt-3 text-sm text-red-700">
+          This product is missing its Paddle price ID.
+        </p>
+      </div>
+    )
+
   return (
     <>
       <Navbar />
-      <main>
-        {/* Hero Section */}
-        <section className="py-12 sm:py-16">
+      <main className="product-detail-page">
+        <section className="product-detail-hero" data-nav-theme="dark">
           <Container>
             <Link
               href="/products"
-              className="page-intro text-gray-600 hover:text-black mb-6 sm:mb-8 inline-block text-sm transition-colors"
+              className="product-back-link page-intro"
             >
-              ← Back to Products
+              <span aria-hidden="true">←</span>
+              All products
             </Link>
-            <div className="max-w-3xl">
-              <h1 className="page-intro page-intro-delay-1 text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
-                {product.title}
-              </h1>
-              <p className="page-intro page-intro-delay-2 text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
-                {product.shortDescription}
-              </p>
-              <div className="page-intro page-intro-delay-3 flex items-center gap-4 sm:gap-6">
-                <span className="text-4xl sm:text-5xl font-bold">{formatPrice(product.price)}</span>
-                {product.price > 0 && (
-                  <span className="text-gray-600 text-sm sm:text-base">One-time payment</span>
-                )}
+
+            <div className="product-detail-hero-grid">
+              <div>
+                <p className="eyebrow page-intro page-intro-delay-1">
+                  Digital tool / {product.price === 0 ? 'Free' : 'Paid'}
+                </p>
+                <h1 className="product-detail-title">
+                  <span className="hero-title-mask">
+                    <span className="hero-title-line hero-title-line-1">
+                      {product.title}
+                    </span>
+                  </span>
+                </h1>
+              </div>
+              <div className="product-detail-intro page-intro page-intro-delay-3">
+                <p>{product.shortDescription}</p>
+                <strong>{formatPrice(product.price)}</strong>
               </div>
             </div>
           </Container>
         </section>
 
-        {/* Product Gallery & Sidebar */}
-        <section className="py-16 sm:py-20 border-t border-gray-200">
+        <section className="product-detail-stage" data-nav-theme="light">
           <Container>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Gallery */}
-              <div className="lg:col-span-2">
-                <h2
-                  className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
-                  data-reveal="up"
-                >
-                  What&apos;s Inside
-                </h2>
+            <div className="product-detail-stage-grid">
+              <div>
+                <div className="product-section-label" data-reveal="left">
+                  <span>01</span>
+                  <p>What&apos;s inside</p>
+                </div>
                 <ProductGallery
                   images={galleryImages}
                   productTitle={product.title}
                 />
               </div>
 
-              {/* Sidebar */}
-              <div
-                className="lg:col-span-1"
+              <aside className="purchase-panel" data-reveal="up">
+                <p className="eyebrow">
+                  {product.price === 0 ? 'Free release' : 'One-time purchase'}
+                </p>
+                <h2>
+                  {product.price === 0
+                    ? 'Get the guide.'
+                    : 'Get instant access.'}
+                </h2>
+                <p className="purchase-panel-copy">
+                  Enter your details and the next step lands directly in your
+                  inbox.
+                </p>
+                <PurchaseAction fullWidth />
+                <div className="purchase-assurances">
+                  <p>
+                    <span>01</span>
+                    Secure delivery
+                  </p>
+                  <p>
+                    <span>02</span>
+                    No recurring charge
+                  </p>
+                  <p>
+                    <span>03</span>
+                    Keep it forever
+                  </p>
+                </div>
+              </aside>
+            </div>
+          </Container>
+        </section>
+
+        <section className="product-story" data-nav-theme="dark">
+          <Container>
+            <div className="product-section-label light" data-reveal="left">
+              <span>02</span>
+              <p>The purpose</p>
+            </div>
+            <div className="product-story-grid">
+              <h2 data-reveal="mask">Built to be used.</h2>
+              <p data-reveal="up">{product.description}</p>
+            </div>
+          </Container>
+        </section>
+
+        <section className="product-inclusions" data-nav-theme="light">
+          <Container>
+            <div className="product-section-label" data-reveal="left">
+              <span>03</span>
+              <p>What you get</p>
+            </div>
+            <div className="product-inclusions-grid">
+              {productFeatures.map((feature, index) => (
+                <article
+                  key={index}
+                  className="product-inclusion"
+                  data-reveal="up"
+                  data-reveal-delay={String(index % 3)}
+                >
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <p>{feature}</p>
+                </article>
+              ))}
+              <article
+                className="product-inclusion"
                 data-reveal="up"
                 data-reveal-delay="1"
               >
-                <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
-                  <h3 className="text-2xl font-bold mb-6">
-                    {product.price === 0 ? 'Get Free Guide' : 'Get Instant Access'}
-                  </h3>
-
-                  <div className="mb-8">
-                    {product.price === 0 ? (
-                      <FreeDownloadButton
-                        productSlug={product.slug}
-                        productTitle={product.title}
-                      />
-                    ) : product.paddlePriceId ? (
-                      <PaidProductButton
-                        productId={product.id}
-                        productSlug={product.slug}
-                        productTitle={product.title}
-                        paddleProductId={product.paddleProductId}
-                        paddlePriceId={product.paddlePriceId}
-                        price={product.price}
-                        variant="primary"
-                        size="lg"
-                        fullWidth={true}
-                        buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
-                      />
-                    ) : (
-                      <div>
-                        <Button size="lg" className="w-full bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
-                          Checkout Not Configured
-                        </Button>
-                        <p className="mt-3 text-sm text-red-600">
-                          This product is missing its Paddle price ID.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-3 mb-8 text-sm">
-                    <p className="flex items-start gap-3">
-                      <span className="text-xl mt-0.5">✓</span>
-                      <span className="text-gray-700">Instant download</span>
-                    </p>
-                    <p className="flex items-start gap-3">
-                      <span className="text-xl mt-0.5">✓</span>
-                      <span className="text-gray-700">No recurring charges</span>
-                    </p>
-                    <p className="flex items-start gap-3">
-                      <span className="text-xl mt-0.5">✓</span>
-                      <span className="text-gray-700">Use forever</span>
-                    </p>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-8">
-                    <p className="text-xs text-gray-600 mb-4 font-semibold">
-                      SATISFACTION GUARANTEED
-                    </p>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      30-day money-back guarantee. If this doesn&apos;t help, we&apos;ll refund you.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* What You Get */}
-        <section className="py-16 sm:py-20 border-t border-gray-200">
-          <Container>
-            <h2
-              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12 max-w-2xl"
-              data-reveal="up"
-            >
-              What You&apos;re Getting
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              {(product.features.length > 0
-                ? product.features
-                : [product.shortDescription]
-              ).map((feature, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg p-6 sm:p-8 hover:border-gray-300 transition-colors"
-                  data-reveal="up"
-                >
-                  <div className="flex gap-4">
-                    <div className="text-3xl">📄</div>
-                    <div>
-                      <p className="text-gray-800 leading-relaxed">{feature}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* About This Product */}
-        <section className="py-16 sm:py-20 border-t border-gray-200">
-          <Container>
-            <div className="max-w-3xl" data-reveal="up">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-                About This Product
-              </h2>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-          </Container>
-        </section>
-
-        {/* Product Details */}
-        <section className="py-16 sm:py-20 border-t border-gray-200 bg-gray-50">
-          <Container>
-            <h2
-              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
-              data-reveal="up"
-            >
-              Product Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div data-reveal="up">
-                <h3 className="text-xl font-bold mb-3">What You&apos;ll Get</h3>
-                <p className="text-gray-700">
-                  {product.shortDescription}
-                </p>
-              </div>
-              <div data-reveal="up" data-reveal-delay="1">
-                <h3 className="text-xl font-bold mb-3">Delivery</h3>
-                <p className="text-gray-700">
+                <span>{String(productFeatures.length + 1).padStart(2, '0')}</span>
+                <p>
                   {product.price === 0
-                    ? 'Enter your email to receive the download link.'
-                    : 'Complete checkout to receive access to your download.'}
+                    ? 'Delivered directly to your email.'
+                    : 'Delivered securely after checkout.'}
                 </p>
+              </article>
+            </div>
+          </Container>
+        </section>
+
+        <section className="product-faq" data-nav-theme="dark">
+          <Container>
+            <div className="product-section-label light" data-reveal="left">
+              <span>04</span>
+              <p>Before you start</p>
+            </div>
+            <div className="product-faq-grid">
+              <h2 data-reveal="mask">Questions.</h2>
+              <div data-reveal="up">
+                <FAQAccordion items={faqItems} />
               </div>
             </div>
           </Container>
         </section>
 
-        {/* FAQ */}
-        <section className="py-16 sm:py-20 border-t border-gray-200">
+        <section className="product-final-cta" data-nav-theme="light">
           <Container>
-            <h2
-              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
-              data-reveal="up"
-            >
-              Common Questions
+            <p className="eyebrow" data-reveal="fade">
+              The tool is ready.
+            </p>
+            <h2 data-reveal="mask">
+              {product.price === 0
+                ? 'Start without paying.'
+                : 'Stop waiting. Start using.'}
             </h2>
-            <div className="max-w-2xl" data-reveal="up" data-reveal-delay="1">
-              <FAQAccordion items={faqItems} />
-            </div>
-          </Container>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-16 sm:py-20 border-t border-gray-200">
-          <Container>
-            <div className="text-center max-w-2xl mx-auto" data-reveal="up">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-                {product.price === 0
-                  ? `Get ${product.title} free`
-                  : `Get ${product.title}`}
-              </h2>
-              <p className="text-lg text-gray-700 mb-8">
-                {product.price === 0
-                  ? 'Enter your email to receive the download link.'
-                  : `Get instant access for ${formatPrice(product.price)}.`}
-              </p>
-              {product.price === 0 ? (
-                <FreeDownloadButton
-                  productSlug={product.slug}
-                  productTitle={product.title}
-                />
-              ) : product.paddlePriceId ? (
-                <PaidProductButton
-                  productId={product.id}
-                  productSlug={product.slug}
-                  productTitle={product.title}
-                  paddleProductId={product.paddleProductId}
-                  paddlePriceId={product.paddlePriceId}
-                  price={product.price}
-                  variant="primary"
-                  size="lg"
-                  buttonText={`Get Instant Access - ${formatPrice(product.price)}`}
-                />
-              ) : (
-                <div>
-                  <Button size="lg" className="bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
-                    Checkout Not Configured
-                  </Button>
-                  <p className="mt-3 text-sm text-red-600">
-                    This product is missing its Paddle price ID.
-                  </p>
-                </div>
-              )}
-              {product.price > 0 && (
-                <p className="text-sm text-gray-600 mt-6">
-                  30-day money-back guarantee. You&apos;ve got nothing to lose.
-                </p>
-              )}
+            <p data-reveal="up">{product.shortDescription}</p>
+            <div className="product-final-action" data-reveal="up">
+              <PurchaseAction />
             </div>
           </Container>
         </section>

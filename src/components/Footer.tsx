@@ -1,62 +1,46 @@
 import Link from 'next/link'
 import Container from './Container'
+import BrandMark from './BrandMark'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-white mt-20">
-      <Container className="py-12">
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12"
-          data-reveal="up"
-        >
-          {/* Brand */}
+    <footer className="cinematic-footer" data-nav-theme="dark">
+      <div className="footer-watermark" aria-hidden="true">
+        NOT4NORMAL
+      </div>
+      <Container className="relative z-10 py-16 sm:py-24">
+        <div className="footer-grid" data-reveal="up">
           <div>
-            <h3 className="text-lg font-bold mb-4">Simple Tools</h3>
-            <p className="text-gray-700 text-sm leading-relaxed">
-              Simple tools for better habits. Buy once, use forever.
-            </p>
+            <Link href="/" className="inline-block" data-cursor="ENTER">
+              <BrandMark className="footer-brand" />
+            </Link>
+            <p className="footer-manifesto">Create your own path.</p>
           </div>
 
-          {/* Links */}
-          <div className="flex flex-wrap gap-6 sm:gap-8">
-            <Link
-              href="/products"
-              className="text-gray-700 hover:text-black transition-colors text-sm"
-            >
-              Product
-            </Link>
-            <Link
-              href="/"
-              className="text-gray-700 hover:text-black transition-colors text-sm"
-            >
-              Home
-            </Link>
-            <Link
-              href="/terms"
-              className="text-gray-700 hover:text-black transition-colors text-sm"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-gray-700 hover:text-black transition-colors text-sm"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/refunds"
-              className="text-gray-700 hover:text-black transition-colors text-sm"
-            >
-              Refunds
-            </Link>
+          <div className="footer-links">
+            <div>
+              <p className="eyebrow mb-5">Navigate</p>
+              <Link href="/products">Products</Link>
+              <Link href="/#manifesto">Manifesto</Link>
+              <Link href="mailto:hello@not4normal.store">Email</Link>
+            </div>
+            <div>
+              <p className="eyebrow mb-5">Legal</p>
+              <Link href="/terms">Terms</Link>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/refunds">Refunds</Link>
+            </div>
+            <div>
+              <p className="eyebrow mb-5">Social</p>
+              <span>Instagram — Soon</span>
+              <span>YouTube — Soon</span>
+            </div>
           </div>
         </div>
 
-        <div
-          className="border-t border-gray-200 pt-8 text-center text-gray-600 text-sm"
-          data-reveal="fade"
-        >
-          <p>&copy; 2024 Simple Tools. Made with care.</p>
+        <div className="footer-bottom" data-reveal="fade">
+          <p>© {new Date().getFullYear()} Not4Normal</p>
+          <p>Built for the ones who refuse the default.</p>
         </div>
       </Container>
     </footer>

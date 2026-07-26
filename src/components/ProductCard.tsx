@@ -1,8 +1,10 @@
+'use client'
+
+import { useRef } from 'react'
 import Link from 'next/link'
-import Button from './Button'
 import ProductPreview from './ProductPreview'
 import { PreviewItem } from '@/src/types/product'
-import { formatPrice, getPriceLabel } from '@/src/lib/utils/format'
+import { formatPrice } from '@/src/lib/utils/format'
 
 interface ProductCardProps {
   title: string
@@ -12,6 +14,7 @@ interface ProductCardProps {
   previews: PreviewItem[]
   features?: string[]
   coverImageUrl?: string
+  revealDelay?: number
 }
 
 export default function ProductCard({
@@ -20,51 +23,59 @@ export default function ProductCard({
   price,
   slug,
   previews,
-  features = [],
   coverImageUrl,
+  revealDelay = 0,
 }: ProductCardProps) {
+  const cardRef = useRef<HTMLAnchorElement>(null)
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLAnchorElement>) => {
+    if (event.pointerType !== 'mouse' || !cardRef.current) return
+
+    const rect = cardRef.current.getBoundingClientRect()
+    const x = (event.clientX - rect.left) / rect.width - 0.5
+    const y = (event.clientY - rect.top) / rect.height - 0.5
+
+    cardRef.current.style.setProperty('--card-x', `${x * 8}px`)
+    cardRef.current.style.setProperty('--card-y', `${y * 8}px`)
+  }
+
+  const resetPointer = () => {
+    cardRef.current?.style.setProperty('--card-x', '0px')
+    cardRef.current?.style.setProperty('--card-y', '0px')
+  }
+
   return (
     <Link
+      ref={cardRef}
       href={`/products/${slug}`}
-      className="block h-full product-card rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+      className="product-card block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
       data-reveal="up"
+      data-reveal-delay={String(Math.min(revealDelay, 3))}
+      data-cursor="VIEW"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetPointer}
     >
-      <div className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col bg-white">
-        {/* Preview Image Area */}
-        <ProductPreview previews={previews} productTitle={title} coverImageUrl={coverImageUrl} />
+      <article className="product-card-surface h-full">
+        <ProductPreview
+          previews={previews}
+          productTitle={title}
+          coverImageUrl={coverImageUrl}
+        />
 
-        {/* Content */}
-        <div className="p-6 flex flex-col flex-1">
-          <div className="flex-1 mb-6">
-            <h3 className="text-xl font-bold mb-2 line-clamp-2">{title}</h3>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-              {description}
-            </p>
+        <div className="product-card-copy">
+          <p className="eyebrow">Digital tool</p>
+          <h3 className="product-card-title">{title}</h3>
+          <p className="product-card-description">{description}</p>
 
-            {/* Features List */}
-            {features.length > 0 && (
-              <ul className="space-y-1 mb-4">
-                {features.slice(0, 2).map((feature, index) => (
-                  <li
-                    key={index}
-                    className="text-gray-600 text-xs flex items-start gap-2"
-                  >
-                    <span className="text-gray-400 flex-shrink-0">→</span>
-                    <span className="line-clamp-1">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold">{formatPrice(price)}</span>
-            <Button variant="outline" size="sm">
-              {price === 0 ? 'Get Free Guide' : 'Get Access'}
-            </Button>
+          <div className="product-card-footer">
+            <span className="product-card-price">{formatPrice(price)}</span>
+            <span className="product-card-link">
+              {price === 0 ? 'Get the guide' : 'View product'}
+              <span aria-hidden="true">↗</span>
+            </span>
           </div>
         </div>
-      </div>
+      </article>
     </Link>
   )
 }

@@ -2,7 +2,7 @@ import React from 'react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary' | 'outline' | 'inverse'
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -14,12 +14,13 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'motion-button font-semibold rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2'
+    'motion-button button-label rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2'
 
   const variantClasses = {
-    primary: 'bg-black text-white hover:bg-gray-800',
-    secondary: 'bg-gray-200 text-black hover:bg-gray-300',
-    outline: 'border border-black text-black hover:bg-black hover:text-white',
+    primary: 'bg-black text-white hover:bg-zinc-800',
+    secondary: 'bg-zinc-200 text-black hover:bg-white',
+    outline: 'border border-current bg-transparent hover:bg-white hover:text-black',
+    inverse: 'bg-white text-black hover:bg-zinc-200',
   }
 
   const sizeClasses = {
@@ -30,6 +31,7 @@ export default function Button({
 
   return (
     <button
+      data-cursor={variant === 'primary' || variant === 'inverse' ? 'ENTER' : undefined}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className || ''}`}
       {...props}
     >

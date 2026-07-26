@@ -15,42 +15,43 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <div className="space-y-3">
-      {items.map((item, index) => (
-        <button
-          key={index}
-          onClick={() => setOpenIndex(openIndex === index ? null : index)}
-          className="w-full text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-          aria-expanded={openIndex === index}
-        >
-          <div className="faq-panel border border-gray-200 rounded-lg p-4 hover:border-gray-300">
-            <div className="flex justify-between items-start gap-4">
-              <h4 className="font-bold text-gray-900 text-sm sm:text-base">
-                {item.question}
-              </h4>
-              <span
-                className={`faq-icon text-lg font-bold text-gray-400 flex-shrink-0 ${
-                  openIndex === index ? 'is-open' : ''
-                }`}
-                aria-hidden="true"
-              >
-                {openIndex === index ? '−' : '+'}
-              </span>
-            </div>
-            <div
-              className={`faq-answer ${
-                openIndex === index ? 'is-open' : ''
-              }`}
-            >
-              <div className="overflow-hidden">
-                <p className="text-gray-700 text-sm sm:text-base mt-4 leading-relaxed">
-                  {item.answer}
-                </p>
+    <div className="faq-list">
+      {items.map((item, index) => {
+        const isOpen = openIndex === index
+
+        return (
+          <button
+            key={index}
+            type="button"
+            onClick={() => setOpenIndex(isOpen ? null : index)}
+            className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2"
+            aria-expanded={isOpen}
+          >
+            <div className="faq-panel">
+              <div className="flex items-start justify-between gap-4">
+                <h4 className="text-base font-semibold sm:text-lg">
+                  {item.question}
+                </h4>
+                <span
+                  className={`faq-icon flex-shrink-0 text-xl ${
+                    isOpen ? 'is-open' : ''
+                  }`}
+                  aria-hidden="true"
+                >
+                  {isOpen ? '−' : '+'}
+                </span>
+              </div>
+              <div className={`faq-answer ${isOpen ? 'is-open' : ''}`}>
+                <div className="overflow-hidden">
+                  <p className="mt-5 max-w-2xl text-sm leading-relaxed opacity-70 sm:text-base">
+                    {item.answer}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </button>
-      ))}
+          </button>
+        )
+      })}
     </div>
   )
 }
