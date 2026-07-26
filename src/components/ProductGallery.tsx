@@ -22,23 +22,46 @@ export default function ProductGallery({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const selectedImage = images[selectedImageIndex]
 
+  if (!selectedImage) {
+    return (
+      <div className="w-full">
+        <div className="bg-gray-100 border border-gray-200 rounded-lg aspect-square flex flex-col items-center justify-center p-8">
+          <div className="text-6xl mb-4" aria-hidden="true">📄</div>
+          <h3 className="text-2xl font-bold text-center mb-2">
+            Preview not available
+          </h3>
+          <p className="text-gray-600 text-center text-sm">
+            A preview for {productTitle} has not been added yet.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const isImageFile = selectedImage.src.match(/\.(jpg|jpeg|png|gif|webp)$/i)
 
   return (
     <div className="w-full">
       {/* Main Image */}
-      <div className="bg-gray-100 border border-gray-200 rounded-lg overflow-hidden mb-6 aspect-square flex items-center justify-center">
+      <div
+        className="bg-gray-100 border border-gray-200 rounded-lg overflow-hidden mb-6 aspect-square flex items-center justify-center"
+        data-reveal="image"
+      >
         {isImageFile ? (
           <Image
+            key={selectedImage.id}
             src={selectedImage.src}
             alt={selectedImage.alt}
             width={500}
             height={500}
-            className="w-full h-full object-cover"
+            className="gallery-image-swap w-full h-full object-cover"
             priority
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center p-8">
+          <div
+            key={selectedImage.id}
+            className="gallery-image-swap w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center p-8"
+          >
             <div className="text-6xl mb-4">📄</div>
             <h3 className="text-2xl font-bold text-center mb-2">
               {selectedImage.label}
@@ -58,7 +81,7 @@ export default function ProductGallery({
             <button
               key={image.id}
               onClick={() => setSelectedImageIndex(index)}
-              className={`aspect-square rounded-lg border-2 transition-all overflow-hidden flex flex-col items-center justify-center text-center p-2 ${
+              className={`motion-thumbnail aspect-square rounded-lg border-2 overflow-hidden flex flex-col items-center justify-center text-center p-2 ${
                 selectedImageIndex === index
                   ? 'border-black bg-gray-50'
                   : 'border-gray-200 hover:border-gray-300 bg-white'

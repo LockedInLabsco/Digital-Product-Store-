@@ -5,7 +5,7 @@ import ProductCard from '@/src/components/ProductCard'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
 
 export default async function ProductsPage() {
-  const products = await getActiveProducts()
+  const { products, error } = await getActiveProducts()
 
   return (
     <>
@@ -13,19 +13,33 @@ export default async function ProductsPage() {
       <main>
         <section className="py-20">
           <Container>
-            <h1 className="text-5xl sm:text-6xl font-bold mb-4">Our Tools</h1>
-            <p className="text-lg text-gray-700 mb-16 max-w-2xl">
+            <h1 className="page-intro text-5xl sm:text-6xl font-bold mb-4">
+              Our Tools
+            </h1>
+            <p className="page-intro page-intro-delay-1 text-lg text-gray-700 mb-16 max-w-2xl">
               Simple, practical guides to help you build better habits and stay
               focused on what matters.
             </p>
 
-            {products.length > 0 ? (
+            {error ? (
+              <div
+                className="border border-gray-200 rounded-lg p-8 sm:p-12 bg-white"
+                data-reveal="up"
+              >
+                <p className="text-lg font-semibold mb-2">
+                  Products are temporarily unavailable.
+                </p>
+                <p className="text-gray-600">
+                  Please try again in a little while.
+                </p>
+              </div>
+            ) : products.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}
                     title={product.title}
-                    description={product.description}
+                    description={product.shortDescription}
                     price={product.price}
                     slug={product.slug}
                     previews={product.previews}
@@ -35,7 +49,10 @@ export default async function ProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="border border-gray-200 rounded-lg p-8 sm:p-12 bg-white">
+              <div
+                className="border border-gray-200 rounded-lg p-8 sm:p-12 bg-white"
+                data-reveal="up"
+              >
                 <p className="text-lg font-semibold mb-2">No products available yet.</p>
                 <p className="text-gray-600">
                   Check back soon for new Not4Normal tools.

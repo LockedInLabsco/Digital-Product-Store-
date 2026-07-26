@@ -18,38 +18,24 @@ interface ProductPageProps {
 
 const faqItems = [
   {
-    question: 'What file formats do I get?',
+    question: 'How do I receive my download?',
     answer:
-      'You get everything as PDFs and printables. Download them to your computer, print if you want, and use them forever.',
-  },
-  {
-    question: 'How long does it take?',
-    answer:
-      'The 7-day reset plan takes about 10-15 minutes per day. The full guide can be read in under an hour.',
-  },
-  {
-    question: 'Will this actually work for me?',
-    answer: `This guide works if you&apos;re willing to start small and show up. It&apos;s not a magic solution, but a practical system that has helped many people restart their habits.`,
-  },
-  {
-    question: 'What if I don\'t like it?',
-    answer:
-      'We offer a 30-day money-back guarantee. No questions asked. If it doesn&apos;t help, you get your money back.',
-  },
-  {
-    question: 'Can I share this with friends?',
-    answer:
-      'The guide is for personal use. If your friends want to use it, they can buy their own copy for $9.',
+      'Free products are delivered by email. Paid products are delivered after checkout using the email provided during purchase.',
   },
   {
     question: 'Do I need an account?',
     answer:
-      'Nope. You buy it once, download it, and it&apos;s yours forever. No login, no subscription, no hassle.',
+      'No. You can download your product without creating a Not4Normal account.',
+  },
+  {
+    question: 'Can I share the files?',
+    answer:
+      'Digital products are licensed for personal use unless the product description says otherwise.',
   },
 ]
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getActiveProductBySlug(params.slug)
+  const { product, error } = await getActiveProductBySlug(params.slug)
 
   if (!product) {
     return (
@@ -58,9 +44,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <main>
           <Container>
             <div className="py-20 text-center">
-              <h1 className="text-4xl font-bold mb-4">Product Not Found</h1>
+              <h1 className="text-4xl font-bold mb-4">
+                {error ? 'Product Temporarily Unavailable' : 'Product Not Found'}
+              </h1>
               <p className="text-gray-600 mb-8">
-                The product you&apos;re looking for doesn&apos;t exist.
+                {error
+                  ? 'We could not load this product. Please try again in a little while.'
+                  : 'The product you\u2019re looking for doesn\u2019t exist or is no longer available.'}
               </p>
               <Link href="/products">
                 <Button>Back to Products</Button>
@@ -94,18 +84,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <Container>
             <Link
               href="/products"
-              className="text-gray-600 hover:text-black mb-6 sm:mb-8 inline-block text-sm"
+              className="page-intro text-gray-600 hover:text-black mb-6 sm:mb-8 inline-block text-sm transition-colors"
             >
               ← Back to Products
             </Link>
             <div className="max-w-3xl">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
+              <h1 className="page-intro page-intro-delay-1 text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
                 {product.title}
               </h1>
-              <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
-                {product.description}
+              <p className="page-intro page-intro-delay-2 text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
+                {product.shortDescription}
               </p>
-              <div className="flex items-center gap-4 sm:gap-6">
+              <div className="page-intro page-intro-delay-3 flex items-center gap-4 sm:gap-6">
                 <span className="text-4xl sm:text-5xl font-bold">{formatPrice(product.price)}</span>
                 {product.price > 0 && (
                   <span className="text-gray-600 text-sm sm:text-base">One-time payment</span>
@@ -121,7 +111,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               {/* Gallery */}
               <div className="lg:col-span-2">
-                <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12">
+                <h2
+                  className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
+                  data-reveal="up"
+                >
                   What&apos;s Inside
                 </h2>
                 <ProductGallery
@@ -131,7 +124,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1">
+              <div
+                className="lg:col-span-1"
+                data-reveal="up"
+                data-reveal-delay="1"
+              >
                 <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
                   <h3 className="text-2xl font-bold mb-6">
                     {product.price === 0 ? 'Get Free Guide' : 'Get Instant Access'}
@@ -181,10 +178,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <span className="text-xl mt-0.5">✓</span>
                       <span className="text-gray-700">Use forever</span>
                     </p>
-                    <p className="flex items-start gap-3">
-                      <span className="text-xl mt-0.5">✓</span>
-                      <span className="text-gray-700">{product.format}</span>
-                    </p>
                   </div>
 
                   <div className="border-t border-gray-200 pt-8">
@@ -204,14 +197,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* What You Get */}
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12 max-w-2xl">
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12 max-w-2xl"
+              data-reveal="up"
+            >
               What You&apos;re Getting
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              {product.features.map((feature, index) => (
+              {(product.features.length > 0
+                ? product.features
+                : [product.shortDescription]
+              ).map((feature, index) => (
                 <div
                   key={index}
                   className="border border-gray-200 rounded-lg p-6 sm:p-8 hover:border-gray-300 transition-colors"
+                  data-reveal="up"
                 >
                   <div className="flex gap-4">
                     <div className="text-3xl">📄</div>
@@ -225,85 +225,43 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Container>
         </section>
 
-        {/* Who This Is For */}
+        {/* About This Product */}
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
-            <div className="max-w-3xl">
+            <div className="max-w-3xl" data-reveal="up">
               <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-                Who This Is For
+                About This Product
               </h2>
-              <div className="space-y-4 text-lg text-gray-700">
-                <p>
-                  This guide is for anyone who has tried to build good habits and
-                  struggled. If you&apos;ve ever:
-                </p>
-                <ul className="space-y-3 ml-4">
-                  <li className="flex gap-3">
-                    <span>•</span>
-                    <span>Started strong but quit after a few weeks</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span>•</span>
-                    <span>Felt overwhelmed by complicated habit systems</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span>•</span>
-                    <span>Wanted to build habits but didn&apos;t know where to start</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span>•</span>
-                    <span>Struggled with consistency and motivation</span>
-                  </li>
-                </ul>
-                <p className="pt-2">
-                  Then this guide is for you. It&apos;s designed to be simple, doable, and
-                  actually helpful.
-                </p>
-              </div>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {product.description}
+              </p>
             </div>
           </Container>
         </section>
 
-        {/* How It Helps */}
+        {/* Product Details */}
         <section className="py-16 sm:py-20 border-t border-gray-200 bg-gray-50">
           <Container>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12">
-              How This Helps
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
+              data-reveal="up"
+            >
+              Product Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-bold mb-3">You&apos;ll Learn</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>Why most habits fail (and how to avoid it)</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>How to start small so you actually stick</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>The simple daily actions that build momentum</span>
-                  </li>
-                </ul>
+              <div data-reveal="up">
+                <h3 className="text-xl font-bold mb-3">What You&apos;ll Get</h3>
+                <p className="text-gray-700">
+                  {product.shortDescription}
+                </p>
               </div>
-              <div>
-                <h3 className="text-xl font-bold mb-3">You&apos;ll Get</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>A step-by-step 7-day plan to start</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>A printable tracker to stay accountable</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>→</span>
-                    <span>A simple daily routine you can use forever</span>
-                  </li>
-                </ul>
+              <div data-reveal="up" data-reveal-delay="1">
+                <h3 className="text-xl font-bold mb-3">Delivery</h3>
+                <p className="text-gray-700">
+                  {product.price === 0
+                    ? 'Enter your email to receive the download link.'
+                    : 'Complete checkout to receive access to your download.'}
+                </p>
               </div>
             </div>
           </Container>
@@ -312,10 +270,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* FAQ */}
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12">
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-8 sm:mb-12"
+              data-reveal="up"
+            >
               Common Questions
             </h2>
-            <div className="max-w-2xl">
+            <div className="max-w-2xl" data-reveal="up" data-reveal-delay="1">
               <FAQAccordion items={faqItems} />
             </div>
           </Container>
@@ -324,14 +285,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* Final CTA */}
         <section className="py-16 sm:py-20 border-t border-gray-200">
           <Container>
-            <div className="text-center max-w-2xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto" data-reveal="up">
               <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-                {product.price === 0 ? 'Get your free guide' : 'Ready to reset?'}
+                {product.price === 0
+                  ? `Get ${product.title} free`
+                  : `Get ${product.title}`}
               </h2>
               <p className="text-lg text-gray-700 mb-8">
                 {product.price === 0
-                  ? 'Your habits can be simple. Get the free guide today.'
-                  : `Your habits can be simple. Start your reset today—just ${formatPrice(product.price)}.`}
+                  ? 'Enter your email to receive the download link.'
+                  : `Get instant access for ${formatPrice(product.price)}.`}
               </p>
               {product.price === 0 ? (
                 <FreeDownloadButton

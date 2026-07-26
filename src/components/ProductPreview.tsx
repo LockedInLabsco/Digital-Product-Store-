@@ -37,13 +37,16 @@ export default function ProductPreview({
 
   if (coverImageUrl && !imageError) {
     return (
-      <div className="bg-gray-100 aspect-square rounded-t-lg overflow-hidden flex items-center justify-center">
+      <div
+        className="bg-gray-100 aspect-square rounded-t-lg overflow-hidden flex items-center justify-center"
+        data-reveal="image"
+      >
         <Image
           src={coverImageUrl}
           alt={productTitle}
           width={500}
           height={500}
-          className="w-full h-full object-cover"
+          className="product-media-image w-full h-full object-cover"
           onError={() => setImageError(true)}
           priority
         />
@@ -51,8 +54,25 @@ export default function ProductPreview({
     )
   }
 
+  if (!currentPreview) {
+    return (
+      <div
+        className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden"
+        data-reveal="fade"
+      >
+        <div className="text-5xl mb-3" aria-hidden="true">📄</div>
+        <h4 className="text-sm font-semibold text-center text-gray-700 px-4">
+          {productTitle}
+        </h4>
+      </div>
+    )
+  }
+
   return (
-    <div className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden transition-all duration-500">
+    <div
+      className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-square flex flex-col items-center justify-center rounded-t-lg overflow-hidden transition-all duration-500"
+      data-reveal="fade"
+    >
       <div className="text-5xl mb-3">{currentPreview.icon}</div>
       <h4 className="text-sm font-semibold text-center text-gray-700 px-4">
         {currentPreview.label}

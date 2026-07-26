@@ -72,9 +72,15 @@ CREATE INDEX idx_products_is_active ON products(is_active);
 
 3. Click "Run" to create the table
 
-## Step 5: Insert Your First Product
+## Step 5: Insert Your First Real Product
 
-Run this SQL to insert the MVP product:
+For the first free guide:
+
+1. Upload `not4normal-free-guide.pdf` to the private `products` bucket at
+   `free/not4normal-free-guide.pdf`.
+2. Upload `not4normal-free-guide-cover.webp` to the public `Product-Covers`
+   bucket at `free/not4normal-free-guide-cover.webp`.
+3. Add this row only after both files are uploaded:
 
 ```sql
 INSERT INTO products (
@@ -84,14 +90,22 @@ INSERT INTO products (
   description,
   price,
   currency,
+  cover_image_url,
+  file_path,
+  paddle_product_id,
+  paddle_price_id,
   is_active
 ) VALUES (
-  'The Simple Habit Reset',
-  'simple-habit-reset',
-  'A tiny beginner-friendly guide to help you restart your habits one simple step at a time',
-  'Most people fail at building habits because they try to change everything at once. This guide helps you restart with a different approach—one that is so simple, anyone can do it. No motivation hacks. No complicated systems. Just the essentials.',
-  9,
+  'Not4Normal Free Guide',
+  'not4normal-free-guide',
+  'A practical free guide from Not4Normal, delivered straight to your inbox.',
+  'A straightforward digital guide with clear, practical ideas you can use at your own pace. Enter your email to receive the PDF download link.',
+  0,
   'USD',
+  'https://qiwmdgyrdhbnbxtzvfkj.supabase.co/storage/v1/object/public/Product-Covers/free/not4normal-free-guide-cover.webp',
+  'free/not4normal-free-guide.pdf',
+  NULL,
+  NULL,
   true
 );
 ```
@@ -120,12 +134,12 @@ CREATE POLICY "Allow public read access to active products"
    ```
 
 3. Check the console for any errors related to Supabase
-4. Visit your products page - it should still show the MVP product
+4. Visit your products page - only active Supabase products should appear
 
 ## Verifying It Works
 
 - If you see your products loading: ✅ Supabase is connected!
-- If you don't see any errors: ✅ Fallback is working!
+- If the query fails: the storefront shows an unavailable state, never demo products
 
 ## Next Steps
 

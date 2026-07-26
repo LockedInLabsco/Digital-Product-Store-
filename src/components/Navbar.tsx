@@ -3,7 +3,7 @@ import Container from './Container'
 
 export default function Navbar() {
   return (
-    <nav className="border-b border-gray-200 sticky top-0 bg-white z-50">
+    <nav className="site-nav border-b border-gray-200 sticky top-0 bg-white z-50">
       <Container className="py-6 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold hover:text-gray-600 transition-colors">
           Simple Tools

@@ -24,8 +24,12 @@ export default function ProductCard({
   coverImageUrl,
 }: ProductCardProps) {
   return (
-    <Link href={`/products/${slug}`}>
-      <div className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer h-full flex flex-col bg-white">
+    <Link
+      href={`/products/${slug}`}
+      className="block h-full product-card rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+      data-reveal="up"
+    >
+      <div className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col bg-white">
         {/* Preview Image Area */}
         <ProductPreview previews={previews} productTitle={title} coverImageUrl={coverImageUrl} />
 

@@ -5,7 +5,10 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white mt-20">
       <Container className="py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12"
+          data-reveal="up"
+        >
           {/* Brand */}
           <div>
             <h3 className="text-lg font-bold mb-4">Simple Tools</h3>
@@ -49,7 +52,10 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-200 pt-8 text-center text-gray-600 text-sm">
+        <div
+          className="border-t border-gray-200 pt-8 text-center text-gray-600 text-sm"
+          data-reveal="fade"
+        >
           <p>&copy; 2024 Simple Tools. Made with care.</p>
         </div>
       </Container>

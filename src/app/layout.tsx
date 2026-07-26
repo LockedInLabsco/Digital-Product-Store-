@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import MotionProvider from '@/src/components/MotionProvider'
 
 export const metadata: Metadata = {
   title: 'Simple Tools - Habits, Focus, Discipline',
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-white text-black antialiased">
+        <MotionProvider />
         {children}
       </body>
     </html>

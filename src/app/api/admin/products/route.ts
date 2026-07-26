@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/src/lib/supabase/client'
 import { supabaseServer } from '@/src/lib/supabase/server'
 
 // GET all products (for admin listing)

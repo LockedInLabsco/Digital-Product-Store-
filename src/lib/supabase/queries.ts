@@ -3,20 +3,26 @@ import { supabase } from './client'
 import { DatabaseProduct, Product } from '@/src/types/product'
 import { transformDatabaseProductToProduct } from './transforms'
 
-export async function getActiveProducts(): Promise<Product[]> {
+export interface ActiveProductsResult {
+  products: Product[]
+  error: boolean
+}
+
+export interface ActiveProductResult {
+  product?: Product
+  error: boolean
+}
+
+export async function getActiveProducts(): Promise<ActiveProductsResult> {
   noStore()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
   console.log('[Products] Fetching active Supabase products', {
-    supabaseUrlConfigured: Boolean(supabaseUrl),
-    supabaseAnonKeyConfigured: Boolean(supabaseAnonKey),
+    supabaseConfigured: Boolean(supabase),
   })
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabase) {
     console.error('[Products] Supabase public env vars are not configured')
-    return []
+    return { products: [], error: true }
   }
 
   try {
@@ -32,7 +38,7 @@ export async function getActiveProducts(): Promise<Product[]> {
         code: error.code,
         details: error.details,
       })
-      return []
+      return { products: [], error: true }
     }
 
     const products = (data || []).map((dbProduct: DatabaseProduct) =>
@@ -44,29 +50,26 @@ export async function getActiveProducts(): Promise<Product[]> {
       slugs: products.map((product) => product.slug),
     })
 
-    return products
+    return { products, error: false }
   } catch (error) {
     console.error('[Products] Exception fetching active products', error)
-    return []
+    return { products: [], error: true }
   }
 }
 
 export async function getActiveProductBySlug(
   slug: string
-): Promise<Product | undefined> {
+): Promise<ActiveProductResult> {
   noStore()
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   console.log('[Products] Fetching active Supabase product by slug', {
     slug,
-    supabaseConfigured: Boolean(supabaseUrl && supabaseAnonKey),
+    supabaseConfigured: Boolean(supabase),
   })
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabase) {
     console.error('[Products] Supabase public env vars are not configured')
-    return undefined
+    return { product: undefined, error: true }
   }
 
   try {
@@ -84,20 +87,23 @@ export async function getActiveProductBySlug(
         code: error.code,
         details: error.details,
       })
-      return undefined
+      return { product: undefined, error: true }
     }
 
     if (!data) {
       console.log('[Products] Active product not found', { slug })
-      return undefined
+      return { product: undefined, error: false }
     }
 
-    return transformDatabaseProductToProduct(data as DatabaseProduct)
+    return {
+      product: transformDatabaseProductToProduct(data as DatabaseProduct),
+      error: false,
+    }
   } catch (error) {
     console.error('[Products] Exception fetching product by slug', {
       slug,
       error,
     })
-    return undefined
+    return { product: undefined, error: true }
   }
 }

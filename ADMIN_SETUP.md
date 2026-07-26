@@ -120,7 +120,7 @@ Click "Delete" to remove a product. Confirmation required.
 8. Save
 
 **Example:**
-- Product: "The Deep Work Starter Pack"
+- Product: your real paid product
 - Price: $29.99
 - Paddle Price ID: `pri_01ARZ3NDEKTSV4RRFFQ69G5FAV`
 

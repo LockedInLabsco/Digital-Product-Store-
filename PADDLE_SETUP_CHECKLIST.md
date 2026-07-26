@@ -140,7 +140,7 @@ then Paddle needs a default checkout URL configured in the Paddle dashboard.
 
 **Example:**
 ```
-Product: "The Deep Work Starter Pack" (if paid)
+Product: your real paid product
 paddle_product_id = "pro_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 paddle_price_id = "pri_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 ```

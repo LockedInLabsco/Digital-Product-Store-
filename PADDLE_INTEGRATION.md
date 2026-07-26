@@ -141,7 +141,7 @@ In your Supabase database, for each paid product, update:
 
 Example:
 ```
-Product: "The Deep Work Starter Pack"
+Product: your real paid product
 paddle_product_id = "pro_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 paddle_price_id = "pri_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 ```

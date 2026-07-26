@@ -22,7 +22,6 @@ export interface Product {
   shortDescription: string
   price: number
   slug: string
-  format: string
   previews: PreviewItem[]
   galleryImages: GalleryImage[]
   features: string[]

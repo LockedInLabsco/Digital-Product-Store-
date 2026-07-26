@@ -106,7 +106,7 @@ export default function ProductForm({
               value={formData.title}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="e.g., The Deep Work Starter Pack"
+              placeholder="Product title"
               required
             />
           </div>
@@ -122,7 +122,7 @@ export default function ProductForm({
               value={formData.slug}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="e.g., the-deep-work-starter-pack"
+              placeholder="product-url-slug"
               required
             />
             <p className="text-xs text-gray-600 mt-1">URL-friendly name (lowercase, hyphens only)</p>
@@ -233,7 +233,7 @@ export default function ProductForm({
               value={formData.file_path}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="e.g., products/deep-work-pack.pdf"
+              placeholder="folder/product-file.pdf"
             />
             <p className="text-xs text-gray-600 mt-1">Path to the downloadable file in Supabase Storage</p>
           </div>

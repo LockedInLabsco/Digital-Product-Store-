@@ -13,7 +13,8 @@ export default function Button({
   className,
   ...props
 }: ButtonProps) {
-  const baseClasses = 'font-semibold rounded transition-colors duration-200'
+  const baseClasses =
+    'motion-button font-semibold rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2'
 
   const variantClasses = {
     primary: 'bg-black text-white hover:bg-gray-800',
