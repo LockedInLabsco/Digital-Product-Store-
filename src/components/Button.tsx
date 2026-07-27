@@ -31,7 +31,6 @@ export default function Button({
 
   return (
     <button
-      data-cursor={variant === 'primary' || variant === 'inverse' ? 'ENTER' : undefined}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className || ''}`}
       {...props}
     >

@@ -57,7 +57,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <Link
               href="/products"
               className="cinematic-cta cinematic-cta-light page-intro page-intro-delay-3"
-              data-cursor="ENTER"
             >
               Back to products
               <span aria-hidden="true">↗</span>

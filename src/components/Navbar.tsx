@@ -73,14 +73,13 @@ export default function Navbar() {
             href="/"
             className="nav-brand"
             aria-label="Not4Normal home"
-            data-cursor="ENTER"
             onClick={closeMenu}
           >
             <BrandMark />
           </Link>
 
           <div className="hidden items-center gap-8 md:flex">
-            <Link href="/products" className="nav-link" data-cursor="ENTER">
+            <Link href="/products" className="nav-link">
               Products
             </Link>
             <Link href="/#manifesto" className="nav-link">
@@ -89,7 +88,6 @@ export default function Navbar() {
             <Link
               href="/products"
               className="nav-cta"
-              data-cursor="ENTER"
             >
               Explore products
               <span aria-hidden="true">↗</span>
@@ -123,7 +121,7 @@ export default function Navbar() {
             <span>01</span>
             Home
           </Link>
-          <Link href="/products" onClick={closeMenu} data-cursor="VIEW">
+          <Link href="/products" onClick={closeMenu}>
             <span>02</span>
             Products
           </Link>

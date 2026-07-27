@@ -91,71 +91,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   text-transform: uppercase;
 }
 
-/* Global cinematic layers */
-
-.custom-cursor {
-  position: fixed;
-  z-index: 300;
-  top: 0;
-  left: 0;
-  display: grid;
-  width: 14px;
-  height: 14px;
-  place-items: center;
-  border: 1px solid var(--white);
-  border-radius: 50%;
-  pointer-events: none;
-  mix-blend-mode: difference;
-  translate: -50% -50%;
-  transition:
-    width 180ms var(--motion-ease),
-    height 180ms var(--motion-ease),
-    opacity 180ms ease,
-    background-color 180ms ease;
-  will-change: transform;
-}
-
-.custom-cursor span {
-  overflow: hidden;
-  max-width: 0;
-  color: var(--ink);
-  font-size: 0.55rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  opacity: 0;
-  text-transform: uppercase;
-  transition:
-    max-width 180ms ease,
-    opacity 180ms ease;
-}
-
-.custom-cursor.is-interactive {
-  width: 54px;
-  height: 54px;
-  background: var(--white);
-  mix-blend-mode: normal;
-}
-
-.custom-cursor.has-label span {
-  max-width: 42px;
-  opacity: 1;
-}
-
-.custom-cursor.is-pressed {
-  width: 42px;
-  height: 42px;
-}
-
-.custom-cursor.is-hidden {
-  opacity: 0;
-}
-
-.cursor-enabled,
-.cursor-enabled a,
-.cursor-enabled button,
-.cursor-enabled input {
-  cursor: none;
-}
+/* Global cinematic layer */
 
 .page-transition {
   position: fixed;
@@ -720,19 +656,15 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
 
 .manifesto-section {
   position: relative;
-  min-height: 170svh;
   overflow: clip;
   background: var(--paper);
   color: var(--ink);
+  padding: clamp(5rem, 8vw, 8rem) 0;
+  scroll-margin-top: 92px;
 }
 
 .manifesto-sticky {
-  position: sticky;
-  top: 0;
-  display: flex;
-  min-height: 100svh;
-  align-items: center;
-  padding: 6rem 0;
+  position: relative;
 }
 
 .manifesto-watermark {
@@ -750,8 +682,8 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 3rem;
-  margin-bottom: clamp(3rem, 8vh, 6rem);
+  gap: clamp(2rem, 6vw, 6rem);
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
 }
 
 .manifesto-note {
@@ -812,19 +744,19 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   overflow: hidden;
   background: var(--ink);
   color: var(--white);
-  padding: clamp(6rem, 12vw, 11rem) 0;
+  padding: clamp(4.5rem, 7vw, 7rem) 0;
 }
 
 .discipline-grid {
   display: grid;
   align-items: center;
-  gap: clamp(3rem, 7vw, 7rem);
-  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: clamp(2.5rem, 4vw, 4rem);
+  grid-template-columns: minmax(0, 1.12fr) minmax(20rem, 0.88fr);
 }
 
 .discipline-image-frame {
   position: relative;
-  min-height: min(78svh, 900px);
+  min-height: clamp(32rem, 52vw, 43rem);
 }
 
 .discipline-image {
@@ -852,13 +784,13 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
 }
 
 .discipline-title {
-  margin-top: 2.5rem;
-  font-size: clamp(3.8rem, 7.1vw, 7rem);
+  margin-top: 2rem;
+  font-size: clamp(3.6rem, 6.2vw, 6.3rem);
 }
 
 .discipline-body {
   max-width: 31rem;
-  margin-top: 2.5rem;
+  margin-top: 2rem;
   color: rgb(255 255 255 / 0.62);
   font-size: 1.05rem;
   line-height: 1.65;
@@ -870,15 +802,15 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   position: relative;
   background: var(--paper);
   color: var(--ink);
-  padding: clamp(6rem, 12vw, 10rem) 0;
+  padding: clamp(4.5rem, 7vw, 7rem) 0;
 }
 
 .section-heading {
   display: grid;
   align-items: end;
-  gap: 3rem;
+  gap: clamp(2rem, 4vw, 4rem);
   grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.5fr);
-  margin-bottom: clamp(4rem, 8vw, 7rem);
+  margin-bottom: clamp(2.5rem, 4vw, 4rem);
 }
 
 .section-display-title {
@@ -899,10 +831,30 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.product-showcase-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+.product-showcase-grid > :only-child .product-card-surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(20rem, 0.88fr);
+}
+
+.product-showcase-grid > :only-child .product-media {
+  aspect-ratio: 4 / 3;
+}
+
+.product-showcase-grid > :only-child .product-card-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(1.75rem, 4vw, 3.5rem);
+}
+
 .product-showcase-footer {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 3rem;
+  justify-content: flex-start;
+  margin-top: 1.75rem;
 }
 
 .cinematic-empty-state {
@@ -929,12 +881,20 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
 .closing-statement {
   background: var(--ink);
   color: var(--white);
-  padding: clamp(7rem, 14vw, 13rem) 0;
+  padding: clamp(5rem, 8vw, 8rem) 0;
 }
 
 .closing-title {
-  margin: 2rem 0 3.5rem;
-  font-size: clamp(4.3rem, 11vw, 11rem);
+  margin: 1.5rem 0 2rem;
+  font-size: clamp(4.3rem, 9.5vw, 9.5rem);
+}
+
+.closing-support {
+  max-width: 36rem;
+  margin-bottom: 2.25rem;
+  color: rgb(255 255 255 / 0.7);
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.55;
 }
 
 /* Product cards */
@@ -1689,10 +1649,6 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     object-position: 67% center;
   }
 
-  .manifesto-section {
-    min-height: 145svh;
-  }
-
   .discipline-grid,
   .product-detail-stage-grid,
   .product-story-grid,
@@ -1701,7 +1657,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   }
 
   .discipline-image-frame {
-    min-height: min(72svh, 760px);
+    min-height: clamp(34rem, 68vw, 42rem);
   }
 
   .discipline-copy {
@@ -1731,6 +1687,10 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     height: 74px;
   }
 
+  .manifesto-section {
+    scroll-margin-top: 74px;
+  }
+
   .hero-content {
     padding-top: 7rem;
     padding-bottom: 2rem;
@@ -1751,7 +1711,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   }
 
   .hero-title {
-    font-size: clamp(4.35rem, 21.5vw, 7rem);
+    font-size: clamp(3.85rem, 19vw, 6.5rem);
   }
 
   .hero-actions {
@@ -1773,8 +1733,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   }
 
   .manifesto-sticky {
-    align-items: flex-start;
-    padding-top: 7rem;
+    padding: 0;
   }
 
   .manifesto-header,
@@ -1803,7 +1762,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   }
 
   .discipline-section {
-    padding-top: 5rem;
+    padding: 4.5rem 0;
   }
 
   .discipline-grid {
@@ -1813,7 +1772,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
 
   .discipline-image-frame {
     width: 100%;
-    min-height: 67svh;
+    min-height: clamp(29rem, 112vw, 38rem);
   }
 
   .discipline-image {
@@ -1836,6 +1795,14 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   .products-index-grid,
   .product-inclusions-grid {
     grid-template-columns: 1fr;
+  }
+
+  .product-showcase-grid > :only-child .product-card-surface {
+    display: block;
+  }
+
+  .product-showcase-grid > :only-child .product-media {
+    aspect-ratio: 4 / 4.6;
   }
 
   .product-card-title {
@@ -1921,8 +1888,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     transform: none !important;
   }
 
-  [data-reveal='image']::after,
-  .custom-cursor {
+  [data-reveal='image']::after {
     display: none !important;
   }
 
@@ -1934,11 +1900,30 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     transform: none !important;
   }
 
-  .manifesto-section {
-    min-height: 100svh;
+}
+
+@media (max-width: 420px) {
+  .manifesto-section,
+  .product-showcase,
+  .discipline-section,
+  .closing-statement {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
   }
 
-  .manifesto-sticky {
-    position: relative;
+  .manifesto-title {
+    font-size: clamp(3.35rem, 17vw, 4.5rem);
+  }
+
+  .discipline-title {
+    font-size: clamp(3.25rem, 16vw, 4.6rem);
+  }
+
+  .section-display-title {
+    font-size: clamp(3.8rem, 18vw, 5.2rem);
+  }
+
+  .closing-title {
+    font-size: clamp(3.65rem, 18vw, 5.4rem);
   }
 }

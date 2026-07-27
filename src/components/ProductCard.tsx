@@ -51,7 +51,6 @@ export default function ProductCard({
       className="product-card block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
       data-reveal="up"
       data-reveal-delay={String(Math.min(revealDelay, 3))}
-      data-cursor="VIEW"
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
     >

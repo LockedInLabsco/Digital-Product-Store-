@@ -51,7 +51,6 @@ export default async function Home() {
                 <Link
                   href="/products"
                   className="cinematic-cta cinematic-cta-light"
-                  data-cursor="ENTER"
                 >
                   Explore products
                   <span aria-hidden="true">↗</span>
@@ -99,58 +98,12 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="kinetic-strip" data-nav-theme="dark" aria-label="Brand statement">
-          <div className="kinetic-track">
-            <span>CREATE YOUR OWN PATH</span>
-            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
-            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
-          </div>
-        </section>
-
-        <section className="discipline-section" data-nav-theme="dark">
-          <Container className="discipline-grid">
-            <div className="discipline-image-frame" data-reveal="image">
-              <Image
-                src="/campaign/discipline-athlete.jpg"
-                alt="Athlete recovering after an intense stair workout in the rain"
-                fill
-                quality={95}
-                sizes="(max-width: 1024px) 100vw, 52vw"
-                className="discipline-image"
-              />
-              <div className="discipline-image-index">02 / Discipline</div>
-            </div>
-
-            <div className="discipline-copy">
-              <p className="eyebrow" data-reveal="left">
-                The work starts after the excuse
-              </p>
-              <h2 className="discipline-title">
-                <span data-reveal="mask">When your mind</span>
-                <span data-reveal="mask" data-reveal-delay="1">
-                  tells you to stop,
-                </span>
-                <span data-reveal="mask" data-reveal-delay="2">
-                  you are only
-                </span>
-                <span data-reveal="mask" data-reveal-delay="3">
-                  getting started.
-                </span>
-              </h2>
-              <p className="discipline-body" data-reveal="up">
-                No borrowed motivation. No performance for the crowd. Just
-                practical systems for the work nobody else can do for you.
-              </p>
-            </div>
-          </Container>
-        </section>
-
         <section className="product-showcase" data-nav-theme="light">
           <Container>
             <div className="section-heading">
               <div>
                 <p className="eyebrow" data-reveal="left">
-                  03 — The tools
+                  02 — The tools
                 </p>
                 <h2 className="section-display-title" data-reveal="mask">
                   Built for action.
@@ -196,11 +149,56 @@ export default async function Home() {
               <Link
                 href="/products"
                 className="cinematic-text-link"
-                data-cursor="VIEW"
               >
                 View all products
                 <span aria-hidden="true">↗</span>
               </Link>
+            </div>
+          </Container>
+        </section>
+
+        <section className="kinetic-strip" data-nav-theme="dark" aria-label="Brand statement">
+          <div className="kinetic-track">
+            <span>CREATE YOUR OWN PATH</span>
+            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
+            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
+          </div>
+        </section>
+
+        <section className="discipline-section" data-nav-theme="dark">
+          <Container className="discipline-grid">
+            <div className="discipline-image-frame" data-reveal="image">
+              <Image
+                src="/campaign/discipline-athlete.jpg"
+                alt="Athlete recovering after an intense stair workout in the rain"
+                fill
+                quality={95}
+                sizes="(max-width: 1024px) 100vw, 52vw"
+                className="discipline-image"
+              />
+              <div className="discipline-image-index">03 / Discipline</div>
+            </div>
+
+            <div className="discipline-copy">
+              <p className="eyebrow" data-reveal="left">
+                The work starts after the excuse
+              </p>
+              <h2 className="discipline-title">
+                <span data-reveal="mask">When your mind</span>
+                <span data-reveal="mask" data-reveal-delay="1">
+                  tells you to stop,
+                </span>
+                <span data-reveal="mask" data-reveal-delay="2">
+                  you are only
+                </span>
+                <span data-reveal="mask" data-reveal-delay="3">
+                  getting started.
+                </span>
+              </h2>
+              <p className="discipline-body" data-reveal="up">
+                No borrowed motivation. No performance for the crowd. Just
+                practical systems for the work nobody else can do for you.
+              </p>
             </div>
           </Container>
         </section>
@@ -216,10 +214,12 @@ export default async function Home() {
                 Build your way out.
               </span>
             </h2>
+            <p className="closing-support" data-reveal="up">
+              Choose a tool. Do the work. Build what comes next.
+            </p>
             <Link
               href="/products"
               className="cinematic-cta cinematic-cta-light"
-              data-cursor="ENTER"
               data-reveal="up"
             >
               Start with a tool

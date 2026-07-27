@@ -11,7 +11,7 @@ export default function Footer() {
       <Container className="relative z-10 py-16 sm:py-24">
         <div className="footer-grid" data-reveal="up">
           <div>
-            <Link href="/" className="inline-block" data-cursor="ENTER">
+            <Link href="/" className="inline-block">
               <BrandMark className="footer-brand" />
             </Link>
             <p className="footer-manifesto">Create your own path.</p>

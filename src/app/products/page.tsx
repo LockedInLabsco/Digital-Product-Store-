@@ -85,7 +85,7 @@ export default async function ProductsPage() {
               Don&apos;t collect information.
             </p>
             <h2 data-reveal="mask">Use it.</h2>
-            <Link href="/#manifesto" className="cinematic-text-link light" data-cursor="ENTER">
+            <Link href="/#manifesto" className="cinematic-text-link light">
               Read the manifesto
               <span aria-hidden="true">↗</span>
             </Link>
