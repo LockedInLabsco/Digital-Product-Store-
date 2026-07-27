@@ -182,9 +182,6 @@ export default function CinematicEffects() {
       console.info(
         '[Not4Normal animation debug] Major animation created: internal page transition.'
       )
-      console.info(
-        '[Not4Normal animation debug] Major animation created: animated film-grain overlay.'
-      )
     }
     return () => document.removeEventListener('click', onClick, true)
   }, [pathname, router])
@@ -201,7 +198,6 @@ export default function CinematicEffects() {
 
   return (
     <>
-      <div className="film-grain" aria-hidden="true" />
       <div className="custom-cursor is-hidden" ref={cursorRef} aria-hidden="true">
         <span ref={cursorLabelRef} />
       </div>

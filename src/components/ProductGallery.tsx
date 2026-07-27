@@ -48,6 +48,7 @@ export default function ProductGallery({
             alt={selectedImage.alt}
             width={1000}
             height={1000}
+            quality={95}
             sizes="(max-width: 1024px) 100vw, 66vw"
             className="gallery-image-swap h-full w-full object-cover grayscale"
             priority
@@ -94,6 +95,7 @@ export default function ProductGallery({
                   alt={image.label}
                   width={160}
                   height={160}
+                  quality={90}
                   className="h-full w-full object-cover grayscale"
                 />
               ) : (

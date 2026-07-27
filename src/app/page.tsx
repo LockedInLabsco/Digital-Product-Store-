@@ -21,12 +21,12 @@ export default async function Home() {
               alt=""
               fill
               priority
+              quality={95}
               sizes="100vw"
               className="hero-background-image"
             />
           </div>
           <div className="hero-overlay" aria-hidden="true" />
-          <div className="hero-vignette" aria-hidden="true" />
 
           <Container className="hero-content">
             <div className="hero-brand page-intro">
@@ -114,6 +114,7 @@ export default async function Home() {
                 src="/campaign/discipline-athlete.jpg"
                 alt="Athlete recovering after an intense stair workout in the rain"
                 fill
+                quality={95}
                 sizes="(max-width: 1024px) 100vw, 52vw"
                 className="discipline-image"
               />

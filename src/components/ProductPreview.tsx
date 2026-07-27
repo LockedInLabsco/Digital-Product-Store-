@@ -43,11 +43,11 @@ export default function ProductPreview({
           alt={productTitle}
           width={800}
           height={800}
+          quality={95}
           sizes="(max-width: 768px) 100vw, 50vw"
           className="product-media-image"
           onError={() => setImageError(true)}
         />
-        <div className="product-media-shade" aria-hidden="true" />
       </div>
     )
   }
@@ -58,7 +58,6 @@ export default function ProductPreview({
         N4N
       </span>
       <p>{currentPreview?.label || productTitle}</p>
-      <div className="product-media-shade" aria-hidden="true" />
     </div>
   )
 }
