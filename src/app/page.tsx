@@ -1,128 +1,141 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
-import BrandMark from '@/src/components/BrandMark'
+import NewsletterForm from '@/src/components/NewsletterForm'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
+
+const CATEGORIES = [
+  {
+    title: 'Focus & Productivity',
+    description: 'Systems to cut distraction and get deep work done on repeat.',
+  },
+  {
+    title: 'Habits & Discipline',
+    description: 'Frameworks for building routines that hold up under pressure.',
+  },
+  {
+    title: 'Personal Growth',
+    description: 'Practical resources for the long, unglamorous work of change.',
+  },
+  {
+    title: 'Templates & Systems',
+    description: 'Ready-to-use structures so you spend your time doing, not designing.',
+  },
+]
+
+const BENEFITS = [
+  'Build stronger daily systems',
+  'Improve focus and cut noise',
+  'Stay consistent when motivation fades',
+  'Make progress with practical tools',
+  'Create your own path',
+]
 
 export default async function Home() {
   const { products, error } = await getActiveProducts()
+  const featuredProducts = products.slice(0, 6)
 
   return (
     <>
       <Navbar />
-      <main className="cinematic-home">
-        <section className="cinematic-hero" data-nav-theme="dark">
-          <div className="hero-background" aria-hidden="true">
-            <Image
-              src="/campaign/hero-athlete.jpg"
-              alt=""
-              fill
-              priority
-              quality={95}
-              sizes="100vw"
-              className="hero-background-image"
-            />
-          </div>
-          <div className="hero-overlay" aria-hidden="true" />
-
-          <Container className="hero-content">
-            <div className="hero-brand page-intro">
-              <BrandMark />
-              <span>Est. 2026</span>
-            </div>
-
-            <div className="hero-copy">
-              <p className="eyebrow page-intro">For the ones who refuse the default</p>
-              <h1 className="hero-title" aria-label="Not made for normal">
-                <span className="hero-title-mask">
-                  <span className="hero-title-line hero-title-line-1">Not made</span>
-                </span>
-                <span className="hero-title-mask">
-                  <span className="hero-title-line hero-title-line-2">for normal</span>
-                </span>
+      <main>
+        {/* Hero */}
+        <section className="border-b border-ink/10 bg-cream">
+          <Container className="grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:py-28">
+            <div data-reveal="up">
+              <p className="eyebrow text-gold">For the ones who refuse the default</p>
+              <h1 className="mt-5 font-serif text-5xl leading-[1.08] text-ink sm:text-6xl lg:text-[3.75rem]">
+                Not made for normal.
               </h1>
-              <p className="hero-description page-intro page-intro-delay-2">
-                Tools for people building their way out.
+              <p className="mt-5 max-w-md text-lg text-ink/70">
+                Build better systems. Create your own path.
               </p>
-              <div className="hero-actions page-intro page-intro-delay-3">
+              <p className="mt-3 max-w-md text-base text-ink/55">
+                Premium digital tools for focus, discipline, habits, and personal
+                growth.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
                   href="/products"
-                  className="cinematic-cta cinematic-cta-light"
+                  className="inline-flex items-center justify-center rounded-sm bg-ink px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
                 >
-                  Explore products
-                  <span aria-hidden="true">↗</span>
+                  Explore Products
                 </Link>
-                <span className="hero-brand-line">Create your own path</span>
+                <Link
+                  href="/#about"
+                  className="inline-flex items-center justify-center rounded-sm border border-ink/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:border-ink"
+                >
+                  Discover the Brand
+                </Link>
               </div>
             </div>
 
-            <div className="hero-scroll-cue" aria-hidden="true">
-              <span>Scroll to begin</span>
-              <div />
+            <div
+              className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10 bg-gradient-to-br from-beige via-offwhite to-cream"
+              data-reveal="fade"
+              aria-hidden="true"
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="font-serif text-6xl tracking-tight text-ink/15 sm:text-7xl">N4N</span>
+              </div>
+              <div className="absolute bottom-6 left-6 right-6 border-t border-ink/10 pt-4">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink/40">
+                  Est. 2026 — Not4Normal
+                </p>
+              </div>
             </div>
           </Container>
         </section>
 
-        <section
-          id="manifesto"
-          className="manifesto-section"
-          data-nav-theme="light"
-        >
-          <div className="manifesto-watermark" aria-hidden="true">
-            N4N
-          </div>
-          <div className="manifesto-sticky">
-            <Container>
-              <p className="eyebrow" data-reveal="left">
-                01 — Manifesto
+        {/* About / brand introduction */}
+        <section id="about" className="scroll-mt-20 bg-offwhite py-20 sm:py-24">
+          <Container className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <p className="eyebrow text-gold" data-reveal="up">About Not4Normal</p>
+            <div data-reveal="up">
+              <p className="font-serif text-2xl leading-relaxed text-ink sm:text-3xl">
+                Not4Normal creates practical digital tools for people who refuse to
+                settle for average.
               </p>
-
-              <h2 className="manifesto-title">
-                <span data-reveal="mask">You were not built</span>
-                <span data-reveal="mask" data-reveal-delay="1">
-                  to follow the
-                </span>
-                <span data-reveal="mask" data-reveal-delay="2">
-                  normal path.
-                </span>
-              </h2>
-
-              <p className="manifesto-note" data-reveal="up">
-                Normal is a script. Discipline is how you write your own.
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink/65">
+                The products help users improve focus, build discipline, develop
+                better habits, and create their own path — no noise, no
+                subscriptions, no complicated systems.
               </p>
-            </Container>
-          </div>
+            </div>
+          </Container>
         </section>
 
-        <section className="product-showcase" data-nav-theme="light">
+        {/* Featured products */}
+        <section className="bg-cream py-20 sm:py-24">
           <Container>
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow" data-reveal="left">
-                  02 — The tools
-                </p>
-                <h2 className="section-display-title" data-reveal="mask">
-                  Built for action.
+            <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+              <div data-reveal="up">
+                <p className="eyebrow text-gold">Featured</p>
+                <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+                  Tools for the work.
                 </h2>
               </div>
-              <p className="section-heading-copy" data-reveal="up">
-                Focused digital tools. No noise, no subscriptions, no
-                complicated systems.
-              </p>
+              <Link
+                href="/products"
+                className="text-xs font-semibold uppercase tracking-[0.1em] text-ink/70 underline underline-offset-4 transition-colors hover:text-ink"
+              >
+                View all products
+              </Link>
             </div>
 
             {error ? (
-              <div className="cinematic-empty-state" data-reveal="up">
-                <p className="eyebrow">Connection interrupted</p>
-                <h3>Products are temporarily unavailable.</h3>
-                <p>Please return in a little while.</p>
+              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-ink/40">Connection interrupted</p>
+                <h3 className="mt-3 font-serif text-2xl text-ink">
+                  Products are temporarily unavailable.
+                </h3>
+                <p className="mt-2 text-ink/55">Please return in a little while.</p>
               </div>
-            ) : products.length > 0 ? (
-              <div className="product-showcase-grid">
-                {products.map((product, index) => (
+            ) : featuredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {featuredProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
                     title={product.title}
@@ -137,92 +150,109 @@ export default async function Home() {
                 ))}
               </div>
             ) : (
-              <div className="cinematic-empty-state" data-reveal="up">
-                <p className="eyebrow">The first release is coming</p>
-                <h3>No products are live yet.</h3>
-                <p>The next Not4Normal tool will appear here when it is ready.</p>
+              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-ink/40">The first release is coming</p>
+                <h3 className="mt-3 font-serif text-2xl text-ink">No products are live yet.</h3>
+                <p className="mt-2 text-ink/55">
+                  The next Not4Normal tool will appear here when it is ready.
+                </p>
               </div>
             )}
-
-            <div className="product-showcase-footer" data-reveal="up">
-              <Link
-                href="/products"
-                className="cinematic-text-link"
-              >
-                View all products
-                <span aria-hidden="true">↗</span>
-              </Link>
-            </div>
           </Container>
         </section>
 
-        <section className="kinetic-strip" data-nav-theme="dark" aria-label="Brand statement">
-          <div className="kinetic-track">
-            <span>CREATE YOUR OWN PATH</span>
-            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
-            <span aria-hidden="true">CREATE YOUR OWN PATH</span>
-          </div>
-        </section>
-
-        <section className="discipline-section" data-nav-theme="dark">
-          <Container className="discipline-grid">
-            <div className="discipline-image-frame" data-reveal="image">
-              <Image
-                src="/campaign/discipline-athlete.jpg"
-                alt="Athlete recovering after an intense stair workout in the rain"
-                fill
-                quality={95}
-                sizes="(max-width: 1024px) 100vw, 52vw"
-                className="discipline-image"
-              />
-              <div className="discipline-image-index">03 / Discipline</div>
-            </div>
-
-            <div className="discipline-copy">
-              <p className="eyebrow" data-reveal="left">
-                The work starts after the excuse
-              </p>
-              <h2 className="discipline-title">
-                <span data-reveal="mask">When your mind</span>
-                <span data-reveal="mask" data-reveal-delay="1">
-                  tells you to stop,
-                </span>
-                <span data-reveal="mask" data-reveal-delay="2">
-                  you are only
-                </span>
-                <span data-reveal="mask" data-reveal-delay="3">
-                  getting started.
-                </span>
-              </h2>
-              <p className="discipline-body" data-reveal="up">
-                No borrowed motivation. No performance for the crowd. Just
-                practical systems for the work nobody else can do for you.
-              </p>
-            </div>
-          </Container>
-        </section>
-
-        <section className="closing-statement" data-nav-theme="dark">
+        {/* Product categories */}
+        <section className="bg-offwhite py-20 sm:py-24">
           <Container>
-            <p className="eyebrow" data-reveal="fade">
-              This is your move.
-            </p>
-            <h2 className="closing-title">
-              <span data-reveal="mask">Nobody is coming.</span>
-              <span data-reveal="mask" data-reveal-delay="1">
-                Build your way out.
-              </span>
+            <div className="mb-12" data-reveal="up">
+              <p className="eyebrow text-gold">What we create</p>
+              <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+                Built with a clear job.
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {CATEGORIES.map((category, index) => (
+                <div
+                  key={category.title}
+                  className="border-t border-gold/50 pt-5"
+                  data-reveal="up"
+                  data-reveal-delay={String(index % 2)}
+                >
+                  <h3 className="font-serif text-lg text-ink">{category.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink/60">
+                    {category.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        {/* Benefits */}
+        <section className="bg-cream py-20 sm:py-24">
+          <Container className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <div data-reveal="up">
+              <p className="eyebrow text-gold">Why Not4Normal</p>
+              <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+                Practical progress, not noise.
+              </h2>
+            </div>
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-reveal="up">
+              {BENEFITS.map((benefit) => (
+                <li
+                  key={benefit}
+                  className="flex items-start gap-3 border-b border-ink/10 pb-4 text-ink/75"
+                >
+                  <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+
+        {/* Manifesto */}
+        <section id="manifesto" className="scroll-mt-20 bg-ink py-20 text-cream sm:py-24">
+          <Container className="max-w-3xl text-center">
+            <p className="eyebrow text-gold" data-reveal="fade">This is your move</p>
+            <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-4xl" data-reveal="up">
+              Normal is the default.
+              <br />
+              Your path does not have to be.
             </h2>
-            <p className="closing-support" data-reveal="up">
-              Choose a tool. Do the work. Build what comes next.
+            <p className="mt-5 text-cream/60" data-reveal="up">
+              You were not made to repeat someone else&apos;s path.
             </p>
+          </Container>
+        </section>
+
+        {/* Newsletter */}
+        <section className="bg-charcoal py-16 text-cream sm:py-20">
+          <Container className="flex flex-col items-center gap-6 text-center">
+            <div data-reveal="up">
+              <h2 className="font-serif text-2xl sm:text-3xl">Join the Not4Normal Community</h2>
+              <p className="mt-3 max-w-md text-sm text-cream/60">
+                Get new tools, ideas, and product releases directly in your inbox.
+              </p>
+            </div>
+            <div data-reveal="up">
+              <NewsletterForm />
+            </div>
+          </Container>
+        </section>
+
+        {/* Final CTA */}
+        <section className="bg-cream py-16 sm:py-20">
+          <Container className="flex flex-col items-center gap-6 text-center">
+            <h2 className="font-serif text-3xl text-ink sm:text-4xl" data-reveal="up">
+              Create Your Own Path.
+            </h2>
             <Link
               href="/products"
-              className="cinematic-cta cinematic-cta-light"
+              className="inline-flex items-center justify-center rounded-sm bg-ink px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
               data-reveal="up"
             >
-              Start with a tool
-              <span aria-hidden="true">↗</span>
+              Explore Products
             </Link>
           </Container>
         </section>

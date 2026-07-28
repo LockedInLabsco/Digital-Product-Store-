@@ -41,25 +41,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return (
       <>
         <Navbar />
-        <main className="product-missing-page" data-nav-theme="dark">
-          <Container>
-            <p className="eyebrow page-intro">
+        <main className="flex min-h-[60vh] items-center bg-cream">
+          <Container className="max-w-2xl text-center">
+            <p className="eyebrow text-gold">
               {error ? 'Connection interrupted' : '404 / Product'}
             </p>
-            <h1 className="display-type page-intro page-intro-delay-1">
+            <h1 className="mt-4 font-serif text-4xl text-ink sm:text-5xl">
               {error ? 'Temporarily unavailable.' : 'This tool is not here.'}
             </h1>
-            <p className="page-intro page-intro-delay-2">
+            <p className="mt-4 text-ink/60">
               {error
                 ? 'We could not load this product. Please try again in a little while.'
                 : 'The product does not exist or is no longer active.'}
             </p>
             <Link
               href="/products"
-              className="cinematic-cta cinematic-cta-light page-intro page-intro-delay-3"
+              className="mt-8 inline-flex items-center justify-center rounded-sm bg-ink px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
             >
               Back to products
-              <span aria-hidden="true">↗</span>
             </Link>
           </Container>
         </main>
@@ -122,159 +121,108 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <>
       <Navbar />
-      <main className="product-detail-page">
-        <section className="product-detail-hero" data-nav-theme="dark">
+      <main className="bg-cream">
+        <section className="py-12 sm:py-16">
           <Container>
             <Link
               href="/products"
-              className="product-back-link page-intro"
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-ink/60 transition-colors hover:text-ink"
             >
               <span aria-hidden="true">←</span>
               All products
             </Link>
 
-            <div className="product-detail-hero-grid">
+            <div className="mt-8 lg:grid lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-x-16 lg:gap-y-8">
+              {/* 1. Title */}
               <div>
-                <p className="eyebrow page-intro page-intro-delay-1">
-                  Digital tool / {product.price === 0 ? 'Free' : 'Paid'}
+                <p className="eyebrow text-gold">
+                  Digital Tool / {product.price === 0 ? 'Free' : 'Paid'}
                 </p>
-                <h1 className="product-detail-title">
-                  <span className="hero-title-mask">
-                    <span className="hero-title-line hero-title-line-1">
-                      {product.title}
-                    </span>
-                  </span>
+                <h1 className="mt-3 font-serif text-4xl text-ink sm:text-5xl">
+                  {product.title}
                 </h1>
               </div>
-              <div className="product-detail-intro page-intro page-intro-delay-3">
-                <p>{product.shortDescription}</p>
-                <strong>{formatPrice(product.price)}</strong>
-              </div>
-            </div>
-          </Container>
-        </section>
 
-        <section className="product-detail-stage" data-nav-theme="light">
-          <Container>
-            <div className="product-detail-stage-grid">
-              <div>
-                <div className="product-section-label" data-reveal="left">
-                  <span>01</span>
-                  <p>What&apos;s inside</p>
-                </div>
+              {/* 2. Short promise */}
+              <p className="mt-4 max-w-xl text-lg text-ink/65 lg:mt-4">
+                {product.shortDescription}
+              </p>
+
+              {/* 3. Price */}
+              <p className="mt-4 font-serif text-3xl text-ink lg:mt-4">
+                {formatPrice(product.price)}
+              </p>
+
+              {/* Gallery — desktop left column, spans the text rows */}
+              <div className="mt-8 lg:col-start-1 lg:row-start-1 lg:row-end-8 lg:mt-0">
                 <ProductGallery
                   images={galleryImages}
                   productTitle={product.title}
                 />
               </div>
 
-              <aside className="purchase-panel" data-reveal="up">
-                <p className="eyebrow">
-                  {product.price === 0 ? 'Free release' : 'One-time purchase'}
-                </p>
-                <h2>
-                  {product.price === 0
-                    ? 'Get the guide.'
-                    : 'Get instant access.'}
-                </h2>
-                <p className="purchase-panel-copy">
-                  Enter your details and the next step lands directly in your
-                  inbox.
-                </p>
+              {/* 5. CTA */}
+              <div className="mt-8 lg:mt-4">
                 <PurchaseAction fullWidth />
-                <div className="purchase-assurances">
-                  <p>
-                    <span>01</span>
-                    Secure delivery
-                  </p>
-                  <p>
-                    <span>02</span>
-                    No recurring charge
-                  </p>
-                  <p>
-                    <span>03</span>
-                    Keep it forever
-                  </p>
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-ink/10 pt-5 text-xs font-semibold uppercase tracking-[0.08em] text-ink/45">
+                  <span>Secure delivery</span>
+                  <span>No recurring charge</span>
+                  <span>Keep it forever</span>
                 </div>
-              </aside>
-            </div>
-          </Container>
-        </section>
+              </div>
 
-        <section className="product-story" data-nav-theme="dark">
-          <Container>
-            <div className="product-section-label light" data-reveal="left">
-              <span>02</span>
-              <p>The purpose</p>
-            </div>
-            <div className="product-story-grid">
-              <h2 data-reveal="mask">Built to be used.</h2>
-              <p data-reveal="up">{product.description}</p>
-            </div>
-          </Container>
-        </section>
-
-        <section className="product-inclusions" data-nav-theme="light">
-          <Container>
-            <div className="product-section-label" data-reveal="left">
-              <span>03</span>
-              <p>What you get</p>
-            </div>
-            <div className="product-inclusions-grid">
-              {productFeatures.map((feature, index) => (
-                <article
-                  key={index}
-                  className="product-inclusion"
-                  data-reveal="up"
-                  data-reveal-delay={String(index % 3)}
-                >
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <p>{feature}</p>
-                </article>
-              ))}
-              <article
-                className="product-inclusion"
-                data-reveal="up"
-                data-reveal-delay="1"
-              >
-                <span>{String(productFeatures.length + 1).padStart(2, '0')}</span>
-                <p>
-                  {product.price === 0
-                    ? 'Delivered directly to your email.'
-                    : 'Delivered securely after checkout.'}
+              {/* 6. Description */}
+              <div className="mt-10 lg:mt-8">
+                <p className="eyebrow text-ink/40">The purpose</p>
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">
+                  {product.description}
                 </p>
-              </article>
-            </div>
-          </Container>
-        </section>
+              </div>
 
-        <section className="product-faq" data-nav-theme="dark">
-          <Container>
-            <div className="product-section-label light" data-reveal="left">
-              <span>04</span>
-              <p>Before you start</p>
-            </div>
-            <div className="product-faq-grid">
-              <h2 data-reveal="mask">Questions.</h2>
-              <div data-reveal="up">
-                <FAQAccordion items={faqItems} />
+              {/* 7. What's inside */}
+              <div className="mt-10 lg:mt-8">
+                <p className="eyebrow text-ink/40">What you get</p>
+                <ul className="mt-4 space-y-3">
+                  {productFeatures.map((feature, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-sm text-ink/70"
+                    >
+                      <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                      {feature}
+                    </li>
+                  ))}
+                  <li className="flex items-start gap-3 text-sm text-ink/70">
+                    <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                    {product.price === 0
+                      ? 'Delivered directly to your email.'
+                      : 'Delivered securely after checkout.'}
+                  </li>
+                </ul>
               </div>
             </div>
           </Container>
         </section>
 
-        <section className="product-final-cta" data-nav-theme="light">
-          <Container>
-            <p className="eyebrow" data-reveal="fade">
-              The tool is ready.
-            </p>
-            <h2 data-reveal="mask">
+        <section className="border-t border-ink/10 py-16 sm:py-20">
+          <Container className="max-w-3xl">
+            <p className="eyebrow text-gold">Before you start</p>
+            <h2 className="mt-3 font-serif text-3xl text-ink">Questions.</h2>
+            <div className="mt-8">
+              <FAQAccordion items={faqItems} />
+            </div>
+          </Container>
+        </section>
+
+        <section className="border-t border-ink/10 bg-offwhite py-16 sm:py-20">
+          <Container className="flex flex-col items-center gap-5 text-center">
+            <h2 className="font-serif text-3xl text-ink sm:text-4xl">
               {product.price === 0
                 ? 'Start without paying.'
                 : 'Stop waiting. Start using.'}
             </h2>
-            <p data-reveal="up">{product.shortDescription}</p>
-            <div className="product-final-action" data-reveal="up">
+            <p className="max-w-md text-ink/60">{product.shortDescription}</p>
+            <div className="mt-2 w-full max-w-sm">
               <PurchaseAction />
             </div>
           </Container>

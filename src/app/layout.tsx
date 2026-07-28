@@ -1,7 +1,21 @@
 import type { Metadata } from 'next'
+import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
 import MotionProvider from '@/src/components/MotionProvider'
-import CinematicEffects from '@/src/components/CinematicEffects'
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-serif',
+  display: 'swap',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://not4normal.store'),
@@ -10,20 +24,12 @@ export const metadata: Metadata = {
     template: '%s — Not4Normal',
   },
   description:
-    'Tools for people building their way out. Create your own path.',
+    'Premium digital tools for focus, discipline, habits, and personal growth. Not made for normal.',
   openGraph: {
     title: 'Not4Normal — Create Your Own Path',
-    description: 'Tools for people building their way out.',
+    description: 'Premium digital tools for focus, discipline, habits, and personal growth.',
     url: 'https://not4normal.store',
     siteName: 'Not4Normal',
-    images: [
-      {
-        url: '/campaign/hero-athlete.jpg',
-        width: 1875,
-        height: 839,
-        alt: 'Athlete training alone on a steep concrete incline',
-      },
-    ],
     type: 'website',
   },
 }
@@ -34,10 +40,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className="bg-black text-white antialiased">
+    <html lang="en" className={`${playfairDisplay.variable} ${inter.variable}`}>
+      <body className="bg-cream text-ink antialiased font-sans">
         <MotionProvider />
-        <CinematicEffects />
         {children}
       </body>
     </html>

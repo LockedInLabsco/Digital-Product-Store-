@@ -14,19 +14,19 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'motion-button button-label rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2'
+    'inline-flex items-center justify-center gap-2 rounded-sm text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100'
 
   const variantClasses = {
-    primary: 'bg-black text-white hover:bg-zinc-800',
-    secondary: 'bg-zinc-200 text-black hover:bg-white',
-    outline: 'border border-current bg-transparent hover:bg-white hover:text-black',
-    inverse: 'bg-white text-black hover:bg-zinc-200',
+    primary: 'bg-ink text-cream hover:bg-charcoal',
+    secondary: 'bg-beige text-ink hover:bg-offwhite',
+    outline: 'border border-ink/30 bg-transparent text-ink hover:border-ink',
+    inverse: 'bg-cream text-ink hover:bg-offwhite',
   }
 
   const sizeClasses = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
+    sm: 'px-4 py-2.5 text-[0.7rem]',
+    md: 'px-6 py-3',
+    lg: 'px-7 py-4 text-sm',
   }
 
   return (

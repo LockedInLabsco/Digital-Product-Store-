@@ -2,54 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import Container from './Container'
 import BrandMark from './BrandMark'
 
-type NavTheme = 'dark' | 'light'
+const NAV_LINKS = [
+  { href: '/products', label: 'Products' },
+  { href: '/#about', label: 'About' },
+  { href: '/#manifesto', label: 'Manifesto' },
+]
 
 export default function Navbar() {
-  const pathname = usePathname()
-  const [isScrolled, setIsScrolled] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const isLegalPage = ['/terms', '/privacy', '/refunds'].includes(pathname)
-  const [theme, setTheme] = useState<NavTheme>(
-    isLegalPage ? 'light' : 'dark'
-  )
-
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
-    setTheme(isLegalPage ? 'light' : 'dark')
-
-    const sections = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-nav-theme]')
-    )
-
-    if (sections.length === 0) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const activeEntry = entries.find((entry) => entry.isIntersecting)
-        const nextTheme = activeEntry?.target.getAttribute('data-nav-theme')
-        if (nextTheme === 'dark' || nextTheme === 'light') {
-          setTheme(nextTheme)
-        }
-      },
-      {
-        rootMargin: '-10% 0px -82% 0px',
-        threshold: 0,
-      }
-    )
-
-    sections.forEach((section) => observer.observe(section))
-    return () => observer.disconnect()
-  }, [isLegalPage, pathname])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -59,81 +22,79 @@ export default function Navbar() {
   }, [isOpen])
 
   const closeMenu = () => setIsOpen(false)
-  const isLight = theme === 'light' && !isOpen
 
   return (
-    <>
-      <nav
-        className={`site-nav cinematic-nav ${
-          isScrolled ? 'is-scrolled' : ''
-        } ${isLight ? 'is-light' : 'is-dark'} ${isOpen ? 'is-menu-open' : ''}`}
-      >
-        <Container className="cinematic-nav-inner flex items-center justify-between">
-          <Link
-            href="/"
-            className="nav-brand"
-            aria-label="Not4Normal home"
-            onClick={closeMenu}
-          >
-            <BrandMark />
-          </Link>
+    <nav className="sticky top-0 z-40 border-b border-ink/10 bg-cream/95 backdrop-blur">
+      <Container className="flex h-[76px] items-center justify-between">
+        <Link href="/" aria-label="Not4Normal home" onClick={closeMenu}>
+          <BrandMark />
+        </Link>
 
-          <div className="hidden items-center gap-8 md:flex">
-            <Link href="/products" className="nav-link">
-              Products
-            </Link>
-            <Link href="/#manifesto" className="nav-link">
-              Manifesto
-            </Link>
+        <div className="hidden items-center gap-9 md:flex">
+          {NAV_LINKS.map((link) => (
             <Link
-              href="/products"
-              className="nav-cta"
+              key={link.href}
+              href={link.href}
+              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink/70 transition-colors hover:text-ink"
             >
-              Explore products
-              <span aria-hidden="true">↗</span>
+              {link.label}
             </Link>
-          </div>
-
-          <button
-            type="button"
-            className="mobile-menu-trigger md:hidden"
-            onClick={() => setIsOpen((open) => !open)}
-            aria-expanded={isOpen}
-            aria-controls="mobile-navigation"
-            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          ))}
+          <Link
+            href="/products"
+            className="inline-flex items-center justify-center rounded-sm bg-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
           >
-            <span />
-            <span />
-          </button>
-        </Container>
-      </nav>
+            Explore Products
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          className="relative flex h-8 w-8 flex-col items-center justify-center gap-[5px] md:hidden"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-expanded={isOpen}
+          aria-controls="mobile-navigation"
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+        >
+          <span
+            className={`block h-px w-6 bg-ink transition-transform duration-200 ${
+              isOpen ? 'translate-y-[6.5px] rotate-45' : ''
+            }`}
+          />
+          <span
+            className={`block h-px w-6 bg-ink transition-transform duration-200 ${
+              isOpen ? '-rotate-45' : ''
+            }`}
+          />
+        </button>
+      </Container>
 
       <div
         id="mobile-navigation"
-        className={`mobile-menu ${isOpen ? 'is-open' : ''}`}
-        aria-hidden={!isOpen}
+        className={`overflow-hidden border-t border-ink/10 bg-cream transition-[max-height] duration-300 md:hidden ${
+          isOpen ? 'max-h-72' : 'max-h-0 border-t-0'
+        }`}
       >
-        <div className="mobile-menu-watermark" aria-hidden="true">
-          N4N
-        </div>
-        <div className="mobile-menu-links">
-          <Link href="/" onClick={closeMenu}>
-            <span>01</span>
-            Home
+        <Container className="flex flex-col gap-1 py-6">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={closeMenu}
+              className="py-3 text-sm font-semibold uppercase tracking-[0.1em] text-ink/80"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            href="/products"
+            onClick={closeMenu}
+            className="mt-3 inline-flex items-center justify-center rounded-sm bg-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
+          >
+            Explore Products
           </Link>
-          <Link href="/products" onClick={closeMenu}>
-            <span>02</span>
-            Products
-          </Link>
-          <Link href="/#manifesto" onClick={closeMenu}>
-            <span>03</span>
-            Manifesto
-          </Link>
-        </div>
-        <p className="mobile-menu-tagline">Create your own path.</p>
+        </Container>
       </div>
-
-      {pathname !== '/' && <div className="nav-spacer" aria-hidden="true" />}
-    </>
+    </nav>
   )
 }

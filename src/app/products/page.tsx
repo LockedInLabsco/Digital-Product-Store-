@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
@@ -11,50 +10,32 @@ export default async function ProductsPage() {
   return (
     <>
       <Navbar />
-      <main className="products-page">
-        <section className="products-hero" data-nav-theme="dark">
-          <div className="products-hero-watermark" aria-hidden="true">
-            TOOLS
-          </div>
-          <Container className="relative z-10">
-            <p className="eyebrow page-intro">The Not4Normal system</p>
-            <h1 className="products-page-title">
-              <span className="hero-title-mask">
-                <span className="hero-title-line hero-title-line-1">Tools for</span>
-              </span>
-              <span className="hero-title-mask">
-                <span className="hero-title-line hero-title-line-2">the work.</span>
-              </span>
+      <main className="bg-cream">
+        <section className="border-b border-ink/10 py-16 sm:py-20">
+          <Container>
+            <p className="eyebrow text-gold" data-reveal="up">The Not4Normal system</p>
+            <h1 className="mt-4 max-w-2xl font-serif text-4xl text-ink sm:text-5xl" data-reveal="up">
+              Tools for the work.
             </h1>
-            <div className="products-hero-bottom page-intro page-intro-delay-3">
-              <p>
-                Practical guides for building focus, discipline, and momentum.
-                Own them once. Use them for as long as the work takes.
-              </p>
-              <span>{String(products.length).padStart(2, '0')} releases</span>
-            </div>
+            <p className="mt-4 max-w-xl text-base text-ink/60" data-reveal="up">
+              Practical guides for building focus, discipline, and momentum. Own
+              them once. Use them for as long as the work takes.
+            </p>
           </Container>
         </section>
 
-        <section className="products-index" data-nav-theme="light">
+        <section className="py-16 sm:py-20">
           <Container>
-            <div className="products-index-header">
-              <p className="eyebrow" data-reveal="left">
-                Current releases
-              </p>
-              <p data-reveal="up">
-                No endless library. Only tools with a clear job.
-              </p>
-            </div>
-
             {error ? (
-              <div className="cinematic-empty-state" data-reveal="up">
-                <p className="eyebrow">Connection interrupted</p>
-                <h2>Products are temporarily unavailable.</h2>
-                <p>Please return in a little while.</p>
+              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-ink/40">Connection interrupted</p>
+                <h2 className="mt-3 font-serif text-2xl text-ink">
+                  Products are temporarily unavailable.
+                </h2>
+                <p className="mt-2 text-ink/55">Please return in a little while.</p>
               </div>
             ) : products.length > 0 ? (
-              <div className="products-index-grid">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {products.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -70,25 +51,14 @@ export default async function ProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="cinematic-empty-state" data-reveal="up">
-                <p className="eyebrow">The first release is coming</p>
-                <h2>No products are live yet.</h2>
-                <p>The next Not4Normal tool will appear here when it is ready.</p>
+              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-ink/40">The first release is coming</p>
+                <h2 className="mt-3 font-serif text-2xl text-ink">No products are live yet.</h2>
+                <p className="mt-2 text-ink/55">
+                  The next Not4Normal tool will appear here when it is ready.
+                </p>
               </div>
             )}
-          </Container>
-        </section>
-
-        <section className="products-closer" data-nav-theme="dark">
-          <Container>
-            <p className="eyebrow" data-reveal="fade">
-              Don&apos;t collect information.
-            </p>
-            <h2 data-reveal="mask">Use it.</h2>
-            <Link href="/#manifesto" className="cinematic-text-link light">
-              Read the manifesto
-              <span aria-hidden="true">↗</span>
-            </Link>
           </Container>
         </section>
       </main>

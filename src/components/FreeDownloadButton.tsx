@@ -68,14 +68,14 @@ export default function FreeDownloadButton({
   if (submitted && success) {
     return (
       <div
-        className="border border-black bg-black p-5 text-white"
+        className="rounded-sm border border-ink bg-ink p-5 text-cream"
         role="status"
         aria-live="polite"
       >
-        <p className="button-label text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.1em]">
           Success — check your inbox
         </p>
-        <p className="mt-3 text-sm text-zinc-300">
+        <p className="mt-3 text-sm text-cream/70">
           {productTitle} is on its way to {submittedEmail}. The download link
           will arrive by email.
         </p>
@@ -86,7 +86,7 @@ export default function FreeDownloadButton({
             setSubmittedEmail('')
             setError(null)
           }}
-          className="mt-4 text-sm font-semibold text-white underline underline-offset-4"
+          className="mt-4 text-sm font-semibold text-cream underline underline-offset-4"
         >
           Send to another email
         </button>
@@ -108,7 +108,7 @@ export default function FreeDownloadButton({
           aria-label={`Email address for ${productTitle}`}
           required
           disabled={loading}
-          className="w-full border border-black bg-white px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:bg-zinc-100 disabled:text-zinc-500"
+          className="w-full rounded-sm border border-ink/20 bg-offwhite px-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 disabled:bg-beige disabled:text-ink/40"
         />
       </div>
 
@@ -123,14 +123,14 @@ export default function FreeDownloadButton({
 
       {error && (
         <div
-          className="border border-black bg-white p-4 text-black"
+          className="rounded-sm border border-ink/20 bg-offwhite p-4 text-ink"
           role="alert"
           aria-live="assertive"
         >
-          <p className="button-label mb-2 text-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em]">
             We couldn&apos;t send your guide
           </p>
-          <p className="text-sm text-zinc-700">
+          <p className="text-sm text-ink/70">
             {error}
           </p>
         </div>

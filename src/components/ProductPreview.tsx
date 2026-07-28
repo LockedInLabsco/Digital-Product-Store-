@@ -37,15 +37,15 @@ export default function ProductPreview({
 
   if (coverImageUrl && !imageError) {
     return (
-      <div className="product-media" data-reveal="image">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-beige">
         <Image
           src={coverImageUrl}
           alt={productTitle}
           width={800}
-          height={800}
+          height={600}
           quality={95}
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="product-media-image"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           onError={() => setImageError(true)}
         />
       </div>
@@ -53,11 +53,9 @@ export default function ProductPreview({
   }
 
   return (
-    <div className="product-media product-media-fallback" data-reveal="image">
-      <span className="product-media-watermark" aria-hidden="true">
-        N4N
-      </span>
-      <p>{currentPreview?.label || productTitle}</p>
+    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center bg-beige p-6 text-center">
+      <span className="font-serif text-2xl text-ink/30">N4N</span>
+      <p className="mt-2 text-sm font-medium text-ink/60">{currentPreview?.label || productTitle}</p>
     </div>
   )
 }

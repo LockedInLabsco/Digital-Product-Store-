@@ -16,17 +16,17 @@ export default function DownloadPage({ params }: DownloadPageProps) {
   return (
     <>
       <Navbar />
-      <main>
+      <main className="bg-cream">
         <section className="py-20">
           <Container>
             <div className="max-w-2xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-4">🎉 Download Your Product</h1>
-              <p className="text-xl text-gray-600 mb-12">
+              <h1 className="font-serif text-5xl mb-4 text-ink">Download Your Product</h1>
+              <p className="text-xl text-ink/60 mb-12">
                 Your download link has been sent to your email. Check your inbox!
               </p>
 
-              <div className="border border-gray-200 rounded-lg p-12 bg-gray-50 mb-8">
-                <p className="text-gray-600 mb-6">
+              <div className="border border-ink/10 rounded-sm p-12 bg-offwhite mb-8">
+                <p className="text-ink/60 mb-6">
                   If you don&apos;t see the email, check your spam folder or try the download button below.
                 </p>
 
@@ -34,14 +34,14 @@ export default function DownloadPage({ params }: DownloadPageProps) {
                   Download File
                 </Button>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-ink/45">
                   Don&apos;t lose your link! Save it somewhere safe.
                 </p>
               </div>
 
-              <div className="text-left border border-gray-200 rounded-lg p-8">
-                <h2 className="text-2xl font-bold mb-4">Getting Started</h2>
-                <ol className="space-y-3 text-gray-700 list-decimal list-inside">
+              <div className="text-left border border-ink/10 rounded-sm p-8">
+                <h2 className="font-serif text-2xl mb-4 text-ink">Getting Started</h2>
+                <ol className="space-y-3 text-ink/65 list-decimal list-inside">
                   <li>Download the file using the button above</li>
                   <li>Extract/open the files on your computer</li>
                   <li>Follow the instructions inside</li>
@@ -50,16 +50,16 @@ export default function DownloadPage({ params }: DownloadPageProps) {
               </div>
 
               <div className="mt-12">
-                <p className="text-gray-600 mb-6">Need help?</p>
-                <p className="text-gray-600 text-sm">
+                <p className="text-ink/60 mb-6">Need help?</p>
+                <p className="text-ink/60 text-sm">
                   If you have any issues accessing your download,{' '}
-                  <a href="mailto:support@example.com" className="text-black underline hover:no-underline">
+                  <a href="mailto:support@example.com" className="text-ink underline hover:no-underline">
                     contact our support team
                   </a>
                 </p>
               </div>
 
-              <div className="mt-12 pt-12 border-t border-gray-200">
+              <div className="mt-12 pt-12 border-t border-ink/10">
                 <Link href="/products">
                   <Button variant="outline">
                     Browse More Products
