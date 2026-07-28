@@ -659,12 +659,16 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   overflow: clip;
   background: var(--paper);
   color: var(--ink);
-  padding: clamp(5rem, 8vw, 8rem) 0;
+  padding: clamp(3.5rem, 5.5vw, 6rem) 0;
   scroll-margin-top: 92px;
 }
 
 .manifesto-sticky {
   position: relative;
+}
+
+.manifesto-sticky .eyebrow {
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .manifesto-watermark {
@@ -678,24 +682,18 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   line-height: 0.8;
 }
 
-.manifesto-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: clamp(2rem, 6vw, 6rem);
-  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
-}
-
 .manifesto-note {
-  max-width: 23rem;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  line-height: 1.45;
+  max-width: 40rem;
+  margin-top: clamp(1.75rem, 3vw, 2.75rem);
+  color: rgb(0 0 0 / 0.62);
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+  line-height: 1.5;
 }
 
 .manifesto-title {
   position: relative;
   z-index: 2;
-  font-size: clamp(4rem, 10.4vw, 10rem);
+  font-size: clamp(3.6rem, 9vw, 9rem);
 }
 
 .manifesto-title span,
@@ -744,19 +742,19 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   overflow: hidden;
   background: var(--ink);
   color: var(--white);
-  padding: clamp(4.5rem, 7vw, 7rem) 0;
+  padding: clamp(3.5rem, 5.5vw, 6rem) 0;
 }
 
 .discipline-grid {
   display: grid;
   align-items: center;
-  gap: clamp(2.5rem, 4vw, 4rem);
-  grid-template-columns: minmax(0, 1.12fr) minmax(20rem, 0.88fr);
+  gap: clamp(2rem, 3vw, 3rem);
+  grid-template-columns: minmax(0, 1.28fr) minmax(19rem, 0.72fr);
 }
 
 .discipline-image-frame {
   position: relative;
-  min-height: clamp(32rem, 52vw, 43rem);
+  min-height: clamp(30rem, 46vw, 40rem);
 }
 
 .discipline-image {
@@ -802,7 +800,7 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   position: relative;
   background: var(--paper);
   color: var(--ink);
-  padding: clamp(4.5rem, 7vw, 7rem) 0;
+  padding: clamp(3.5rem, 5.5vw, 6rem) 0;
 }
 
 .section-heading {
@@ -810,12 +808,12 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
   align-items: end;
   gap: clamp(2rem, 4vw, 4rem);
   grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.5fr);
-  margin-bottom: clamp(2.5rem, 4vw, 4rem);
+  margin-bottom: clamp(2rem, 3vw, 3rem);
 }
 
 .section-display-title {
-  margin-top: 1.7rem;
-  font-size: clamp(4.8rem, 10vw, 10rem);
+  margin-top: 1.4rem;
+  font-size: clamp(4.2rem, 8vw, 8rem);
 }
 
 .section-heading-copy {
@@ -881,12 +879,12 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
 .closing-statement {
   background: var(--ink);
   color: var(--white);
-  padding: clamp(5rem, 8vw, 8rem) 0;
+  padding: clamp(3.5rem, 6vw, 6.5rem) 0;
 }
 
 .closing-title {
-  margin: 1.5rem 0 2rem;
-  font-size: clamp(4.3rem, 9.5vw, 9.5rem);
+  margin: 1.25rem 0 1.75rem;
+  font-size: clamp(4rem, 8.5vw, 8.5rem);
 }
 
 .closing-support {
@@ -1736,7 +1734,6 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     padding: 0;
   }
 
-  .manifesto-header,
   .section-heading,
   .products-hero-bottom,
   .products-index-header,
@@ -1745,12 +1742,8 @@ main:not(.cinematic-home):not(.products-page):not(.product-detail-page):not(
     flex-direction: column;
   }
 
-  .manifesto-header {
-    display: flex;
-  }
-
   .manifesto-note {
-    max-width: 18rem;
+    max-width: 28rem;
   }
 
   .manifesto-title {

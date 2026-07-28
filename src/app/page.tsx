@@ -76,14 +76,9 @@ export default async function Home() {
           </div>
           <div className="manifesto-sticky">
             <Container>
-              <div className="manifesto-header">
-                <p className="eyebrow" data-reveal="left">
-                  01 — Manifesto
-                </p>
-                <p className="manifesto-note" data-reveal="up">
-                  Normal is a script. Discipline is how you write your own.
-                </p>
-              </div>
+              <p className="eyebrow" data-reveal="left">
+                01 — Manifesto
+              </p>
 
               <h2 className="manifesto-title">
                 <span data-reveal="mask">You were not built</span>
@@ -94,6 +89,10 @@ export default async function Home() {
                   normal path.
                 </span>
               </h2>
+
+              <p className="manifesto-note" data-reveal="up">
+                Normal is a script. Discipline is how you write your own.
+              </p>
             </Container>
           </div>
         </section>
