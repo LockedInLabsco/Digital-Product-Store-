@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
 import MotionProvider from '@/src/components/MotionProvider'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
@@ -17,21 +18,29 @@ const inter = Inter({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://not4normal.store'),
-  title: {
-    default: 'Not4Normal — Create Your Own Path',
-    template: '%s — Not4Normal',
-  },
-  description:
-    'Premium digital tools for focus, discipline, habits, and personal growth. Not made for normal.',
-  openGraph: {
-    title: 'Not4Normal — Create Your Own Path',
-    description: 'Premium digital tools for focus, discipline, habits, and personal growth.',
-    url: 'https://not4normal.store',
-    siteName: 'Not4Normal',
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const media = await getWebsiteMedia()
+
+  return {
+    metadataBase: new URL('https://not4normal.store'),
+    title: {
+      default: 'Not4Normal — Create Your Own Path',
+      template: '%s — Not4Normal',
+    },
+    description:
+      'Premium digital tools for focus, discipline, habits, and personal growth. Not made for normal.',
+    icons: media.favicon_url ? { icon: media.favicon_url } : undefined,
+    openGraph: {
+      title: 'Not4Normal — Create Your Own Path',
+      description: 'Premium digital tools for focus, discipline, habits, and personal growth.',
+      url: 'https://not4normal.store',
+      siteName: 'Not4Normal',
+      type: 'website',
+      images: media.social_share_image_url
+        ? [{ url: media.social_share_image_url, width: 1200, height: 630 }]
+        : undefined,
+    },
+  }
 }
 
 export default function RootLayout({

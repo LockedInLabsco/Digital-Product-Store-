@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import NewsletterForm from '@/src/components/NewsletterForm'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
 const CATEGORIES = [
   {
@@ -35,11 +37,12 @@ const BENEFITS = [
 
 export default async function Home() {
   const { products, error } = await getActiveProducts()
+  const media = await getWebsiteMedia()
   const featuredProducts = products.slice(0, 6)
 
   return (
     <>
-      <Navbar />
+      <Navbar media={media} />
       <main>
         {/* Hero */}
         <section className="border-b border-ink/10 bg-cream">
@@ -72,28 +75,65 @@ export default async function Home() {
               </div>
             </div>
 
-            <div
-              className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10 bg-gradient-to-br from-beige via-offwhite to-cream"
-              data-reveal="fade"
-              aria-hidden="true"
-            >
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-serif text-6xl tracking-tight text-ink/15 sm:text-7xl">N4N</span>
+            {media.hero_image_url ? (
+              <div
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10"
+                data-reveal="fade"
+              >
+                <Image
+                  src={media.hero_image_url}
+                  alt={media.hero_image_alt || 'Not4Normal'}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                />
               </div>
-              <div className="absolute bottom-6 left-6 right-6 border-t border-ink/10 pt-4">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink/40">
-                  Est. 2026 — Not4Normal
-                </p>
+            ) : (
+              <div
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10 bg-gradient-to-br from-beige via-offwhite to-cream"
+                data-reveal="fade"
+                aria-hidden="true"
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-serif text-6xl tracking-tight text-ink/15 sm:text-7xl">N4N</span>
+                </div>
+                <div className="absolute bottom-6 left-6 right-6 border-t border-ink/10 pt-4">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink/40">
+                    Est. 2026 — Not4Normal
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </Container>
         </section>
 
         {/* About / brand introduction */}
         <section id="about" className="scroll-mt-20 bg-offwhite py-20 sm:py-24">
-          <Container className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-            <p className="eyebrow text-gold" data-reveal="up">About Not4Normal</p>
+          <Container
+            className={
+              media.about_image_url
+                ? 'grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-16'
+                : 'grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16'
+            }
+          >
+            {media.about_image_url ? (
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm" data-reveal="fade">
+                <Image
+                  src={media.about_image_url}
+                  alt={media.about_image_alt || 'Not4Normal'}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <p className="eyebrow text-gold" data-reveal="up">About Not4Normal</p>
+            )}
             <div data-reveal="up">
+              {media.about_image_url && (
+                <p className="eyebrow text-gold mb-4">About Not4Normal</p>
+              )}
               <p className="font-serif text-2xl leading-relaxed text-ink sm:text-3xl">
                 Not4Normal creates practical digital tools for people who refuse to
                 settle for average.
@@ -212,8 +252,21 @@ export default async function Home() {
         </section>
 
         {/* Manifesto */}
-        <section id="manifesto" className="scroll-mt-20 bg-ink py-20 text-cream sm:py-24">
-          <Container className="max-w-3xl text-center">
+        <section id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-20 text-cream sm:py-24">
+          {media.manifesto_image_url && (
+            <>
+              <Image
+                src={media.manifesto_image_url}
+                alt={media.manifesto_image_alt || ''}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-ink/70" aria-hidden="true" />
+            </>
+          )}
+          <Container className="relative max-w-3xl text-center">
             <p className="eyebrow text-gold" data-reveal="fade">This is your move</p>
             <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-4xl" data-reveal="up">
               Normal is the default.
@@ -227,8 +280,21 @@ export default async function Home() {
         </section>
 
         {/* Newsletter */}
-        <section className="bg-charcoal py-16 text-cream sm:py-20">
-          <Container className="flex flex-col items-center gap-6 text-center">
+        <section className="relative overflow-hidden bg-charcoal py-16 text-cream sm:py-20">
+          {media.newsletter_image_url && (
+            <>
+              <Image
+                src={media.newsletter_image_url}
+                alt={media.newsletter_image_alt || ''}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-charcoal/75" aria-hidden="true" />
+            </>
+          )}
+          <Container className="relative flex flex-col items-center gap-6 text-center">
             <div data-reveal="up">
               <h2 className="font-serif text-2xl sm:text-3xl">Join the Not4Normal Community</h2>
               <p className="mt-3 max-w-md text-sm text-cream/60">
@@ -242,8 +308,21 @@ export default async function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="bg-cream py-16 sm:py-20">
-          <Container className="flex flex-col items-center gap-6 text-center">
+        <section className="relative overflow-hidden bg-cream py-16 sm:py-20">
+          {media.final_cta_image_url && (
+            <>
+              <Image
+                src={media.final_cta_image_url}
+                alt={media.final_cta_image_alt || ''}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-cream/80" aria-hidden="true" />
+            </>
+          )}
+          <Container className="relative flex flex-col items-center gap-6 text-center">
             <h2 className="font-serif text-3xl text-ink sm:text-4xl" data-reveal="up">
               Create Your Own Path.
             </h2>
@@ -257,7 +336,7 @@ export default async function Home() {
           </Container>
         </section>
       </main>
-      <Footer />
+      <Footer media={media} />
     </>
   )
 }

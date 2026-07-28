@@ -8,6 +8,7 @@ import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import PaidProductButton from '@/src/components/PaidProductButton'
 import { getActiveProductBySlug } from '@/src/lib/supabase/queries'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { formatPrice } from '@/src/lib/utils/format'
 
 interface ProductPageProps {
@@ -36,11 +37,12 @@ const faqItems = [
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { product, error } = await getActiveProductBySlug(params.slug)
+  const media = await getWebsiteMedia()
 
   if (!product) {
     return (
       <>
-        <Navbar />
+        <Navbar media={media} />
         <main className="flex min-h-[60vh] items-center bg-cream">
           <Container className="max-w-2xl text-center">
             <p className="eyebrow text-gold">
@@ -62,7 +64,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </Link>
           </Container>
         </main>
-        <Footer />
+        <Footer media={media} />
       </>
     )
   }
@@ -120,7 +122,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
-      <Navbar />
+      <Navbar media={media} />
       <main className="bg-cream">
         <section className="py-12 sm:py-16">
           <Container>
@@ -228,7 +230,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Container>
         </section>
       </main>
-      <Footer />
+      <Footer media={media} />
     </>
   )
 }

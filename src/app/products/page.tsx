@@ -3,13 +3,15 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
 export default async function ProductsPage() {
   const { products, error } = await getActiveProducts()
+  const media = await getWebsiteMedia()
 
   return (
     <>
-      <Navbar />
+      <Navbar media={media} />
       <main className="bg-cream">
         <section className="border-b border-ink/10 py-16 sm:py-20">
           <Container>
@@ -62,7 +64,7 @@ export default async function ProductsPage() {
           </Container>
         </section>
       </main>
-      <Footer />
+      <Footer media={media} />
     </>
   )
 }

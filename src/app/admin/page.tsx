@@ -84,13 +84,15 @@ export default function AdminPage() {
               <span className="text-sm text-gray-500">Coming soon</span>
             </div>
 
-            <div className="border border-gray-200 rounded-lg p-6 bg-gray-100 opacity-50 cursor-not-allowed h-full">
-              <h3 className="text-lg font-bold mb-2">Settings</h3>
-              <p className="text-gray-600 mb-4">
-                Configure store settings
-              </p>
-              <span className="text-sm text-gray-500">Coming soon</span>
-            </div>
+            <Link href="/admin/media">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
+                <h3 className="text-lg font-bold mb-2">Website Media</h3>
+                <p className="text-gray-600 mb-4">
+                  Manage logos, favicon, and homepage images
+                </p>
+                <span className="text-sm text-black font-medium">Manage Media -&gt;</span>
+              </div>
+            </Link>
           </div>
         </div>
       </Container>

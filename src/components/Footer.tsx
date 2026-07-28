@@ -1,15 +1,20 @@
 import Link from 'next/link'
 import Container from './Container'
 import BrandMark from './BrandMark'
+import { WebsiteMedia } from '@/src/types/settings'
 
-export default function Footer() {
+interface FooterProps {
+  media?: WebsiteMedia
+}
+
+export default function Footer({ media }: FooterProps) {
   return (
     <footer className="bg-ink text-cream">
       <Container className="py-16 sm:py-20">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
           <div>
             <Link href="/" className="inline-block">
-              <BrandMark className="text-cream" />
+              <BrandMark className="text-cream" logoUrl={media?.logo_light_url} />
             </Link>
             <p className="mt-4 max-w-xs text-sm text-cream/60">
               Not made for normal. Tools for people building their way out.

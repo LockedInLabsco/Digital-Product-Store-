@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Container from './Container'
 import BrandMark from './BrandMark'
+import { WebsiteMedia } from '@/src/types/settings'
 
 const NAV_LINKS = [
   { href: '/products', label: 'Products' },
@@ -11,7 +12,11 @@ const NAV_LINKS = [
   { href: '/#manifesto', label: 'Manifesto' },
 ]
 
-export default function Navbar() {
+interface NavbarProps {
+  media?: WebsiteMedia
+}
+
+export default function Navbar({ media }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -27,7 +32,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-40 border-b border-ink/10 bg-cream/95 backdrop-blur">
       <Container className="flex h-[76px] items-center justify-between">
         <Link href="/" aria-label="Not4Normal home" onClick={closeMenu}>
-          <BrandMark />
+          <BrandMark logoUrl={media?.logo_dark_url} />
         </Link>
 
         <div className="hidden items-center gap-9 md:flex">

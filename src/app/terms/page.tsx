@@ -3,11 +3,14 @@ import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import Button from '@/src/components/Button'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const media = await getWebsiteMedia()
+
   return (
     <>
-      <Navbar />
+      <Navbar media={media} />
       <main className="bg-cream">
         <section className="py-12 sm:py-16">
           <Container>
@@ -100,7 +103,7 @@ export default function TermsPage() {
           </Container>
         </section>
       </main>
-      <Footer />
+      <Footer media={media} />
     </>
   )
 }
