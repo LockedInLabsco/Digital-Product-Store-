@@ -29,16 +29,20 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       'Premium digital tools for focus, discipline, habits, and personal growth. Not made for normal.',
-    icons: media.favicon_url ? { icon: media.favicon_url } : undefined,
+    icons: { icon: media.favicon_url || '/favicon.svg' },
     openGraph: {
       title: 'Not4Normal — Create Your Own Path',
       description: 'Premium digital tools for focus, discipline, habits, and personal growth.',
       url: 'https://not4normal.store',
       siteName: 'Not4Normal',
       type: 'website',
-      images: media.social_share_image_url
-        ? [{ url: media.social_share_image_url, width: 1200, height: 630 }]
-        : undefined,
+      images: [
+        {
+          url: media.social_share_image_url || '/og-image.png',
+          width: 1200,
+          height: 630,
+        },
+      ],
     },
   }
 }
@@ -50,7 +54,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfairDisplay.variable} ${inter.variable}`}>
-      <body className="bg-cream text-ink antialiased font-sans">
+      <body className="bg-ink text-cream antialiased font-sans">
         <MotionProvider />
         {children}
       </body>

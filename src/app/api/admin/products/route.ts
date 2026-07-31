@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
+import { isAdminRequest } from '@/src/lib/admin/auth'
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 // GET all products (for admin listing)
 export async function GET(request: NextRequest) {
   console.log('🔍 [GET /api/admin/products] Fetching all products for admin')
 
   try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Get all products including inactive ones
     const { data, error } = await supabaseServer
       .from('products')
@@ -36,6 +43,10 @@ export async function POST(request: NextRequest) {
   console.log('📝 [POST /api/admin/products] Creating new product')
 
   try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
 
     // Validate required fields
@@ -58,7 +69,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!SLUG_PATTERN.test(body.slug)) {
+      console.error(`❌ Invalid slug format: ${body.slug}`)
+      return NextResponse.json(
+        { error: 'Slug must be lowercase letters, numbers, and hyphens only (e.g. "my-product-name")' },
+        { status: 400 }
+      )
+    }
+
     console.log(`📦 Creating product: "${body.title}"`)
+
+    const { data: existingProduct } = await supabaseServer
+      .from('products')
+      .select('id')
+      .eq('slug', body.slug)
+      .maybeSingle()
+
+    if (existingProduct) {
+      console.error(`❌ Duplicate slug: ${body.slug}`)
+      return NextResponse.json(
+        { error: `A product with the slug "${body.slug}" already exists. Please choose a different slug.` },
+        { status: 409 }
+      )
+    }
 
     const { data, error } = await supabaseServer
       .from('products')
@@ -82,6 +115,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('❌ Insert error:', error.message)
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: `A product with the slug "${body.slug}" already exists. Please choose a different slug.` },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: 'Failed to create product' },
         { status: 500 }

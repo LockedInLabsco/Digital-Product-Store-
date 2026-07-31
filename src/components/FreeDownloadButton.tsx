@@ -68,7 +68,7 @@ export default function FreeDownloadButton({
   if (submitted && success) {
     return (
       <div
-        className="rounded-sm border border-ink bg-ink p-5 text-cream"
+        className="rounded-sm border border-gold/30 bg-offwhite p-5 text-cream"
         role="status"
         aria-live="polite"
       >
@@ -108,7 +108,7 @@ export default function FreeDownloadButton({
           aria-label={`Email address for ${productTitle}`}
           required
           disabled={loading}
-          className="w-full rounded-sm border border-ink/20 bg-offwhite px-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 disabled:bg-beige disabled:text-ink/40"
+          className="w-full rounded-sm border border-cream/20 bg-offwhite px-4 py-3 text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink disabled:bg-charcoal disabled:text-cream/40"
         />
       </div>
 
@@ -123,14 +123,14 @@ export default function FreeDownloadButton({
 
       {error && (
         <div
-          className="rounded-sm border border-ink/20 bg-offwhite p-4 text-ink"
+          className="rounded-sm border border-cream/20 bg-offwhite p-4 text-cream"
           role="alert"
           aria-live="assertive"
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em]">
             We couldn&apos;t send your guide
           </p>
-          <p className="text-sm text-ink/70">
+          <p className="text-sm text-cream/70">
             {error}
           </p>
         </div>

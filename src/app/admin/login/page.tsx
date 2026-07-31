@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Container from '@/src/components/Container'
-import Button from '@/src/components/Button'
+import Button from '@/src/components/admin/AdminButton'
 
 export default function AdminLoginPage() {
   const router = useRouter()

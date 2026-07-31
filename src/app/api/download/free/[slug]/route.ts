@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    const slug = params.slug
+    const slug = params.slug ? decodeURIComponent(params.slug) : params.slug
 
     if (!slug) {
       return NextResponse.json(

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
-import Button from '@/src/components/Button'
+import Button from '@/src/components/admin/AdminButton'
 
 interface Product {
   id: string

@@ -45,30 +45,30 @@ export default async function Home() {
       <Navbar media={media} />
       <main>
         {/* Hero */}
-        <section className="border-b border-ink/10 bg-cream">
+        <section className="border-b border-cream/10 bg-ink">
           <Container className="grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:py-28">
             <div data-reveal="up">
               <p className="eyebrow text-gold">For the ones who refuse the default</p>
-              <h1 className="mt-5 font-serif text-5xl leading-[1.08] text-ink sm:text-6xl lg:text-[3.75rem]">
+              <h1 className="mt-5 font-serif text-5xl leading-[1.08] text-cream sm:text-6xl lg:text-[3.75rem]">
                 Not made for normal.
               </h1>
-              <p className="mt-5 max-w-md text-lg text-ink/70">
+              <p className="mt-5 max-w-md text-lg text-cream/70">
                 Build better systems. Create your own path.
               </p>
-              <p className="mt-3 max-w-md text-base text-ink/55">
+              <p className="mt-3 max-w-md text-base text-cream/55">
                 Premium digital tools for focus, discipline, habits, and personal
                 growth.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
                   href="/products"
-                  className="inline-flex items-center justify-center rounded-sm bg-ink px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
+                  className="inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
                 >
                   Explore Products
                 </Link>
                 <Link
                   href="/#about"
-                  className="inline-flex items-center justify-center rounded-sm border border-ink/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:border-ink"
+                  className="inline-flex items-center justify-center rounded-sm border border-cream/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-cream"
                 >
                   Discover the Brand
                 </Link>
@@ -77,7 +77,7 @@ export default async function Home() {
 
             {media.hero_image_url ? (
               <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10"
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-cream/10"
                 data-reveal="fade"
               >
                 <Image
@@ -91,15 +91,15 @@ export default async function Home() {
               </div>
             ) : (
               <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-ink/10 bg-gradient-to-br from-beige via-offwhite to-cream"
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-cream/10 bg-gradient-to-br from-offwhite via-charcoal to-ink"
                 data-reveal="fade"
                 aria-hidden="true"
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-serif text-6xl tracking-tight text-ink/15 sm:text-7xl">N4N</span>
+                  <span className="font-serif text-6xl tracking-tight text-cream/15 sm:text-7xl">N4N</span>
                 </div>
-                <div className="absolute bottom-6 left-6 right-6 border-t border-ink/10 pt-4">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink/40">
+                <div className="absolute bottom-6 left-6 right-6 border-t border-cream/10 pt-4">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-cream/40">
                     Est. 2026 — Not4Normal
                   </p>
                 </div>
@@ -134,11 +134,11 @@ export default async function Home() {
               {media.about_image_url && (
                 <p className="eyebrow text-gold mb-4">About Not4Normal</p>
               )}
-              <p className="font-serif text-2xl leading-relaxed text-ink sm:text-3xl">
+              <p className="font-serif text-2xl leading-relaxed text-cream sm:text-3xl">
                 Not4Normal creates practical digital tools for people who refuse to
                 settle for average.
               </p>
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink/65">
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-cream/65">
                 The products help users improve focus, build discipline, develop
                 better habits, and create their own path — no noise, no
                 subscriptions, no complicated systems.
@@ -148,30 +148,30 @@ export default async function Home() {
         </section>
 
         {/* Featured products */}
-        <section className="bg-cream py-20 sm:py-24">
+        <section className="bg-ink py-20 sm:py-24">
           <Container>
             <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
               <div data-reveal="up">
                 <p className="eyebrow text-gold">Featured</p>
-                <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+                <h2 className="mt-3 font-serif text-3xl text-cream sm:text-4xl">
                   Tools for the work.
                 </h2>
               </div>
               <Link
                 href="/products"
-                className="text-xs font-semibold uppercase tracking-[0.1em] text-ink/70 underline underline-offset-4 transition-colors hover:text-ink"
+                className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/70 underline underline-offset-4 transition-colors hover:text-cream"
               >
                 View all products
               </Link>
             </div>
 
             {error ? (
-              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
-                <p className="eyebrow text-ink/40">Connection interrupted</p>
-                <h3 className="mt-3 font-serif text-2xl text-ink">
+              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-cream/40">Connection interrupted</p>
+                <h3 className="mt-3 font-serif text-2xl text-cream">
                   Products are temporarily unavailable.
                 </h3>
-                <p className="mt-2 text-ink/55">Please return in a little while.</p>
+                <p className="mt-2 text-cream/55">Please return in a little while.</p>
               </div>
             ) : featuredProducts.length > 0 ? (
               <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -190,10 +190,10 @@ export default async function Home() {
                 ))}
               </div>
             ) : (
-              <div className="border-y border-ink/10 py-16 text-center" data-reveal="up">
-                <p className="eyebrow text-ink/40">The first release is coming</p>
-                <h3 className="mt-3 font-serif text-2xl text-ink">No products are live yet.</h3>
-                <p className="mt-2 text-ink/55">
+              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+                <p className="eyebrow text-cream/40">The first release is coming</p>
+                <h3 className="mt-3 font-serif text-2xl text-cream">No products are live yet.</h3>
+                <p className="mt-2 text-cream/55">
                   The next Not4Normal tool will appear here when it is ready.
                 </p>
               </div>
@@ -206,7 +206,7 @@ export default async function Home() {
           <Container>
             <div className="mb-12" data-reveal="up">
               <p className="eyebrow text-gold">What we create</p>
-              <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+              <h2 className="mt-3 font-serif text-3xl text-cream sm:text-4xl">
                 Built with a clear job.
               </h2>
             </div>
@@ -218,8 +218,8 @@ export default async function Home() {
                   data-reveal="up"
                   data-reveal-delay={String(index % 2)}
                 >
-                  <h3 className="font-serif text-lg text-ink">{category.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink/60">
+                  <h3 className="font-serif text-lg text-cream">{category.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-cream/60">
                     {category.description}
                   </p>
                 </div>
@@ -229,11 +229,11 @@ export default async function Home() {
         </section>
 
         {/* Benefits */}
-        <section className="bg-cream py-20 sm:py-24">
+        <section className="bg-ink py-20 sm:py-24">
           <Container className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
             <div data-reveal="up">
               <p className="eyebrow text-gold">Why Not4Normal</p>
-              <h2 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
+              <h2 className="mt-3 font-serif text-3xl text-cream sm:text-4xl">
                 Practical progress, not noise.
               </h2>
             </div>
@@ -241,7 +241,7 @@ export default async function Home() {
               {BENEFITS.map((benefit) => (
                 <li
                   key={benefit}
-                  className="flex items-start gap-3 border-b border-ink/10 pb-4 text-ink/75"
+                  className="flex items-start gap-3 border-b border-cream/10 pb-4 text-cream/75"
                 >
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold" aria-hidden="true" />
                   <span>{benefit}</span>
@@ -308,7 +308,7 @@ export default async function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="relative overflow-hidden bg-cream py-16 sm:py-20">
+        <section className="relative overflow-hidden bg-ink py-16 sm:py-20">
           {media.final_cta_image_url && (
             <>
               <Image
@@ -319,16 +319,16 @@ export default async function Home() {
                 className="object-cover"
                 aria-hidden="true"
               />
-              <div className="absolute inset-0 bg-cream/80" aria-hidden="true" />
+              <div className="absolute inset-0 bg-ink/80" aria-hidden="true" />
             </>
           )}
           <Container className="relative flex flex-col items-center gap-6 text-center">
-            <h2 className="font-serif text-3xl text-ink sm:text-4xl" data-reveal="up">
+            <h2 className="font-serif text-3xl text-cream sm:text-4xl" data-reveal="up">
               Create Your Own Path.
             </h2>
             <Link
               href="/products"
-              className="inline-flex items-center justify-center rounded-sm bg-ink px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
+              className="inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
               data-reveal="up"
             >
               Explore Products

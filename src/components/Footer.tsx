@@ -22,7 +22,7 @@ export default function Footer({ media }: FooterProps) {
           </div>
 
           <div>
-            <p className="eyebrow mb-5 text-cream/45">Navigate</p>
+            <p className="eyebrow mb-5 text-gold/80">Navigate</p>
             <ul className="space-y-3 text-sm text-cream/70">
               <li><Link href="/products" className="transition-colors hover:text-cream">Products</Link></li>
               <li><Link href="/#about" className="transition-colors hover:text-cream">About</Link></li>
@@ -32,7 +32,7 @@ export default function Footer({ media }: FooterProps) {
           </div>
 
           <div>
-            <p className="eyebrow mb-5 text-cream/45">Legal</p>
+            <p className="eyebrow mb-5 text-gold/80">Legal</p>
             <ul className="space-y-3 text-sm text-cream/70">
               <li><Link href="/privacy" className="transition-colors hover:text-cream">Privacy</Link></li>
               <li><Link href="/terms" className="transition-colors hover:text-cream">Terms</Link></li>
@@ -41,7 +41,7 @@ export default function Footer({ media }: FooterProps) {
           </div>
 
           <div>
-            <p className="eyebrow mb-5 text-cream/45">Social</p>
+            <p className="eyebrow mb-5 text-gold/80">Social</p>
             <ul className="space-y-3 text-sm text-cream/50">
               <li>Instagram — Soon</li>
               <li>YouTube — Soon</li>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Button from '../Button'
+import Button from './AdminButton'
 
 interface ProductFormData {
   title: string
@@ -70,6 +70,10 @@ export default function ProductForm({
     }
     if (!formData.slug.trim()) {
       setError('Slug is required')
+      return
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.slug.trim())) {
+      setError('Slug must be lowercase letters, numbers, and hyphens only (e.g. "my-product-name")')
       return
     }
 

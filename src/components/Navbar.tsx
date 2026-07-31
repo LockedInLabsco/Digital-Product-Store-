@@ -29,10 +29,10 @@ export default function Navbar({ media }: NavbarProps) {
   const closeMenu = () => setIsOpen(false)
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-ink/10 bg-cream/95 backdrop-blur">
+    <nav className="sticky top-0 z-40 border-b border-cream/10 bg-ink/95 backdrop-blur">
       <Container className="flex h-[76px] items-center justify-between">
         <Link href="/" aria-label="Not4Normal home" onClick={closeMenu}>
-          <BrandMark logoUrl={media?.logo_dark_url} />
+          <BrandMark logoUrl={media?.logo_light_url} />
         </Link>
 
         <div className="hidden items-center gap-9 md:flex">
@@ -40,14 +40,14 @@ export default function Navbar({ media }: NavbarProps) {
             <Link
               key={link.href}
               href={link.href}
-              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink/70 transition-colors hover:text-ink"
+              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-cream"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/products"
-            className="inline-flex items-center justify-center rounded-sm bg-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-charcoal"
+            className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
           >
             Explore Products
           </Link>
@@ -62,12 +62,12 @@ export default function Navbar({ media }: NavbarProps) {
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <span
-            className={`block h-px w-6 bg-ink transition-transform duration-200 ${
+            className={`block h-px w-6 bg-cream transition-transform duration-200 ${
               isOpen ? 'translate-y-[6.5px] rotate-45' : ''
             }`}
           />
           <span
-            className={`block h-px w-6 bg-ink transition-transform duration-200 ${
+            className={`block h-px w-6 bg-cream transition-transform duration-200 ${
               isOpen ? '-rotate-45' : ''
             }`}
           />
@@ -76,7 +76,7 @@ export default function Navbar({ media }: NavbarProps) {
 
       <div
         id="mobile-navigation"
-        className={`overflow-hidden border-t border-ink/10 bg-cream transition-[max-height] duration-300 md:hidden ${
+        className={`overflow-hidden border-t border-cream/10 bg-ink transition-[max-height] duration-300 md:hidden ${
           isOpen ? 'max-h-72' : 'max-h-0 border-t-0'
         }`}
       >
@@ -86,7 +86,7 @@ export default function Navbar({ media }: NavbarProps) {
               key={link.href}
               href={link.href}
               onClick={closeMenu}
-              className="py-3 text-sm font-semibold uppercase tracking-[0.1em] text-ink/80"
+              className="py-3 text-sm font-semibold uppercase tracking-[0.1em] text-cream/80"
             >
               {link.label}
             </Link>
@@ -94,7 +94,7 @@ export default function Navbar({ media }: NavbarProps) {
           <Link
             href="/products"
             onClick={closeMenu}
-            className="mt-3 inline-flex items-center justify-center rounded-sm bg-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
+            className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink"
           >
             Explore Products
           </Link>

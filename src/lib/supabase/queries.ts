@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { supabase } from './client'
 import { DatabaseProduct, Product } from '@/src/types/product'
@@ -57,7 +58,7 @@ export async function getActiveProducts(): Promise<ActiveProductsResult> {
   }
 }
 
-export async function getActiveProductBySlug(
+export const getActiveProductBySlug = cache(async function getActiveProductBySlug(
   slug: string
 ): Promise<ActiveProductResult> {
   noStore()
@@ -106,4 +107,4 @@ export async function getActiveProductBySlug(
     })
     return { product: undefined, error: true }
   }
-}
+})

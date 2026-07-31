@@ -37,7 +37,7 @@ export default function ProductPreview({
 
   if (coverImageUrl && !imageError) {
     return (
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-beige">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-charcoal">
         <Image
           src={coverImageUrl}
           alt={productTitle}
@@ -53,9 +53,9 @@ export default function ProductPreview({
   }
 
   return (
-    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center bg-beige p-6 text-center">
-      <span className="font-serif text-2xl text-ink/30">N4N</span>
-      <p className="mt-2 text-sm font-medium text-ink/60">{currentPreview?.label || productTitle}</p>
+    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center bg-charcoal p-6 text-center">
+      <span className="font-serif text-2xl text-cream/30">N4N</span>
+      <p className="mt-2 text-sm font-medium text-cream/60">{currentPreview?.label || productTitle}</p>
     </div>
   )
 }

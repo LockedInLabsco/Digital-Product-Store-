@@ -6,9 +6,24 @@
   box-sizing: border-box;
 }
 
+/*
+ * Not4Normal dark-first theme palette.
+ * This is the single source of truth for every brand color in the app.
+ * tailwind.config.ts reads these variables to generate utility classes
+ * (bg-ink, text-cream, border-gold, etc.) — edit hex values ONLY here.
+ */
 :root {
-  --hairline-light: rgb(21 19 15 / 0.1);
-  --hairline-dark: rgb(246 241 231 / 0.14);
+  --color-ink: 11 11 10; /* #0B0B0A — main background + dark button text */
+  --color-charcoal: 21 21 18; /* #151512 — secondary/surface background */
+  --color-offwhite: 28 27 23; /* #1C1B17 — elevated card/panel background */
+  --color-cream: 243 235 221; /* #F3EBDD — primary text, light borders */
+  --color-beige: 184 174 157; /* #B8AE9D — secondary/supporting text */
+  --color-dust: 133 125 112; /* #857D70 — muted/tertiary text */
+  --color-gold: 184 154 90; /* #B89A5A — accent: labels, borders, key actions */
+  --color-gold-hover: 201 173 107; /* #C9AD6B — gold hover state */
+
+  --hairline-light: rgb(var(--color-cream) / 0.1);
+  --hairline-dark: rgb(var(--color-cream) / 0.14);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --duration: 560ms;
 }
@@ -20,11 +35,12 @@ html {
 body {
   min-width: 320px;
   overflow-x: clip;
+  background-color: rgb(var(--color-ink));
 }
 
 ::selection {
-  background: #15130f;
-  color: #f6f1e7;
+  background: rgb(var(--color-gold));
+  color: rgb(var(--color-ink));
 }
 
 .eyebrow {

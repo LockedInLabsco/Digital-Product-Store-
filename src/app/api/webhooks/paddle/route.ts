@@ -400,6 +400,7 @@ export async function POST(request: NextRequest) {
       email: customerEmail,
       productTitle: product.title,
       downloadUrl: signedUrl,
+      isFree: false,
     })
 
     console.log('[Paddle Webhook] Resend delivery result', emailResult)

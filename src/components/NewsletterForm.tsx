@@ -1,42 +1,18 @@
-'use client'
-
-import { useState } from 'react'
-import Button from './Button'
-
+// No email-list provider is connected yet. Rather than fake a
+// successful signup, this shows an honest "coming soon" state.
 export default function NewsletterForm() {
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Integration point: wire this up to a real newsletter/email-list
-    // provider when one exists. No backend call is made yet.
-    setSubmitted(true)
-    setEmail('')
-  }
-
-  if (submitted) {
-    return (
-      <p className="text-sm font-medium text-cream/80">
-        Thanks — we&apos;ll be in touch.
-      </p>
-    )
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
+    <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
       <input
         type="email"
-        required
+        disabled
         placeholder="your@email.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
         aria-label="Email address"
-        className="w-full flex-1 rounded-sm border border-cream/25 bg-transparent px-4 py-3 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:ring-2 focus:ring-cream/50"
+        className="w-full flex-1 cursor-not-allowed rounded-sm border border-cream/15 bg-transparent px-4 py-3 text-sm text-cream/40 placeholder:text-cream/30"
       />
-      <Button type="submit" variant="inverse" className="whitespace-nowrap">
-        Subscribe
-      </Button>
-    </form>
+      <span className="inline-flex items-center justify-center whitespace-nowrap rounded-sm border border-cream/25 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream/50">
+        Coming soon
+      </span>
+    </div>
   )
 }

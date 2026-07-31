@@ -16,7 +16,7 @@ export async function POST(
 ) {
   console.log('\n🚀 ===== EMAIL DOWNLOAD API ROUTE CALLED =====')
   try {
-    const slug = params.slug
+    const slug = params.slug ? decodeURIComponent(params.slug) : params.slug
     console.log(`📋 SLUG: ${slug}`)
 
     if (!slug) {
@@ -123,6 +123,7 @@ export async function POST(
       email,
       productTitle: product.title,
       downloadUrl: signedUrl,
+      isFree: true,
     })
 
     console.log(`📧 Email result:`, emailResult)

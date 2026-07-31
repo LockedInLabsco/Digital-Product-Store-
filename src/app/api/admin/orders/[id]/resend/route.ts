@@ -105,6 +105,7 @@ export async function POST(
       email: order.customer_email,
       productTitle: product.title || order.product_title,
       downloadUrl: signedUrl,
+      isFree: false,
     })
 
     if (!emailResult.success) {

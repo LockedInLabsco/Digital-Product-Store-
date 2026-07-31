@@ -6,13 +6,20 @@ interface SendDownloadEmailParams {
   email: string
   productTitle: string
   downloadUrl: string
+  isFree?: boolean
 }
 
 export async function sendDownloadEmail({
   email,
   productTitle,
   downloadUrl,
+  isFree = true,
 }: SendDownloadEmailParams): Promise<{ success: boolean; error?: string }> {
+  const subject = isFree ? 'Your free guide is ready' : 'Your purchase is ready to download'
+  const heading = isFree ? 'Your guide is ready' : 'Your purchase is ready'
+  const introLine = isFree
+    ? `Your copy of <strong>${productTitle}</strong> is ready to download.`
+    : `Thank you for your purchase. Your copy of <strong>${productTitle}</strong> is ready to download.`
   console.log('\n📧 ===== RESEND EMAIL DEBUG =====')
   console.log(`🔑 RESEND_API_KEY exists: ${!!RESEND_API_KEY}`)
   console.log(`📧 FROM_EMAIL: ${FROM_EMAIL}`)
@@ -99,12 +106,12 @@ export async function sendDownloadEmail({
 <body>
   <div class="container">
     <div class="header">
-      <h1>Your guide is ready</h1>
+      <h1>${heading}</h1>
     </div>
 
     <div class="content">
       <p>Hi,</p>
-      <p>Your copy of <strong>${productTitle}</strong> is ready to download.</p>
+      <p>${introLine}</p>
       <p><a href="${downloadUrl}" class="button">Download Now</a></p>
       <p class="expiry">This link expires in 1 hour</p>
     </div>
@@ -120,7 +127,7 @@ export async function sendDownloadEmail({
     const payload = {
       from: FROM_EMAIL,
       to: email,
-      subject: 'Your free guide is ready',
+      subject,
       html: htmlContent,
     }
 
