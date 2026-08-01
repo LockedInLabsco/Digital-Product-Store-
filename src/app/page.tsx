@@ -1,3 +1,5 @@
+import { existsSync } from 'fs'
+import path from 'path'
 import Link from 'next/link'
 import Image from 'next/image'
 import Container from '@/src/components/Container'
@@ -5,8 +7,19 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import NewsletterForm from '@/src/components/NewsletterForm'
+import HeroImageSlider from '@/src/components/home/HeroImageSlider'
+import { HERO_SLIDES, type HeroSlide } from '@/src/components/home/heroSlides'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
+
+// Server-only: only pass slides through to the client slider whose file
+// has actually been uploaded to /public, so a missing image never
+// causes a broken-image flash — it's silently skipped instead.
+function getAvailableHeroSlides(): HeroSlide[] {
+  return HERO_SLIDES.filter((slide) =>
+    existsSync(path.join(process.cwd(), 'public', slide.src))
+  )
+}
 
 const CATEGORIES = [
   {
@@ -39,6 +52,7 @@ export default async function Home() {
   const { products, error } = await getActiveProducts()
   const media = await getWebsiteMedia()
   const featuredProducts = products.slice(0, 6)
+  const heroSlides = getAvailableHeroSlides()
 
   return (
     <>
@@ -75,36 +89,11 @@ export default async function Home() {
               </div>
             </div>
 
-            {media.hero_image_url ? (
-              <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10"
-                data-reveal="fade"
-              >
-                <Image
-                  src={media.hero_image_url}
-                  alt={media.hero_image_alt || 'Not4Normal'}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10 bg-gradient-to-br from-offwhite via-charcoal to-ink"
-                data-reveal="fade"
-                aria-hidden="true"
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-serif text-6xl tracking-tight text-cream/15 sm:text-7xl">N4N</span>
-                </div>
-                <div className="absolute bottom-6 left-6 right-6 border-t border-line/10 pt-4">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-cream/40">
-                    Est. 2026 — Not4Normal
-                  </p>
-                </div>
-              </div>
-            )}
+            <HeroImageSlider
+              slides={heroSlides}
+              fallbackImageUrl={media.hero_image_url}
+              fallbackImageAlt={media.hero_image_alt}
+            />
           </Container>
         </section>
 
