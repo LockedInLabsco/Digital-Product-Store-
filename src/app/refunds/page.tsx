@@ -16,7 +16,7 @@ export default async function RefundsPage() {
           <Container>
             <Link
               href="/"
-              className="text-cream/55 hover:text-cream mb-6 sm:mb-8 inline-block text-sm"
+              className="text-cream/55 hover:text-gold mb-6 sm:mb-8 inline-block text-sm"
             >
               ← Back Home
             </Link>
@@ -27,7 +27,7 @@ export default async function RefundsPage() {
           </Container>
         </section>
 
-        <section className="py-16 sm:py-20 border-t border-cream/10">
+        <section className="py-16 sm:py-20 border-t border-line/10">
           <Container>
             <div className="max-w-3xl prose prose-sm">
               <h2 className="font-serif text-2xl mb-4 mt-8 text-cream">Digital Products Are Non-Refundable</h2>
@@ -84,7 +84,7 @@ export default async function RefundsPage() {
           </Container>
         </section>
 
-        <section className="py-16 sm:py-20 border-t border-cream/10 bg-offwhite">
+        <section className="py-16 sm:py-20 border-t border-line/10 bg-offwhite">
           <Container>
             <div className="text-center max-w-2xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl mb-6 text-cream">Need Help?</h2>

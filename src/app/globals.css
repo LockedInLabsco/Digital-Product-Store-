@@ -7,23 +7,33 @@
 }
 
 /*
- * Not4Normal dark-first theme palette.
+ * Not4Normal dark navy / electric-blue theme palette.
  * This is the single source of truth for every brand color in the app.
- * tailwind.config.ts reads these variables to generate utility classes
- * (bg-ink, text-cream, border-gold, etc.) — edit hex values ONLY here.
+ * tailwind.config.ts reads these variables and wires them to Tailwind
+ * utility classes (bg-ink, text-cream, border-gold, etc.) — the class
+ * NAMES are kept stable on purpose so component markup never needed to
+ * change between theme revisions; only the values below did.
+ * Edit hex values ONLY here to re-theme the site later.
  */
 :root {
-  --color-ink: 11 11 10; /* #0B0B0A — main background + dark button text */
-  --color-charcoal: 21 21 18; /* #151512 — secondary/surface background */
-  --color-offwhite: 28 27 23; /* #1C1B17 — elevated card/panel background */
-  --color-cream: 243 235 221; /* #F3EBDD — primary text, light borders */
-  --color-beige: 184 174 157; /* #B8AE9D — secondary/supporting text */
-  --color-dust: 133 125 112; /* #857D70 — muted/tertiary text */
-  --color-gold: 184 154 90; /* #B89A5A — accent: labels, borders, key actions */
-  --color-gold-hover: 201 173 107; /* #C9AD6B — gold hover state */
+  --color-bg: 3 6 21; /* #030615 — main background */
+  --color-bg-secondary: 7 11 32; /* #070B20 — secondary/alternate section background */
+  --color-bg-elevated: 11 18 48; /* #0B1230 — elevated surface (available for future use) */
+  --color-bg-card: 14 23 56; /* #0E1738 — card/panel surface */
+  --color-bg-deep: 5 10 42; /* #050A2A — deep navy (available for future use) */
 
-  --hairline-light: rgb(var(--color-cream) / 0.1);
-  --hairline-dark: rgb(var(--color-cream) / 0.14);
+  --color-text-primary: 255 255 255; /* #FFFFFF — headings, primary text */
+  --color-text-secondary: 200 210 240; /* #C8D2F0 — supporting copy */
+  --color-text-muted: 135 146 181; /* #8792B5 — tertiary/muted text */
+
+  --color-accent: 23 76 255; /* #174CFF — electric blue: CTAs, active states */
+  --color-accent-bright: 47 107 255; /* #2F6BFF — bright blue accent / hover */
+  --color-btn-dark-text: 2 6 23; /* #020617 — dark text for light/white button surfaces */
+
+  --color-border: 110 145 255; /* used with alpha, e.g. border-line/18 */
+
+  --hairline-light: rgb(var(--color-border) / 0.18);
+  --hairline-dark: rgb(var(--color-border) / 0.34);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --duration: 560ms;
 }
@@ -35,12 +45,25 @@ html {
 body {
   min-width: 320px;
   overflow-x: clip;
-  background-color: rgb(var(--color-ink));
+  background-color: rgb(var(--color-bg));
 }
 
 ::selection {
-  background: rgb(var(--color-gold));
-  color: rgb(var(--color-ink));
+  background: rgb(var(--color-accent));
+  color: rgb(var(--color-text-primary));
+}
+
+/*
+ * Subtle radial blue illumination — an optional atmospheric layer used
+ * sparingly behind key sections (see .glow-top usage in page.tsx).
+ * Pure background-image; adds no markup, spacing, or layout of its own.
+ */
+.glow-top {
+  background-image: radial-gradient(
+    circle at top center,
+    rgb(var(--color-accent) / 0.18),
+    transparent 45%
+  );
 }
 
 .eyebrow {

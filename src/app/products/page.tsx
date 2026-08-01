@@ -13,7 +13,7 @@ export default async function ProductsPage() {
     <>
       <Navbar media={media} />
       <main className="bg-ink">
-        <section className="border-b border-cream/10 py-16 sm:py-20">
+        <section className="border-b border-line/10 py-16 sm:py-20">
           <Container>
             <p className="eyebrow text-gold" data-reveal="up">The Not4Normal system</p>
             <h1 className="mt-4 max-w-2xl font-serif text-4xl text-cream sm:text-5xl" data-reveal="up">
@@ -29,7 +29,7 @@ export default async function ProductsPage() {
         <section className="py-16 sm:py-20">
           <Container>
             {error ? (
-              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+              <div className="border-y border-line/10 py-16 text-center" data-reveal="up">
                 <p className="eyebrow text-cream/40">Connection interrupted</p>
                 <h2 className="mt-3 font-serif text-2xl text-cream">
                   Products are temporarily unavailable.
@@ -53,7 +53,7 @@ export default async function ProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+              <div className="border-y border-line/10 py-16 text-center" data-reveal="up">
                 <p className="eyebrow text-cream/40">The first release is coming</p>
                 <h2 className="mt-3 font-serif text-2xl text-cream">No products are live yet.</h2>
                 <p className="mt-2 text-cream/55">

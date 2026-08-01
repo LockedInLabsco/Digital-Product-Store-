@@ -24,7 +24,7 @@ export default function ProductGallery({
 
   if (!selectedImage) {
     return (
-      <div className="flex aspect-square flex-col items-center justify-center rounded-sm border border-cream/10 bg-offwhite">
+      <div className="flex aspect-square flex-col items-center justify-center rounded-sm border border-line/10 bg-offwhite">
         <span className="font-serif text-3xl text-cream/25" aria-hidden="true">N4N</span>
         <h3 className="mt-4 font-serif text-xl text-cream">Preview not available</h3>
         <p className="mt-3 max-w-sm text-center text-sm text-cream/50">
@@ -38,7 +38,7 @@ export default function ProductGallery({
 
   return (
     <div className="w-full">
-      <div className="mb-5 aspect-square overflow-hidden rounded-sm border border-cream/10 bg-offwhite">
+      <div className="mb-5 aspect-square overflow-hidden rounded-sm border border-line/10 bg-offwhite">
         {isImageFile ? (
           <Image
             key={selectedImage.id}
@@ -77,7 +77,7 @@ export default function ProductGallery({
               className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-sm border text-center transition-colors ${
                 selectedImageIndex === index
                   ? 'border-gold'
-                  : 'border-cream/15 hover:border-cream/40'
+                  : 'border-line/15 hover:border-line/40'
               }`}
               aria-label={`View ${image.label}`}
             >

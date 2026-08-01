@@ -29,7 +29,7 @@ export default function Navbar({ media }: NavbarProps) {
   const closeMenu = () => setIsOpen(false)
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-cream/10 bg-ink/95 backdrop-blur">
+    <nav className="sticky top-0 z-40 border-b border-line/10 bg-ink/95 backdrop-blur">
       <Container className="flex h-[76px] items-center justify-between">
         <Link href="/" aria-label="Not4Normal home" onClick={closeMenu}>
           <BrandMark logoUrl={media?.logo_light_url} />
@@ -40,14 +40,14 @@ export default function Navbar({ media }: NavbarProps) {
             <Link
               key={link.href}
               href={link.href}
-              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-cream"
+              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-gold"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/products"
-            className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
+            className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
           >
             Explore Products
           </Link>
@@ -76,7 +76,7 @@ export default function Navbar({ media }: NavbarProps) {
 
       <div
         id="mobile-navigation"
-        className={`overflow-hidden border-t border-cream/10 bg-ink transition-[max-height] duration-300 md:hidden ${
+        className={`overflow-hidden border-t border-line/10 bg-ink transition-[max-height] duration-300 md:hidden ${
           isOpen ? 'max-h-72' : 'max-h-0 border-t-0'
         }`}
       >
@@ -94,7 +94,7 @@ export default function Navbar({ media }: NavbarProps) {
           <Link
             href="/products"
             onClick={closeMenu}
-            className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink"
+            className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
           >
             Explore Products
           </Link>

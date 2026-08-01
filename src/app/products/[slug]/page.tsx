@@ -92,7 +92,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </p>
             <Link
               href="/products"
-              className="mt-8 inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
+              className="mt-8 inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
             >
               Back to products
             </Link>
@@ -162,7 +162,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <Container>
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-cream/60 transition-colors hover:text-cream"
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-cream/60 transition-colors hover:text-gold"
             >
               <span aria-hidden="true">←</span>
               All products
@@ -200,7 +200,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {/* 5. CTA */}
               <div className="mt-8 lg:mt-4">
                 <PurchaseAction fullWidth />
-                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-cream/10 pt-5 text-xs font-semibold uppercase tracking-[0.08em] text-cream/45">
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-line/10 pt-5 text-xs font-semibold uppercase tracking-[0.08em] text-cream/45">
                   <span>Secure delivery</span>
                   <span>No recurring charge</span>
                   <span>Keep it forever</span>
@@ -240,7 +240,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Container>
         </section>
 
-        <section className="border-t border-cream/10 py-16 sm:py-20">
+        <section className="border-t border-line/10 py-16 sm:py-20">
           <Container className="max-w-3xl">
             <p className="eyebrow text-gold">Before you start</p>
             <h2 className="mt-3 font-serif text-3xl text-cream">Questions.</h2>
@@ -250,7 +250,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Container>
         </section>
 
-        <section className="border-t border-cream/10 bg-offwhite py-16 sm:py-20">
+        <section className="border-t border-line/10 bg-offwhite py-16 sm:py-20">
           <Container className="flex flex-col items-center gap-5 text-center">
             <h2 className="font-serif text-3xl text-cream sm:text-4xl">
               {product.price === 0

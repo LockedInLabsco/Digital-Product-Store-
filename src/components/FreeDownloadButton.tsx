@@ -108,7 +108,7 @@ export default function FreeDownloadButton({
           aria-label={`Email address for ${productTitle}`}
           required
           disabled={loading}
-          className="w-full rounded-sm border border-cream/20 bg-offwhite px-4 py-3 text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink disabled:bg-charcoal disabled:text-cream/40"
+          className="w-full rounded-sm border border-line/20 bg-offwhite px-4 py-3 text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink disabled:bg-charcoal disabled:text-cream/40"
         />
       </div>
 
@@ -123,7 +123,7 @@ export default function FreeDownloadButton({
 
       {error && (
         <div
-          className="rounded-sm border border-cream/20 bg-offwhite p-4 text-cream"
+          className="rounded-sm border border-line/20 bg-offwhite p-4 text-cream"
           role="alert"
           aria-live="assertive"
         >

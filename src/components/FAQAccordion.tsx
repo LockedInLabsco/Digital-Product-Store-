@@ -15,7 +15,7 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <div className="border-t border-cream/10">
+    <div className="border-t border-line/10">
       {items.map((item, index) => {
         const isOpen = openIndex === index
 
@@ -24,7 +24,7 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
             key={index}
             type="button"
             onClick={() => setOpenIndex(isOpen ? null : index)}
-            className="w-full border-b border-cream/10 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+            className="w-full border-b border-line/10 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             aria-expanded={isOpen}
           >
             <div className="py-5">

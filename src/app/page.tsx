@@ -45,7 +45,7 @@ export default async function Home() {
       <Navbar media={media} />
       <main>
         {/* Hero */}
-        <section className="border-b border-cream/10 bg-ink">
+        <section className="glow-top border-b border-line/10 bg-ink">
           <Container className="grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:py-28">
             <div data-reveal="up">
               <p className="eyebrow text-gold">For the ones who refuse the default</p>
@@ -62,13 +62,13 @@ export default async function Home() {
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
                   href="/products"
-                  className="inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
+                  className="inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
                 >
                   Explore Products
                 </Link>
                 <Link
                   href="/#about"
-                  className="inline-flex items-center justify-center rounded-sm border border-cream/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-cream"
+                  className="inline-flex items-center justify-center rounded-sm border border-line/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-line hover:bg-gold/10"
                 >
                   Discover the Brand
                 </Link>
@@ -77,7 +77,7 @@ export default async function Home() {
 
             {media.hero_image_url ? (
               <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-cream/10"
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10"
                 data-reveal="fade"
               >
                 <Image
@@ -91,14 +91,14 @@ export default async function Home() {
               </div>
             ) : (
               <div
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-cream/10 bg-gradient-to-br from-offwhite via-charcoal to-ink"
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10 bg-gradient-to-br from-offwhite via-charcoal to-ink"
                 data-reveal="fade"
                 aria-hidden="true"
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="font-serif text-6xl tracking-tight text-cream/15 sm:text-7xl">N4N</span>
                 </div>
-                <div className="absolute bottom-6 left-6 right-6 border-t border-cream/10 pt-4">
+                <div className="absolute bottom-6 left-6 right-6 border-t border-line/10 pt-4">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-cream/40">
                     Est. 2026 — Not4Normal
                   </p>
@@ -159,14 +159,14 @@ export default async function Home() {
               </div>
               <Link
                 href="/products"
-                className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/70 underline underline-offset-4 transition-colors hover:text-cream"
+                className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/70 underline underline-offset-4 transition-colors hover:text-gold"
               >
                 View all products
               </Link>
             </div>
 
             {error ? (
-              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+              <div className="border-y border-line/10 py-16 text-center" data-reveal="up">
                 <p className="eyebrow text-cream/40">Connection interrupted</p>
                 <h3 className="mt-3 font-serif text-2xl text-cream">
                   Products are temporarily unavailable.
@@ -190,7 +190,7 @@ export default async function Home() {
                 ))}
               </div>
             ) : (
-              <div className="border-y border-cream/10 py-16 text-center" data-reveal="up">
+              <div className="border-y border-line/10 py-16 text-center" data-reveal="up">
                 <p className="eyebrow text-cream/40">The first release is coming</p>
                 <h3 className="mt-3 font-serif text-2xl text-cream">No products are live yet.</h3>
                 <p className="mt-2 text-cream/55">
@@ -241,7 +241,7 @@ export default async function Home() {
               {BENEFITS.map((benefit) => (
                 <li
                   key={benefit}
-                  className="flex items-start gap-3 border-b border-cream/10 pb-4 text-cream/75"
+                  className="flex items-start gap-3 border-b border-line/10 pb-4 text-cream/75"
                 >
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold" aria-hidden="true" />
                   <span>{benefit}</span>
@@ -328,7 +328,7 @@ export default async function Home() {
             </h2>
             <Link
               href="/products"
-              className="inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-gold-hover"
+              className="inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
               data-reveal="up"
             >
               Explore Products

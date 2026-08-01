@@ -24,19 +24,19 @@ export default function Footer({ media }: FooterProps) {
           <div>
             <p className="eyebrow mb-5 text-gold/80">Navigate</p>
             <ul className="space-y-3 text-sm text-cream/70">
-              <li><Link href="/products" className="transition-colors hover:text-cream">Products</Link></li>
-              <li><Link href="/#about" className="transition-colors hover:text-cream">About</Link></li>
-              <li><Link href="/#manifesto" className="transition-colors hover:text-cream">Manifesto</Link></li>
-              <li><Link href="mailto:hello@not4normal.store" className="transition-colors hover:text-cream">Contact</Link></li>
+              <li><Link href="/products" className="transition-colors hover:text-gold">Products</Link></li>
+              <li><Link href="/#about" className="transition-colors hover:text-gold">About</Link></li>
+              <li><Link href="/#manifesto" className="transition-colors hover:text-gold">Manifesto</Link></li>
+              <li><Link href="mailto:hello@not4normal.store" className="transition-colors hover:text-gold">Contact</Link></li>
             </ul>
           </div>
 
           <div>
             <p className="eyebrow mb-5 text-gold/80">Legal</p>
             <ul className="space-y-3 text-sm text-cream/70">
-              <li><Link href="/privacy" className="transition-colors hover:text-cream">Privacy</Link></li>
-              <li><Link href="/terms" className="transition-colors hover:text-cream">Terms</Link></li>
-              <li><Link href="/refunds" className="transition-colors hover:text-cream">Refund Policy</Link></li>
+              <li><Link href="/privacy" className="transition-colors hover:text-gold">Privacy</Link></li>
+              <li><Link href="/terms" className="transition-colors hover:text-gold">Terms</Link></li>
+              <li><Link href="/refunds" className="transition-colors hover:text-gold">Refund Policy</Link></li>
             </ul>
           </div>
 
@@ -49,7 +49,7 @@ export default function Footer({ media }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-cream/10 pt-6 text-xs uppercase tracking-[0.1em] text-cream/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-line/10 pt-6 text-xs uppercase tracking-[0.1em] text-cream/40 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Not4Normal</p>
           <p>Create your own path.</p>
         </div>

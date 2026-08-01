@@ -30,7 +30,7 @@ export default function ProductCard({
       data-reveal="up"
       data-reveal-delay={String(Math.min(revealDelay, 2))}
     >
-      <article className="flex h-full flex-col overflow-hidden rounded-sm border border-cream/10 bg-offwhite transition-all duration-300 group-hover:border-gold/30 group-hover:shadow-[0_18px_40px_-16px_rgba(184,154,90,0.25)]">
+      <article className="flex h-full flex-col overflow-hidden rounded-sm border border-line/10 bg-offwhite transition-all duration-300 group-hover:border-gold/30 group-hover:shadow-[0_18px_40px_-16px_rgb(var(--color-accent-bright)/0.28)]">
         <ProductPreview
           previews={previews}
           productTitle={title}
@@ -44,7 +44,7 @@ export default function ProductCard({
             {description}
           </p>
 
-          <div className="mt-5 flex items-center justify-between border-t border-cream/10 pt-4">
+          <div className="mt-5 flex items-center justify-between border-t border-line/10 pt-4">
             <span className="font-serif text-lg text-cream">{formatPrice(price)}</span>
             <span className="flex items-center gap-1 text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-cream/70">
               {price === 0 ? 'Get the guide' : 'View product'}
