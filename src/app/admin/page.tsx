@@ -93,6 +93,16 @@ export default function AdminPage() {
                 <span className="text-sm text-black font-medium">Manage Media -&gt;</span>
               </div>
             </Link>
+
+            <Link href="/admin/hero-slider">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
+                <h3 className="text-lg font-bold mb-2">Hero Slider Images</h3>
+                <p className="text-gray-600 mb-4">
+                  Manage the auto-sliding homepage hero showcase
+                </p>
+                <span className="text-sm text-black font-medium">Manage Slider -&gt;</span>
+              </div>
+            </Link>
           </div>
         </div>
       </Container>

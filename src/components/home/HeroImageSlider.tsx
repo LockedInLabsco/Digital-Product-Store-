@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import type { HeroSlide } from './heroSlides'
+import type { HeroSliderImage } from '@/src/types/settings'
 
 const AUTOPLAY_INTERVAL_MS = 4000
 const CROSSFADE_MS = 1200
@@ -11,24 +11,26 @@ const CROSSFADE_MS = 1200
 const SCALE_DURATION_MS = AUTOPLAY_INTERVAL_MS + 1000
 
 interface HeroImageSliderProps {
-  /** Pre-filtered by the server to only slides whose file actually exists. */
-  slides: HeroSlide[]
-  /** Website Media hero image — shown while no slideshow images are uploaded. */
+  /** Hero slider images from admin settings (site_settings -> hero_slider_images). */
+  images: HeroSliderImage[]
+  /** Website Media hero image — shown while no slider images are enabled. */
   fallbackImageUrl?: string
   fallbackImageAlt?: string
 }
 
 export default function HeroImageSlider({
-  slides,
+  images,
   fallbackImageUrl,
   fallbackImageAlt,
 }: HeroImageSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [failedSrcs, setFailedSrcs] = useState<Set<string>>(new Set())
+  const [failedIds, setFailedIds] = useState<Set<string>>(new Set())
   const [isPaused, setIsPaused] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
-  const visibleSlides = slides.filter((slide) => !failedSrcs.has(slide.src))
+  const visibleSlides = images.filter(
+    (image) => image.enabled && image.url && !failedIds.has(image.id)
+  )
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -51,18 +53,18 @@ export default function HeroImageSlider({
     return () => window.clearInterval(interval)
   }, [visibleSlides.length, isPaused])
 
-  const handleImageError = (src: string) => {
-    setFailedSrcs((previous) => {
-      if (previous.has(src)) return previous
+  const handleImageError = (id: string) => {
+    setFailedIds((previous) => {
+      if (previous.has(id)) return previous
       const next = new Set(previous)
-      next.add(src)
+      next.add(id)
       return next
     })
   }
 
-  // Every configured slide failed (or none exist yet) — fall back to the
-  // existing single Website Media hero image / placeholder mark exactly
-  // as before, so the page never breaks.
+  // No enabled slider images (or every one of them failed to load) — fall
+  // back to the existing single Website Media hero image / placeholder
+  // mark exactly as before, so the page never breaks.
   if (visibleSlides.length === 0) {
     return fallbackImageUrl ? (
       <div
@@ -112,7 +114,7 @@ export default function HeroImageSlider({
 
         return (
           <div
-            key={slide.src}
+            key={slide.id}
             aria-hidden={!isActive}
             className="absolute inset-0"
             style={{
@@ -134,14 +136,14 @@ export default function HeroImageSlider({
               }}
             >
               <Image
-                src={slide.src}
+                src={slide.url}
                 alt={slide.alt}
                 fill
                 priority={index === 0}
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover contrast-[1.05] saturate-[0.9]"
                 style={{ objectPosition: slide.objectPosition || 'center' }}
-                onError={() => handleImageError(slide.src)}
+                onError={() => handleImageError(slide.id)}
               />
             </div>
           </div>
@@ -175,7 +177,7 @@ export default function HeroImageSlider({
         <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2">
           {visibleSlides.map((slide, index) => (
             <button
-              key={slide.src}
+              key={slide.id}
               type="button"
               onClick={() => setCurrentIndex(index)}
               aria-label={`Show slide ${index + 1}: ${slide.alt}`}

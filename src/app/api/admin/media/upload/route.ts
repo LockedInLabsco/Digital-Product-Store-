@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const result = await uploadMediaFile(folder, file)
 
-    return NextResponse.json({ url: result.url })
+    return NextResponse.json({ url: result.url, path: result.path })
   } catch (error) {
     if (error instanceof MediaUploadError) {
       return NextResponse.json({ error: error.message }, { status: 400 })

@@ -1,5 +1,3 @@
-import { existsSync } from 'fs'
-import path from 'path'
 import Link from 'next/link'
 import Image from 'next/image'
 import Container from '@/src/components/Container'
@@ -8,18 +6,8 @@ import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import NewsletterForm from '@/src/components/NewsletterForm'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
-import { HERO_SLIDES, type HeroSlide } from '@/src/components/home/heroSlides'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
-import { getWebsiteMedia } from '@/src/lib/supabase/settings'
-
-// Server-only: only pass slides through to the client slider whose file
-// has actually been uploaded to /public, so a missing image never
-// causes a broken-image flash — it's silently skipped instead.
-function getAvailableHeroSlides(): HeroSlide[] {
-  return HERO_SLIDES.filter((slide) =>
-    existsSync(path.join(process.cwd(), 'public', slide.src))
-  )
-}
+import { getWebsiteMedia, getHeroSliderImages } from '@/src/lib/supabase/settings'
 
 const CATEGORIES = [
   {
@@ -51,8 +39,8 @@ const BENEFITS = [
 export default async function Home() {
   const { products, error } = await getActiveProducts()
   const media = await getWebsiteMedia()
+  const heroSliderImages = await getHeroSliderImages()
   const featuredProducts = products.slice(0, 6)
-  const heroSlides = getAvailableHeroSlides()
 
   return (
     <>
@@ -90,7 +78,7 @@ export default async function Home() {
             </div>
 
             <HeroImageSlider
-              slides={heroSlides}
+              images={heroSliderImages}
               fallbackImageUrl={media.hero_image_url}
               fallbackImageAlt={media.hero_image_alt}
             />

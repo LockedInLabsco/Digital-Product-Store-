@@ -12,6 +12,8 @@ interface MediaFieldUploadProps {
   onAltChange?: (alt: string) => void
   fit?: 'contain' | 'cover'
   previewClassName?: string
+  /** Fired alongside onChange with the uploaded file's storage path, if the caller wants it. */
+  onUploadPath?: (path: string) => void
 }
 
 export default function MediaFieldUpload({
@@ -24,6 +26,7 @@ export default function MediaFieldUpload({
   onAltChange,
   fit = 'cover',
   previewClassName = 'bg-gray-100',
+  onUploadPath,
 }: MediaFieldUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -53,6 +56,7 @@ export default function MediaFieldUpload({
       }
 
       onChange(data.url)
+      if (data.path) onUploadPath?.(data.path)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {

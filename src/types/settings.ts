@@ -37,3 +37,15 @@ export const WEBSITE_MEDIA_DEFAULTS: WebsiteMedia = {
 }
 
 export const WEBSITE_MEDIA_SETTING_KEY = 'website_media'
+
+export interface HeroSliderImage {
+  id: string
+  url: string
+  storagePath?: string
+  alt: string
+  objectPosition?: string
+  enabled: boolean
+}
+
+export const HERO_SLIDER_SETTING_KEY = 'hero_slider_images'
+export const HERO_SLIDER_MAX_IMAGES = 8

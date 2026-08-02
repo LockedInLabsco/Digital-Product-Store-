@@ -6,6 +6,8 @@ import {
   WebsiteMedia,
   WEBSITE_MEDIA_DEFAULTS,
   WEBSITE_MEDIA_SETTING_KEY,
+  HeroSliderImage,
+  HERO_SLIDER_SETTING_KEY,
 } from '@/src/types/settings'
 
 function mergeWithDefaults(value: unknown): WebsiteMedia {
@@ -77,4 +79,77 @@ export async function saveWebsiteMedia(
   }
 
   return next
+}
+
+function parseHeroSliderImages(value: unknown): HeroSliderImage[] {
+  if (!Array.isArray(value)) return []
+
+  return value.filter(
+    (item): item is HeroSliderImage =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as HeroSliderImage).id === 'string' &&
+      typeof (item as HeroSliderImage).url === 'string'
+  )
+}
+
+export const getHeroSliderImages = cache(async (): Promise<HeroSliderImage[]> => {
+  noStore()
+
+  if (!supabase) {
+    console.warn('[Hero Slider] Supabase public env vars are not configured')
+    return []
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', HERO_SLIDER_SETTING_KEY)
+      .maybeSingle()
+
+    if (error) {
+      console.error('[Hero Slider] Failed to load settings', error.message)
+      return []
+    }
+
+    return parseHeroSliderImages(data?.setting_value)
+  } catch (error) {
+    console.error('[Hero Slider] Exception loading settings', error)
+    return []
+  }
+})
+
+export async function getHeroSliderImagesAdmin(): Promise<HeroSliderImage[]> {
+  const { data, error } = await supabaseServer
+    .from('site_settings')
+    .select('setting_value')
+    .eq('setting_key', HERO_SLIDER_SETTING_KEY)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[Hero Slider] Admin failed to load settings', error.message)
+    return []
+  }
+
+  return parseHeroSliderImages(data?.setting_value)
+}
+
+export async function saveHeroSliderImages(
+  images: HeroSliderImage[]
+): Promise<HeroSliderImage[]> {
+  const { error } = await supabaseServer.from('site_settings').upsert(
+    {
+      setting_key: HERO_SLIDER_SETTING_KEY,
+      setting_value: images,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'setting_key' }
+  )
+
+  if (error) {
+    throw new Error(`Failed to save hero slider images: ${error.message}`)
+  }
+
+  return images
 }

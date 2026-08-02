@@ -21,7 +21,7 @@ const MEDIA_FOLDERS: MediaFolder[] = [
 ]
 
 const LOGO_MIME_TYPES = ['image/png', 'image/webp', 'image/svg+xml']
-const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
 
 const ALLOWED_MIME_BY_FOLDER: Record<MediaFolder, string[]> = {
   logos: LOGO_MIME_TYPES,
@@ -46,6 +46,7 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
   'image/jpeg': 'jpg',
   'image/svg+xml': 'svg',
+  'image/avif': 'avif',
 }
 
 export function isMediaFolder(value: string): value is MediaFolder {
