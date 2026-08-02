@@ -15,4 +15,15 @@ export interface Order {
   error_message: string | null
   created_at: string
   updated_at?: string
+  first_touch_source?: string | null
+  first_touch_medium?: string | null
+  first_touch_campaign?: string | null
+  first_touch_content?: string | null
+  last_touch_source?: string | null
+  last_touch_medium?: string | null
+  last_touch_campaign?: string | null
+  referrer_domain?: string | null
+  landing_page?: string | null
+  device_category?: string | null
+  country_code?: string | null
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Button from './Button'
+import { track, productEventProps } from '@/src/lib/analytics/events'
+import { getAttributionSnapshot, getDeviceCategory } from '@/src/lib/analytics/attribution'
+import { toAttributionPayload } from '@/src/types/attribution'
 
 interface PaidProductButtonProps {
   productId: string
@@ -14,6 +17,8 @@ interface PaidProductButtonProps {
   size?: 'sm' | 'md' | 'lg'
   fullWidth?: boolean
   buttonText?: string
+  /** Where this button renders, e.g. "product_page_cta", "product_page_sticky". */
+  buttonLocation?: string
 }
 
 declare global {
@@ -24,6 +29,53 @@ declare global {
 }
 
 const PADDLE_SCRIPT_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js'
+
+type ProductEventProps = ReturnType<typeof productEventProps>
+
+// Paddle.Initialize() only accepts one global eventCallback, but this
+// page can mount more than one PaidProductButton at once (e.g. a hero
+// CTA and a bottom CTA for the same product). Only one checkout can be
+// open at a time, so the button that opened it stashes its event
+// properties here for the shared callback to read.
+let activeCheckoutContext: { eventProps: ProductEventProps; completed: boolean } | null = null
+
+function handleGlobalPaddleEvent(event: any) {
+  const eventName = event?.name
+  console.log('[Paddle] Checkout event', eventName || 'unknown', event)
+
+  if (!activeCheckoutContext) return
+  const { eventProps } = activeCheckoutContext
+
+  if (
+    eventName === 'checkout.error' ||
+    eventName === 'checkout.payment.error' ||
+    eventName === 'checkout.payment.failed'
+  ) {
+    console.error('[Paddle] Checkout event', eventName, event)
+    track('purchase_failed', { ...eventProps, reason: eventName })
+    return
+  }
+
+  if (eventName === 'checkout.warning') {
+    console.warn('[Paddle] Checkout warning', event)
+    return
+  }
+
+  if (eventName === 'checkout.opened') {
+    activeCheckoutContext.completed = false
+    track('paid_checkout_opened', eventProps)
+  } else if (eventName === 'checkout.completed') {
+    activeCheckoutContext.completed = true
+    // Behavioral signal only — the Paddle webhook (server-side,
+    // signature-verified) is the source of truth for confirmed revenue.
+    track('purchase_completed', eventProps)
+  } else if (eventName === 'checkout.closed') {
+    if (!activeCheckoutContext.completed) {
+      track('paid_checkout_abandoned', eventProps)
+    }
+    activeCheckoutContext = null
+  }
+}
 
 function getPaddleEnvironment(): 'production' | 'sandbox' {
   const configuredEnvironment = (
@@ -43,22 +95,6 @@ function getConfiguredPaddleEnvironment(): string {
 
 function getPaddleClientToken(): string {
   return process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ''
-}
-
-function logPaddleEvent(event: any) {
-  const eventName = event?.name
-
-  if (
-    eventName === 'checkout.error' ||
-    eventName === 'checkout.payment.error' ||
-    eventName === 'checkout.payment.failed' ||
-    eventName === 'checkout.warning'
-  ) {
-    console.error('[Paddle] Checkout event', eventName, event)
-    return
-  }
-
-  console.log('[Paddle] Checkout event', eventName || 'unknown', event)
 }
 
 function initializePaddle() {
@@ -104,7 +140,7 @@ function initializePaddle() {
 
     window.Paddle.Initialize({
       token: clientToken,
-      eventCallback: logPaddleEvent,
+      eventCallback: handleGlobalPaddleEvent,
     })
 
     window.__not4normalPaddleInitialized = true
@@ -131,6 +167,7 @@ export default function PaidProductButton({
   size = 'md',
   fullWidth = false,
   buttonText,
+  buttonLocation = 'product_page',
 }: PaidProductButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -197,12 +234,26 @@ export default function PaidProductButton({
       return
     }
 
+    const eventProps = productEventProps({
+      id: productId,
+      slug: productSlug,
+      title: productTitle,
+      price,
+    })
+
+    track('paid_checkout_started', { ...eventProps, button_location: buttonLocation })
+    activeCheckoutContext = { eventProps, completed: false }
+
     const checkoutItems = [
       {
         priceId: paddlePriceId,
         quantity: 1,
       },
     ]
+
+    // Small, safe attribution snapshot only — no personal data — so the
+    // Paddle webhook can attribute the transaction once it's confirmed.
+    const attribution = toAttributionPayload(getAttributionSnapshot())
 
     const checkoutOptions = {
       settings: {
@@ -213,6 +264,8 @@ export default function PaidProductButton({
         product_id: productId,
         product_slug: productSlug,
         paddle_price_id: paddlePriceId,
+        attribution,
+        device_category: getDeviceCategory(),
       },
     }
 

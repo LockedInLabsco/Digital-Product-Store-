@@ -1,9 +1,13 @@
+'use client'
+
 import Link from 'next/link'
 import ProductPreview from './ProductPreview'
 import { PreviewItem } from '@/src/types/product'
 import { formatPrice } from '@/src/lib/utils/format'
+import { track, productEventProps } from '@/src/lib/analytics/events'
 
 interface ProductCardProps {
+  id: string
   title: string
   description: string
   price: number
@@ -12,9 +16,12 @@ interface ProductCardProps {
   features?: string[]
   coverImageUrl?: string
   revealDelay?: number
+  /** Where on the page this card renders, e.g. "homepage_featured", "products_page". */
+  location?: string
 }
 
 export default function ProductCard({
+  id,
   title,
   description,
   price,
@@ -22,10 +29,19 @@ export default function ProductCard({
   previews,
   coverImageUrl,
   revealDelay = 0,
+  location = 'products_page',
 }: ProductCardProps) {
+  const handleClick = () => {
+    track('product_card_clicked', {
+      ...productEventProps({ id, slug, title, price }),
+      button_location: location,
+    })
+  }
+
   return (
     <Link
       href={`/products/${slug}`}
+      onClick={handleClick}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-4 focus-visible:ring-offset-ink"
       data-reveal="up"
       data-reveal-delay={String(Math.min(revealDelay, 2))}

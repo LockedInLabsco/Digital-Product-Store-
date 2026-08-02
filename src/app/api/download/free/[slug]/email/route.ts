@@ -2,12 +2,53 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { getSignedDownloadUrl } from '@/src/lib/supabase/downloads'
 import { sendDownloadEmail } from '@/src/lib/email/resend'
+import { AttributionPayload } from '@/src/types/attribution'
+import { sanitizeAttribution, sanitizeDeviceCategory } from '@/src/lib/analytics/sanitizeAttribution'
 
 const EMAIL_SIGNED_URL_EXPIRY_SECONDS = 60 * 60 // 1 hour
 
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
+}
+
+interface RecordFreeDownloadInput {
+  productId: string | null
+  productSlug: string
+  productTitle: string
+  email: string
+  downloadStatus: 'delivered' | 'failed'
+  emailDeliveryStatus: 'sent' | 'failed'
+  errorMessage?: string | null
+  attribution: Partial<AttributionPayload>
+  deviceCategory: string | null
+}
+
+async function recordFreeDownload(input: RecordFreeDownloadInput) {
+  const { error } = await supabaseServer.from('free_downloads').insert({
+    product_id: input.productId,
+    product_slug: input.productSlug,
+    product_title: input.productTitle,
+    email: input.email,
+    download_status: input.downloadStatus,
+    email_delivery_status: input.emailDeliveryStatus,
+    error_message: input.errorMessage || null,
+    first_touch_source: input.attribution.first_touch_source || null,
+    first_touch_medium: input.attribution.first_touch_medium || null,
+    first_touch_campaign: input.attribution.first_touch_campaign || null,
+    first_touch_content: input.attribution.first_touch_content || null,
+    last_touch_source: input.attribution.last_touch_source || null,
+    last_touch_medium: input.attribution.last_touch_medium || null,
+    last_touch_campaign: input.attribution.last_touch_campaign || null,
+    referrer_domain: input.attribution.referrer_domain || null,
+    landing_page: input.attribution.landing_page || null,
+    device_category: input.deviceCategory,
+  })
+
+  if (error) {
+    // Never let analytics logging break the actual delivery flow.
+    console.error('[Free Download] Failed to record free_downloads row', error.message)
+  }
 }
 
 export async function POST(
@@ -29,6 +70,8 @@ export async function POST(
 
     const body = await request.json()
     const email = body.email?.trim()
+    const attribution = sanitizeAttribution(body.attribution)
+    const deviceCategory = sanitizeDeviceCategory(body.deviceCategory)
     console.log(`📧 EMAIL: ${email}`)
 
     if (!email) {
@@ -88,9 +131,23 @@ export async function POST(
     }
 
     const filePath = product.file_path
+    const recordBase = {
+      productId: product.id,
+      productSlug: slug,
+      productTitle: product.title,
+      email,
+      attribution,
+      deviceCategory,
+    }
 
     if (!filePath) {
       console.error(`❌ No file_path set for product: ${product.title}`)
+      await recordFreeDownload({
+        ...recordBase,
+        downloadStatus: 'failed',
+        emailDeliveryStatus: 'failed',
+        errorMessage: 'Product does not have a downloadable file configured',
+      })
       return NextResponse.json(
         {
           error: 'This product does not have a downloadable file yet',
@@ -110,13 +167,17 @@ export async function POST(
 
     if (!signedUrl) {
       console.error(`❌ Failed to generate signed URL for: ${filePath}`)
+      await recordFreeDownload({
+        ...recordBase,
+        downloadStatus: 'failed',
+        emailDeliveryStatus: 'failed',
+        errorMessage: 'Failed to generate signed download URL',
+      })
       return NextResponse.json(
         { error: 'Failed to generate download link' },
         { status: 500 }
       )
     }
-
-    console.log(`✅ Signed URL generated (${signedUrl.length} chars)`)
 
     console.log(`📧 Calling sendDownloadEmail()...`)
     const emailResult = await sendDownloadEmail({
@@ -130,11 +191,23 @@ export async function POST(
 
     if (!emailResult.success) {
       console.error(`❌ Email send failed: ${emailResult.error}`)
+      await recordFreeDownload({
+        ...recordBase,
+        downloadStatus: 'failed',
+        emailDeliveryStatus: 'failed',
+        errorMessage: emailResult.error || 'Email send failed',
+      })
       return NextResponse.json(
         { error: emailResult.error || 'Failed to send email' },
         { status: 500 }
       )
     }
+
+    await recordFreeDownload({
+      ...recordBase,
+      downloadStatus: 'delivered',
+      emailDeliveryStatus: 'sent',
+    })
 
     console.log(`✅ Email sent successfully!`)
     console.log('🚀 ===== END ROUTE =====\n')

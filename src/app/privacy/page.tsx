@@ -58,9 +58,35 @@ export default async function PrivacyPage() {
                 Payment information is processed securely by trusted payment processors. We do not store your full credit card details on our servers.
               </p>
 
-              <h2 className="font-serif text-2xl mb-4 mt-8 text-cream">Cookies</h2>
+              <h2 className="font-serif text-2xl mb-4 mt-8 text-cream">Cookies &amp; Local Storage</h2>
               <p className="text-cream/65 mb-4">
-                Our website uses basic cookies to improve your experience. These are minimal and do not track personal information.
+                We use a small first-party cookie/local-storage entry to remember your analytics
+                choice (see below), and separate first-party cookies to remember which marketing
+                source, campaign, or referrer first brought you to the site and which brought you
+                back most recently. These attribution cookies store short text values only (for
+                example a campaign name) — never your name, email, or payment details — and expire
+                automatically after 90 days.
+              </p>
+
+              <h2 className="font-serif text-2xl mb-4 mt-8 text-cream">Website Analytics &amp; Session Replay</h2>
+              <p className="text-cream/65 mb-4">
+                With your consent, we use PostHog to understand how visitors use Not4Normal —
+                which pages are viewed, which buttons are clicked, how far visitors scroll, and
+                which marketing source or campaign led to a visit, download, or purchase. This
+                helps us improve the site and see which products and campaigns are working.
+              </p>
+              <p className="text-cream/65 mb-4">
+                When enabled, this may include session replay — a recording of on-page
+                interactions (scrolling, clicks, page navigation) used to spot confusing pages or
+                broken flows. Password fields, email fields, and any other input on the site are
+                masked before a recording is captured, and our admin dashboard is never recorded.
+                There is no payment field on this site for us to capture — Paddle Checkout runs
+                inside Paddle&apos;s own secure, separately hosted payment window.
+              </p>
+              <p className="text-cream/65 mb-4">
+                Analytics is entirely optional. You can accept or reject it from the banner shown
+                on your first visit, and rejecting it does not affect your ability to browse,
+                download, or purchase anything on this site.
               </p>
 
               <h2 className="font-serif text-2xl mb-4 mt-8 text-cream">Your Rights</h2>

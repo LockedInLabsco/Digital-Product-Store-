@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { getSignedDownloadUrl, verifyProductFileExists } from '@/src/lib/supabase/downloads'
 import { sendDownloadEmail } from '@/src/lib/email/resend'
+import { sanitizeAttribution } from '@/src/lib/analytics/sanitizeAttribution'
+import { AttributionPayload } from '@/src/types/attribution'
 import {
   verifyPaddleWebhookSignature,
   getPaddleCustomerEmail,
@@ -33,6 +35,8 @@ interface OrderRecordInput {
   deliveryStatus: 'pending' | 'sent' | 'failed'
   downloadUrlSent: boolean
   errorMessage?: string | null
+  attribution?: Partial<AttributionPayload>
+  deviceCategory?: string | null
 }
 
 async function getExistingOrder(transactionId: string) {
@@ -61,6 +65,8 @@ async function saveOrderRecord({
   deliveryStatus,
   downloadUrlSent,
   errorMessage = null,
+  attribution = {},
+  deviceCategory = null,
 }: OrderRecordInput) {
   const orderPayload = {
     product_id: product?.id || null,
@@ -76,14 +82,57 @@ async function saveOrderRecord({
     delivery_status: deliveryStatus,
     download_url_sent: downloadUrlSent,
     error_message: errorMessage,
+    first_touch_source: attribution.first_touch_source || null,
+    first_touch_medium: attribution.first_touch_medium || null,
+    first_touch_campaign: attribution.first_touch_campaign || null,
+    first_touch_content: attribution.first_touch_content || null,
+    last_touch_source: attribution.last_touch_source || null,
+    last_touch_medium: attribution.last_touch_medium || null,
+    last_touch_campaign: attribution.last_touch_campaign || null,
+    referrer_domain: attribution.referrer_domain || null,
+    landing_page: attribution.landing_page || null,
+    device_category: deviceCategory,
     updated_at: new Date().toISOString(),
   }
 
-  const { data, error } = await supabaseServer
+  let { data, error } = await supabaseServer
     .from('orders')
     .upsert(orderPayload, { onConflict: 'paddle_transaction_id' })
     .select()
     .single()
+
+  // If the attribution columns from migration 0003 haven't been applied
+  // yet, don't let that break core order tracking (which predates this
+  // change) — retry with just the original column set.
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message))) {
+    console.warn(
+      '[Paddle Webhook] Order save failed due to missing attribution columns — retrying without them. Run supabase/migrations/0003_analytics.sql to fix this.',
+      error.message
+    )
+
+    const {
+      first_touch_source,
+      first_touch_medium,
+      first_touch_campaign,
+      first_touch_content,
+      last_touch_source,
+      last_touch_medium,
+      last_touch_campaign,
+      referrer_domain,
+      landing_page,
+      device_category,
+      ...baseOnlyPayload
+    } = orderPayload
+
+    const retryResult = await supabaseServer
+      .from('orders')
+      .upsert(baseOnlyPayload, { onConflict: 'paddle_transaction_id' })
+      .select()
+      .single()
+
+    data = retryResult.data
+    error = retryResult.error
+  }
 
   if (error) {
     console.error('[Paddle Webhook] Order save failed', error)
@@ -273,6 +322,13 @@ export async function POST(request: NextRequest) {
     }
 
     const customData = getPaddleCustomData(transaction)
+    const attribution = sanitizeAttribution(customData?.attribution)
+    const deviceCategory =
+      customData?.device_category === 'mobile' ||
+      customData?.device_category === 'tablet' ||
+      customData?.device_category === 'desktop'
+        ? customData.device_category
+        : null
 
     console.log('[Paddle Webhook] Product identifiers extracted', {
       priceId: priceId || 'not found',
@@ -302,6 +358,8 @@ export async function POST(request: NextRequest) {
         deliveryStatus: 'failed',
         downloadUrlSent: false,
         errorMessage: 'Product not found for Paddle transaction',
+        attribution,
+        deviceCategory,
       })
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
@@ -334,6 +392,8 @@ export async function POST(request: NextRequest) {
         deliveryStatus: 'failed',
         downloadUrlSent: false,
         errorMessage: 'Product file_path is missing',
+        attribution,
+        deviceCategory,
       })
       return NextResponse.json({ error: 'Product file not configured' }, { status: 400 })
     }
@@ -357,6 +417,8 @@ export async function POST(request: NextRequest) {
         deliveryStatus: 'failed',
         downloadUrlSent: false,
         errorMessage: 'Product file not found in Supabase storage',
+        attribution,
+        deviceCategory,
       })
       return NextResponse.json({ error: 'Product file not found' }, { status: 500 })
     }
@@ -385,6 +447,8 @@ export async function POST(request: NextRequest) {
         deliveryStatus: 'failed',
         downloadUrlSent: false,
         errorMessage: 'Failed to generate signed download URL',
+        attribution,
+        deviceCategory,
       })
       return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 })
     }
@@ -422,6 +486,8 @@ export async function POST(request: NextRequest) {
         deliveryStatus: 'failed',
         downloadUrlSent: false,
         errorMessage: emailResult.error || 'Email send failed',
+        attribution,
+        deviceCategory,
       })
       return NextResponse.json({ error: 'Email send failed' }, { status: 500 })
     }
@@ -438,6 +504,8 @@ export async function POST(request: NextRequest) {
       deliveryStatus: 'sent',
       downloadUrlSent: true,
       errorMessage: null,
+      attribution,
+      deviceCategory,
     })
 
     console.log('[Paddle Webhook] Paid product delivery completed successfully')

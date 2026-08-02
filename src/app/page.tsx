@@ -6,6 +6,8 @@ import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import NewsletterForm from '@/src/components/NewsletterForm'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
+import TrackMount from '@/src/components/analytics/TrackMount'
+import TrackedLink from '@/src/components/analytics/TrackedLink'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
 import { getWebsiteMedia, getHeroSliderImages } from '@/src/lib/supabase/settings'
 
@@ -44,10 +46,11 @@ export default async function Home() {
 
   return (
     <>
+      <TrackMount event="homepage_viewed" properties={{}} />
       <Navbar media={media} />
       <main>
         {/* Hero */}
-        <section className="glow-top border-b border-line/10 bg-ink">
+        <section data-section-id="hero" className="glow-top border-b border-line/10 bg-ink">
           <Container className="grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:py-28">
             <div data-reveal="up">
               <p className="eyebrow text-gold">For the ones who refuse the default</p>
@@ -62,12 +65,14 @@ export default async function Home() {
                 growth.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link
+                <TrackedLink
                   href="/products"
+                  event="hero_cta_clicked"
+                  eventProperties={{ button_location: 'hero_primary', destination: '/products' }}
                   className="inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
                 >
                   Explore Products
-                </Link>
+                </TrackedLink>
                 <Link
                   href="/#about"
                   className="inline-flex items-center justify-center rounded-sm border border-line/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-line hover:bg-gold/10"
@@ -86,7 +91,7 @@ export default async function Home() {
         </section>
 
         {/* About / brand introduction */}
-        <section id="about" className="scroll-mt-20 bg-offwhite py-20 sm:py-24">
+        <section id="about" data-section-id="about" className="scroll-mt-20 bg-offwhite py-20 sm:py-24">
           <Container
             className={
               media.about_image_url
@@ -125,7 +130,7 @@ export default async function Home() {
         </section>
 
         {/* Featured products */}
-        <section className="bg-ink py-20 sm:py-24">
+        <section data-section-id="products" className="bg-ink py-20 sm:py-24">
           <Container>
             <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
               <div data-reveal="up">
@@ -155,6 +160,7 @@ export default async function Home() {
                 {featuredProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
+                    id={product.id}
                     title={product.title}
                     description={product.shortDescription}
                     price={product.price}
@@ -163,6 +169,7 @@ export default async function Home() {
                     features={product.features}
                     coverImageUrl={product.coverImageUrl}
                     revealDelay={index % 3}
+                    location="homepage_featured"
                   />
                 ))}
               </div>
@@ -229,7 +236,7 @@ export default async function Home() {
         </section>
 
         {/* Manifesto */}
-        <section id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-20 text-cream sm:py-24">
+        <section id="manifesto" data-section-id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-20 text-cream sm:py-24">
           {media.manifesto_image_url && (
             <>
               <Image
@@ -257,7 +264,7 @@ export default async function Home() {
         </section>
 
         {/* Newsletter */}
-        <section className="relative overflow-hidden bg-charcoal py-16 text-cream sm:py-20">
+        <section data-section-id="newsletter" className="relative overflow-hidden bg-charcoal py-16 text-cream sm:py-20">
           {media.newsletter_image_url && (
             <>
               <Image
@@ -285,7 +292,7 @@ export default async function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="relative overflow-hidden bg-ink py-16 sm:py-20">
+        <section data-section-id="final_cta" className="relative overflow-hidden bg-ink py-16 sm:py-20">
           {media.final_cta_image_url && (
             <>
               <Image
@@ -303,13 +310,15 @@ export default async function Home() {
             <h2 className="font-serif text-3xl text-cream sm:text-4xl" data-reveal="up">
               Create Your Own Path.
             </h2>
-            <Link
+            <TrackedLink
               href="/products"
+              event="navigation_clicked"
+              eventProperties={{ button_location: 'final_cta', destination: '/products', label: 'Explore Products' }}
               className="inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
               data-reveal="up"
             >
               Explore Products
-            </Link>
+            </TrackedLink>
           </Container>
         </section>
       </main>

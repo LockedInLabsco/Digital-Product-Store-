@@ -41,6 +41,7 @@ export default async function ProductsPage() {
                 {products.map((product, index) => (
                   <ProductCard
                     key={product.id}
+                    id={product.id}
                     title={product.title}
                     description={product.shortDescription}
                     price={product.price}
@@ -49,6 +50,7 @@ export default async function ProductsPage() {
                     features={product.features}
                     coverImageUrl={product.coverImageUrl}
                     revealDelay={index % 3}
+                    location="products_page"
                   />
                 ))}
               </div>

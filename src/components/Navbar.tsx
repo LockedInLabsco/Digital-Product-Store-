@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Container from './Container'
 import BrandMark from './BrandMark'
 import { WebsiteMedia } from '@/src/types/settings'
+import { track } from '@/src/lib/analytics/events'
 
 const NAV_LINKS = [
   { href: '/products', label: 'Products' },
@@ -40,6 +41,13 @@ export default function Navbar({ media }: NavbarProps) {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() =>
+                track('navigation_clicked', {
+                  button_location: 'navbar_desktop',
+                  destination: link.href,
+                  label: link.label,
+                })
+              }
               className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-gold"
             >
               {link.label}
@@ -47,6 +55,13 @@ export default function Navbar({ media }: NavbarProps) {
           ))}
           <Link
             href="/products"
+            onClick={() =>
+              track('navigation_clicked', {
+                button_location: 'navbar_desktop',
+                destination: '/products',
+                label: 'Explore Products',
+              })
+            }
             className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
           >
             Explore Products
@@ -85,7 +100,14 @@ export default function Navbar({ media }: NavbarProps) {
             <Link
               key={link.href}
               href={link.href}
-              onClick={closeMenu}
+              onClick={() => {
+                track('navigation_clicked', {
+                  button_location: 'navbar_mobile',
+                  destination: link.href,
+                  label: link.label,
+                })
+                closeMenu()
+              }}
               className="py-3 text-sm font-semibold uppercase tracking-[0.1em] text-cream/80"
             >
               {link.label}
@@ -93,7 +115,14 @@ export default function Navbar({ media }: NavbarProps) {
           ))}
           <Link
             href="/products"
-            onClick={closeMenu}
+            onClick={() => {
+              track('navigation_clicked', {
+                button_location: 'navbar_mobile',
+                destination: '/products',
+                label: 'Explore Products',
+              })
+              closeMenu()
+            }}
             className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
           >
             Explore Products

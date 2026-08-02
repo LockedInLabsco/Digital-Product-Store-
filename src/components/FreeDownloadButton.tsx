@@ -2,13 +2,18 @@
 
 import { useState } from 'react'
 import Button from './Button'
+import { track, productEventProps } from '@/src/lib/analytics/events'
+import { getAttributionSnapshot, getDeviceCategory } from '@/src/lib/analytics/attribution'
+import { toAttributionPayload } from '@/src/types/attribution'
 
 interface FreeDownloadButtonProps {
+  productId: string
   productSlug: string
   productTitle: string
 }
 
 export default function FreeDownloadButton({
+  productId,
   productSlug,
   productTitle,
 }: FreeDownloadButtonProps) {
@@ -19,10 +24,18 @@ export default function FreeDownloadButton({
   const [submitted, setSubmitted] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
 
+  const eventProps = productEventProps({
+    id: productId,
+    slug: productSlug,
+    title: productTitle,
+    price: 0,
+  })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    track('free_download_started', eventProps)
 
     try {
       console.log('Submitting email for: ' + productSlug)
@@ -34,7 +47,11 @@ export default function FreeDownloadButton({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({
+            email,
+            attribution: toAttributionPayload(getAttributionSnapshot()),
+            deviceCategory: getDeviceCategory(),
+          }),
         }
       )
 
@@ -42,10 +59,10 @@ export default function FreeDownloadButton({
 
       if (!response.ok) {
         console.error('API error:', data)
-        setError(
-          data.error ||
-            'We could not send your guide right now. Please try again.'
-        )
+        const message =
+          data.error || 'We could not send your guide right now. Please try again.'
+        setError(message)
+        track('free_download_failed', { ...eventProps, reason: message })
         return
       }
 
@@ -54,12 +71,14 @@ export default function FreeDownloadButton({
       setSubmitted(true)
       setSuccess(true)
       setEmail('')
+      track('free_download_completed', eventProps)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       console.error('Submit error:', errorMessage)
       setError(
         'We could not reach the email service. Check your connection and try again.'
       )
+      track('free_download_failed', { ...eventProps, reason: 'network_error' })
     } finally {
       setLoading(false)
     }

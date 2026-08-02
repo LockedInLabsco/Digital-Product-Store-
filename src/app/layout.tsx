@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
 import MotionProvider from '@/src/components/MotionProvider'
+import AnalyticsProvider from '@/src/components/analytics/AnalyticsProvider'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
 const playfairDisplay = Playfair_Display({
@@ -56,6 +57,7 @@ export default function RootLayout({
     <html lang="en" className={`${playfairDisplay.variable} ${inter.variable}`}>
       <body className="bg-ink text-cream antialiased font-sans">
         <MotionProvider />
+        <AnalyticsProvider />
         {children}
       </body>
     </html>

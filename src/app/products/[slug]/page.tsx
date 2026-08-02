@@ -8,6 +8,8 @@ import ProductGallery from '@/src/components/ProductGallery'
 import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import PaidProductButton from '@/src/components/PaidProductButton'
+import TrackMount from '@/src/components/analytics/TrackMount'
+import { productEventProps } from '@/src/lib/analytics/events'
 import { getActiveProductBySlug } from '@/src/lib/supabase/queries'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { formatPrice } from '@/src/lib/utils/format'
@@ -123,6 +125,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const PurchaseAction = ({ fullWidth = false }: { fullWidth?: boolean }) =>
     product.price === 0 ? (
       <FreeDownloadButton
+        productId={product.id}
         productSlug={product.slug}
         productTitle={product.title}
       />
@@ -156,6 +159,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
+      <TrackMount event="product_page_viewed" properties={productEventProps(product)} />
       <Navbar media={media} />
       <main className="bg-ink">
         <section className="py-12 sm:py-16">

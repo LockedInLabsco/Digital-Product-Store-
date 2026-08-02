@@ -1,10 +1,17 @@
+'use client'
+
 import Link from 'next/link'
 import Container from './Container'
 import BrandMark from './BrandMark'
 import { WebsiteMedia } from '@/src/types/settings'
+import { track } from '@/src/lib/analytics/events'
 
 interface FooterProps {
   media?: WebsiteMedia
+}
+
+function trackFooterClick(destination: string, label: string) {
+  track('navigation_clicked', { button_location: 'footer', destination, label })
 }
 
 export default function Footer({ media }: FooterProps) {
@@ -24,19 +31,19 @@ export default function Footer({ media }: FooterProps) {
           <div>
             <p className="eyebrow mb-5 text-gold/80">Navigate</p>
             <ul className="space-y-3 text-sm text-cream/70">
-              <li><Link href="/products" className="transition-colors hover:text-gold">Products</Link></li>
-              <li><Link href="/#about" className="transition-colors hover:text-gold">About</Link></li>
-              <li><Link href="/#manifesto" className="transition-colors hover:text-gold">Manifesto</Link></li>
-              <li><Link href="mailto:hello@not4normal.store" className="transition-colors hover:text-gold">Contact</Link></li>
+              <li><Link href="/products" onClick={() => trackFooterClick('/products', 'Products')} className="transition-colors hover:text-gold">Products</Link></li>
+              <li><Link href="/#about" onClick={() => trackFooterClick('/#about', 'About')} className="transition-colors hover:text-gold">About</Link></li>
+              <li><Link href="/#manifesto" onClick={() => trackFooterClick('/#manifesto', 'Manifesto')} className="transition-colors hover:text-gold">Manifesto</Link></li>
+              <li><Link href="mailto:hello@not4normal.store" onClick={() => trackFooterClick('mailto:hello@not4normal.store', 'Contact')} className="transition-colors hover:text-gold">Contact</Link></li>
             </ul>
           </div>
 
           <div>
             <p className="eyebrow mb-5 text-gold/80">Legal</p>
             <ul className="space-y-3 text-sm text-cream/70">
-              <li><Link href="/privacy" className="transition-colors hover:text-gold">Privacy</Link></li>
-              <li><Link href="/terms" className="transition-colors hover:text-gold">Terms</Link></li>
-              <li><Link href="/refunds" className="transition-colors hover:text-gold">Refund Policy</Link></li>
+              <li><Link href="/privacy" onClick={() => trackFooterClick('/privacy', 'Privacy')} className="transition-colors hover:text-gold">Privacy</Link></li>
+              <li><Link href="/terms" onClick={() => trackFooterClick('/terms', 'Terms')} className="transition-colors hover:text-gold">Terms</Link></li>
+              <li><Link href="/refunds" onClick={() => trackFooterClick('/refunds', 'Refund Policy')} className="transition-colors hover:text-gold">Refund Policy</Link></li>
             </ul>
           </div>
 

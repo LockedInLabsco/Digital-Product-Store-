@@ -76,13 +76,15 @@ export default function AdminPage() {
               </div>
             </Link>
 
-            <div className="border border-gray-200 rounded-lg p-6 bg-gray-100 opacity-50 cursor-not-allowed h-full">
-              <h3 className="text-lg font-bold mb-2">Analytics</h3>
-              <p className="text-gray-600 mb-4">
-                View sales and traffic metrics
-              </p>
-              <span className="text-sm text-gray-500">Coming soon</span>
-            </div>
+            <Link href="/admin/analytics">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
+                <h3 className="text-lg font-bold mb-2">Analytics</h3>
+                <p className="text-gray-600 mb-4">
+                  Traffic, funnels, revenue, and site engagement
+                </p>
+                <span className="text-sm text-black font-medium">View Analytics -&gt;</span>
+              </div>
+            </Link>
 
             <Link href="/admin/media">
               <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
