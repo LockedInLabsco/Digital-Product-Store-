@@ -23,11 +23,16 @@ metrics with PostHog-dependent cards marked "Not configured."
    — this is `NEXT_PUBLIC_POSTHOG_KEY`.
 4. In Project Settings, copy the **Project ID** (a number) — this is
    `POSTHOG_PROJECT_ID`.
-5. Under your account's **Personal API Keys** (not project settings —
-   this is per-user), create a new key with read access to Insights,
-   Session Recordings, and Query. This is `POSTHOG_PERSONAL_API_KEY`.
-   **Never put this key in a `NEXT_PUBLIC_*` variable** — it must stay
-   server-only, which is why every PostHog query in this codebase runs
+5. Under your account's **Personal API Keys** (Settings → Personal API
+   Keys — this is per-user, not per-project), create a new key with
+   these **exact scopes** (confirmed against a live project — see
+   "Troubleshooting" below for what happens if you miss one):
+   - **`query:read`** — required for every visitor/session/pageview/
+     traffic-source/engagement metric (uses the HogQL Query API)
+   - **`session_recording:read`** — required for the session replay list
+   This is `POSTHOG_PERSONAL_API_KEY`. **Never put this key in a
+   `NEXT_PUBLIC_*` variable** — it must stay server-only, which is why
+   every PostHog query in this codebase runs
    from `src/lib/analytics/posthogServer.ts`, guarded by the
    `server-only` package so it can never end up in a browser bundle.
 
@@ -77,6 +82,38 @@ If nothing appears: check the browser console for `[analytics]`
 warnings, and confirm `NEXT_PUBLIC_POSTHOG_KEY` is actually present in
 the built/served page (it must be set at build time for Vercel, since
 `NEXT_PUBLIC_*` vars are inlined at build).
+
+### Troubleshooting: dashboard shows "Not configured" even though events arrive in PostHog
+
+Client-side tracking (`NEXT_PUBLIC_POSTHOG_KEY`) and the admin
+dashboard's server-side queries (`POSTHOG_PERSONAL_API_KEY` +
+`POSTHOG_PROJECT_ID`) are two entirely separate integrations — events
+arriving in PostHog's Activity feed only proves the first one works.
+
+If the dashboard still shows "Not configured" or "Unavailable":
+
+1. **Check which one it is.** The dashboard now distinguishes them: a
+   grey "Not configured" card means `POSTHOG_PERSONAL_API_KEY` or
+   `POSTHOG_PROJECT_ID` isn't set at all. A red "PostHog is configured,
+   but the query failed" banner with an actual error message means the
+   env vars are present but the request itself failed — read that
+   message, it's PostHog's real error text, not a workaround guess.
+2. **Check the server logs** for lines starting with `[PostHog]` — every
+   failed request logs the HTTP status and PostHog's exact error detail,
+   plus a specific hint for 401 (bad/revoked key), 403 permission_denied
+   (missing scope), and 404 (wrong project ID) cases.
+3. **Most common cause: the Personal API Key is missing the `query:read`
+   scope.** This happened during development of this feature — the key
+   worked fine for session replays (which only needs
+   `session_recording:read`) but every visitor/session/pageview metric
+   failed with `403 permission_denied: API key missing required scope
+   'query:read'`. Fix: PostHog → Settings → Personal API Keys → edit the
+   key → add the `query:read` scope → save. No restart or redeploy
+   needed — the next dashboard refresh picks it up immediately.
+4. **404 on every query** usually means `POSTHOG_PROJECT_ID` doesn't
+   match the project the key belongs to (personal API keys are scoped
+   per-organization, but the project ID must still be one you have
+   access to).
 
 ## 5. Test UTM attribution
 
@@ -151,12 +188,14 @@ by this implementation — you need to run it yourself.
 
 ## Known limitations
 
-- The HogQL queries in `posthogServer.ts` are written against PostHog's
-  documented event schema (the `events` table, `$session_id`,
-  `$pathname`, etc.) but **have not been run against a live PostHog
-  project** in this environment — no PostHog credentials were available
-  here. Verify each query once you have a real project connected, and
-  adjust property names if your PostHog version/schema differs.
+- The `/api/projects/:id/query/` and `/api/projects/:id/session_recordings/`
+  endpoints and request shapes in `posthogServer.ts` have been verified
+  against a live PostHog Cloud project (both respond correctly once the
+  Personal API Key has the right scope — see the Troubleshooting section
+  above). The exact HogQL property names (`$session_id`, `$pathname`,
+  `product_slug`, etc.) match what this site's own events actually send,
+  but if you later change event/property names in `lib/analytics/events.ts`,
+  update the corresponding queries in `posthogServer.ts` to match.
 - "Exit pages" is approximated from `$pageleave` event counts per path,
   not a true last-page-of-session calculation (which needs session-level
   ordering).

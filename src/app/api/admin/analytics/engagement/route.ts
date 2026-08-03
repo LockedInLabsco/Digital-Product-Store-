@@ -45,10 +45,18 @@ export async function GET(request: NextRequest) {
     const allOk =
       topPagesResult.ok && exitPagesResult.ok && ctaResult.ok && sectionResult.ok
 
+    const firstError = [topPagesResult, exitPagesResult, ctaResult, sectionResult].find(
+      (r): r is { ok: false; error: string } => !r.ok
+    )?.error
+    if (firstError) {
+      console.error('[GET /api/admin/analytics/engagement] PostHog configured but query failed:', firstError)
+    }
+
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
       postHogConfigured: true,
       postHogAvailable: allOk,
+      postHogError: firstError,
       topPages: topPagesResult.ok ? topPagesResult.data : [],
       exitPages: exitPagesResult.ok ? exitPagesResult.data : [],
       topCtaClicks: ctaResult.ok ? ctaResult.data : [],

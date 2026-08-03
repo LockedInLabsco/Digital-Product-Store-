@@ -25,12 +25,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await listRecentSessionRecordings(10)
+    if (!result.ok) {
+      console.error('[GET /api/admin/analytics/session-replays] PostHog configured but query failed:', result.error)
+    }
     return NextResponse.json({
       postHogConfigured: true,
       postHogAvailable: result.ok,
       recordings: result.ok ? result.data : [],
       projectReplayUrl,
-      error: result.ok ? undefined : result.error,
+      postHogError: result.ok ? undefined : result.error,
     })
   } catch (error) {
     console.error('[GET /api/admin/analytics/session-replays] Exception', error)

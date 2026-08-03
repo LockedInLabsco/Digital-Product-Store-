@@ -52,10 +52,17 @@ export async function GET(request: NextRequest) {
 
     rows.sort((a, b) => b.revenue - a.revenue || b.purchases - a.purchases)
 
+    const postHogError =
+      postHogConfigured && productViewsResult && !productViewsResult.ok ? productViewsResult.error : undefined
+    if (postHogError) {
+      console.error('[GET /api/admin/analytics/products] PostHog configured but query failed:', postHogError)
+    }
+
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
       postHogConfigured,
       postHogAvailable: Boolean(productViewsResult?.ok),
+      postHogError,
       rows,
     })
   } catch (error) {

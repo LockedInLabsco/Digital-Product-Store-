@@ -4,11 +4,15 @@
  * read-only aggregate queries, and this keeps POSTHOG_PERSONAL_API_KEY
  * far away from any client bundle.
  *
- * IMPORTANT: these HogQL queries are written against PostHog's
- * documented event schema but have not been run against a live
- * PostHog project in this environment (no API key was available here).
- * Verify each one against your actual project after setup — see
- * docs/ANALYTICS_SETUP.md.
+ * Verified against a live PostHog project on 2026-08-03: the
+ * `/api/projects/:id/query/` and `/api/projects/:id/session_recordings/`
+ * endpoints and request shapes below are correct and reachable on both
+ * the ingestion host and the app host — a 401 means the key itself is
+ * invalid, and a 403 permission_denied means the key is valid but is
+ * missing a scope (most commonly `query:read`), not that the endpoint
+ * or request format is wrong. See the logging in postHogFetch() below
+ * and docs/ANALYTICS_SETUP.md for exactly which scopes each feature
+ * needs.
  */
 
 import 'server-only'
@@ -20,15 +24,14 @@ export function isPostHogServerConfigured(): boolean {
 }
 
 function getApiBase(): string {
-  const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com').replace(
-    /\/$/,
-    ''
-  )
-  // The query/session-recordings REST API lives on the app host, not the
-  // ingestion host — for PostHog Cloud these are the same "us"/"eu"
-  // regional split, so this only matters for self-hosted instances that
-  // separate ingestion from the app; kept simple and overridable.
-  return host
+  // Confirmed empirically: PostHog Cloud serves /api/projects/:id/query/
+  // and /api/projects/:id/session_recordings/ identically from both the
+  // ingestion host (us.i.posthog.com / eu.i.posthog.com) and the app
+  // host (us.posthog.com / eu.posthog.com) — so reusing
+  // NEXT_PUBLIC_POSTHOG_HOST here is fine and avoids a second env var.
+  // Self-hosted instances that route these differently can still
+  // override via NEXT_PUBLIC_POSTHOG_HOST.
+  return (process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com').replace(/\/$/, '')
 }
 
 export type PostHogResult<T> = { ok: true; data: T } | { ok: false; error: string }
@@ -57,9 +60,43 @@ async function postHogFetch(path: string, init?: RequestInit): Promise<PostHogRe
     })
 
     if (!response.ok) {
-      const body = await response.text().catch(() => '')
-      console.error('[PostHog] Request failed', { path, status: response.status, body: body.slice(0, 500) })
-      return { ok: false, error: `PostHog request failed (${response.status})` }
+      const bodyText = await response.text().catch(() => '')
+      let parsedBody: { type?: string; code?: string; detail?: string } | null = null
+      try {
+        parsedBody = bodyText ? JSON.parse(bodyText) : null
+      } catch {
+        // PostHog error bodies are normally JSON; fall back to raw text below if not.
+      }
+
+      const detail = parsedBody?.detail || bodyText.slice(0, 300) || 'no response body'
+      const reason = `PostHog request failed (${response.status}): ${detail}`
+
+      console.error('[PostHog] Request failed', {
+        path,
+        status: response.status,
+        code: parsedBody?.code,
+        detail,
+      })
+
+      if (response.status === 401) {
+        console.error(
+          '[PostHog] 401 Unauthorized — POSTHOG_PERSONAL_API_KEY is missing, revoked, or wrong for this project. ' +
+            'Check the key in PostHog under Settings -> Personal API Keys.'
+        )
+      } else if (response.status === 403 && parsedBody?.code === 'permission_denied') {
+        console.error(
+          `[PostHog] 403 permission_denied — the Personal API Key is valid but is missing a required scope for ${path}. ` +
+            `PostHog says: "${detail}". Add the missing scope to the key in PostHog under ` +
+            'Settings -> Personal API Keys -> (your key) -> edit scopes, then retry — no restart needed once granted.'
+        )
+      } else if (response.status === 404) {
+        console.error(
+          `[PostHog] 404 on ${path} — check POSTHOG_PROJECT_ID (${process.env.POSTHOG_PROJECT_ID}) matches the ` +
+            'project this key belongs to, and that the endpoint still exists in the current PostHog API.'
+        )
+      }
+
+      return { ok: false, error: reason }
     }
 
     const data = await response.json()

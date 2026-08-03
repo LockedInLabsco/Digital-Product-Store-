@@ -150,6 +150,21 @@ export default function AdminAnalyticsPage() {
   const change = overview.data?.changeVsPreviousPeriod
   const postHogUnavailable = overview.data && !overview.data.postHogConfigured
 
+  // Distinguishes "genuinely not configured" (env vars missing) from
+  // "configured but the query failed" (e.g. the Personal API Key is
+  // missing a scope) — both used to collapse into the same misleading
+  // "Not configured" label.
+  const postHogCardProps =
+    overview.data && !overview.data.postHogAvailable
+      ? {
+          unavailable: true,
+          unavailableLabel: overview.data.postHogConfigured ? 'Unavailable' : 'Not configured',
+          unavailableReason: overview.data.postHogConfigured
+            ? overview.data.postHogError || 'PostHog query failed — check server logs'
+            : undefined,
+        }
+      : { unavailable: false }
+
   const trafficColumns: ColumnDef<any>[] = [
     { key: 'source', header: 'Source', accessor: (r) => r.source },
     { key: 'medium', header: 'Medium', accessor: (r) => r.medium },
@@ -305,6 +320,20 @@ export default function AdminAnalyticsPage() {
           </div>
         )}
 
+        {overview.data?.postHogConfigured && !overview.data?.postHogAvailable && (
+          <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p className="font-semibold">PostHog is configured, but the query failed.</p>
+            <p className="mt-1">
+              {overview.data.postHogError || 'Unknown error — check the server logs for [PostHog] entries.'}
+            </p>
+            <p className="mt-1 text-red-700">
+              This is usually a missing scope on the Personal API Key (most commonly{' '}
+              <code className="rounded bg-red-100 px-1">query:read</code>) rather than a missing
+              environment variable — see docs/ANALYTICS_SETUP.md.
+            </p>
+          </div>
+        )}
+
         {/* Overview cards */}
         <section>
           <h2 className="mb-4 text-lg font-bold">Overview</h2>
@@ -318,22 +347,14 @@ export default function AdminAnalyticsPage() {
                 label="Unique visitors"
                 value={formatNumber(ov?.uniqueVisitors)}
                 change={change?.uniqueVisitors}
-                unavailable={overview.data && !overview.data.postHogAvailable}
+                {...postHogCardProps}
               />
-              <StatCard
-                label="Sessions"
-                value={formatNumber(ov?.sessions)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
-              />
-              <StatCard
-                label="Page views"
-                value={formatNumber(ov?.pageViews)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
-              />
+              <StatCard label="Sessions" value={formatNumber(ov?.sessions)} {...postHogCardProps} />
+              <StatCard label="Page views" value={formatNumber(ov?.pageViews)} {...postHogCardProps} />
               <StatCard
                 label="Product-page views"
                 value={formatNumber(ov?.productPageViews)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
+                {...postHogCardProps}
               />
               <StatCard label="Free downloads" value={formatNumber(ov?.freeDownloads)} change={change?.freeDownloads} />
               <StatCard label="Paid purchases" value={formatNumber(ov?.paidPurchases)} change={change?.paidPurchases} />
@@ -346,17 +367,17 @@ export default function AdminAnalyticsPage() {
               <StatCard
                 label="Overall conversion rate"
                 value={formatPercent(ov?.overallConversionRate)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
+                {...postHogCardProps}
               />
               <StatCard
                 label="Returning visitors"
                 value={formatPercent(ov?.returningVisitorPercentage)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
+                {...postHogCardProps}
               />
               <StatCard
                 label="Avg. engaged session time"
                 value={formatSeconds(ov?.avgEngagedSessionSeconds)}
-                unavailable={overview.data && !overview.data.postHogAvailable}
+                {...postHogCardProps}
               />
               <StatCard label="Known customers" value={formatNumber(ov?.totalKnownCustomers)} />
             </div>
@@ -416,8 +437,13 @@ export default function AdminAnalyticsPage() {
               rows={traffic.data?.rows || []}
               rowKey={(r) => `${r.source}-${r.medium}-${r.campaign}`}
               isLoading={traffic.isLoading}
-              error={traffic.error}
+              error={traffic.error || (traffic.data?.postHogConfigured ? traffic.data.postHogError : null)}
               defaultSortKey="revenue"
+              emptyMessage={
+                traffic.data && !traffic.data.postHogConfigured
+                  ? 'Analytics not configured'
+                  : 'No data for this period'
+              }
             />
           </div>
         </section>
@@ -431,8 +457,13 @@ export default function AdminAnalyticsPage() {
               rows={products.data?.rows || []}
               rowKey={(r) => r.productId || r.productTitle}
               isLoading={products.isLoading}
-              error={products.error}
+              error={products.error || (products.data?.postHogConfigured ? products.data.postHogError : null)}
               defaultSortKey="revenue"
+              emptyMessage={
+                products.data && !products.data.postHogConfigured
+                  ? 'Analytics not configured'
+                  : 'No data for this period'
+              }
             />
           </div>
         </section>
@@ -498,7 +529,7 @@ export default function AdminAnalyticsPage() {
                 rows={engagement.data?.topPages || []}
                 rowKey={(r) => r.path}
                 isLoading={engagement.isLoading}
-                error={engagement.error}
+                error={engagement.error || (engagement.data?.postHogConfigured ? engagement.data.postHogError : null)}
                 defaultSortKey="views"
                 emptyMessage={
                   engagement.data && !engagement.data.postHogConfigured
@@ -514,7 +545,7 @@ export default function AdminAnalyticsPage() {
                 rows={engagement.data?.exitPages || []}
                 rowKey={(r) => r.path}
                 isLoading={engagement.isLoading}
-                error={engagement.error}
+                error={engagement.error || (engagement.data?.postHogConfigured ? engagement.data.postHogError : null)}
                 defaultSortKey="exits"
                 emptyMessage={
                   engagement.data && !engagement.data.postHogConfigured
@@ -530,7 +561,7 @@ export default function AdminAnalyticsPage() {
                 rows={engagement.data?.topCtaClicks || []}
                 rowKey={(r) => r.location}
                 isLoading={engagement.isLoading}
-                error={engagement.error}
+                error={engagement.error || (engagement.data?.postHogConfigured ? engagement.data.postHogError : null)}
                 defaultSortKey="clicks"
                 emptyMessage={
                   engagement.data && !engagement.data.postHogConfigured
@@ -546,7 +577,7 @@ export default function AdminAnalyticsPage() {
                 rows={engagement.data?.sectionEngagement || []}
                 rowKey={(r) => r.sectionId}
                 isLoading={engagement.isLoading}
-                error={engagement.error}
+                error={engagement.error || (engagement.data?.postHogConfigured ? engagement.data.postHogError : null)}
                 defaultSortKey="views"
                 emptyMessage={
                   engagement.data && !engagement.data.postHogConfigured
@@ -578,6 +609,11 @@ export default function AdminAnalyticsPage() {
                   >
                     Open session replays in PostHog ↗
                   </a>
+                )}
+                {!sessionReplays.data.postHogAvailable && sessionReplays.data.postHogError && (
+                  <p className="mb-4 text-sm text-red-700">
+                    Could not list recent recordings: {sessionReplays.data.postHogError}
+                  </p>
                 )}
                 {sessionReplays.data.recordings?.length > 0 ? (
                   <ul className="divide-y divide-gray-100 text-sm">

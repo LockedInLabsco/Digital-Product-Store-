@@ -57,6 +57,19 @@ export async function GET(request: NextRequest) {
     const funnelEntry = funnelEntryResult?.ok ? funnelEntryResult.data : null
     const timeSeries = timeSeriesResult?.ok ? timeSeriesResult.data : []
 
+    // Surface the *actual* reason a configured PostHog integration came
+    // back empty, instead of collapsing every failure into "not
+    // configured" — see postHogFetch() in posthogServer.ts for the
+    // detailed server-side log this is drawn from.
+    const postHogError =
+      postHogConfigured && !visitorSummary && visitorSummaryResult && !visitorSummaryResult.ok
+        ? visitorSummaryResult.error
+        : undefined
+
+    if (postHogConfigured && postHogError) {
+      console.error('[GET /api/admin/analytics/overview] PostHog configured but query failed:', postHogError)
+    }
+
     const totalVisitors = visitorSummary?.uniqueVisitors ?? null
     const overallConversionRate =
       totalVisitors && totalVisitors > 0
@@ -93,6 +106,7 @@ export async function GET(request: NextRequest) {
       generatedAt: new Date().toISOString(),
       postHogConfigured,
       postHogAvailable: Boolean(visitorSummary),
+      postHogError,
       overview: {
         uniqueVisitors: totalVisitors,
         sessions: visitorSummary?.sessions ?? null,

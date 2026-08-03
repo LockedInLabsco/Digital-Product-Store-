@@ -53,10 +53,17 @@ export async function GET(request: NextRequest) {
 
     rows.sort((a, b) => b.revenue - a.revenue || (b.visitors || 0) - (a.visitors || 0))
 
+    const postHogError =
+      postHogConfigured && visitorRowsResult && !visitorRowsResult.ok ? visitorRowsResult.error : undefined
+    if (postHogError) {
+      console.error('[GET /api/admin/analytics/traffic] PostHog configured but query failed:', postHogError)
+    }
+
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
       postHogConfigured,
       postHogAvailable: Boolean(visitorRowsResult?.ok),
+      postHogError,
       rows,
     })
   } catch (error) {
