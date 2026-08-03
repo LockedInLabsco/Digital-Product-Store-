@@ -9,7 +9,7 @@ import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import PaidProductButton from '@/src/components/PaidProductButton'
 import TrackMount from '@/src/components/analytics/TrackMount'
-import { productEventProps } from '@/src/lib/analytics/events'
+import { productEventProps } from '@/src/lib/analytics/eventTypes'
 import { getActiveProductBySlug } from '@/src/lib/supabase/queries'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { formatPrice } from '@/src/lib/utils/format'
@@ -122,6 +122,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
       ? product.features
       : [product.shortDescription]
 
+  // Analytics is optional instrumentation, never core page content — a
+  // failure here must never take down the product page itself. Scoped
+  // to this one non-critical computation, not a blanket try/catch
+  // around the page.
+  let productTrackingProps: ReturnType<typeof productEventProps> | null = null
+  try {
+    productTrackingProps = productEventProps(product)
+  } catch (error) {
+    console.error('[products/[slug]] Failed to build analytics properties', error)
+  }
+
   const PurchaseAction = ({ fullWidth = false }: { fullWidth?: boolean }) =>
     product.price === 0 ? (
       <FreeDownloadButton
@@ -159,7 +170,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
-      <TrackMount event="product_page_viewed" properties={productEventProps(product)} />
+      {productTrackingProps && (
+        <TrackMount event="product_page_viewed" properties={productTrackingProps} />
+      )}
       <Navbar media={media} />
       <main className="bg-ink">
         <section className="py-12 sm:py-16">

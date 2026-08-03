@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Button from './Button'
-import { track, productEventProps } from '@/src/lib/analytics/events'
+import { track } from '@/src/lib/analytics/events'
+import { productEventProps } from '@/src/lib/analytics/eventTypes'
 import { getAttributionSnapshot, getDeviceCategory } from '@/src/lib/analytics/attribution'
 import { toAttributionPayload } from '@/src/types/attribution'
 

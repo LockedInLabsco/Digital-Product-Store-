@@ -2,12 +2,20 @@
 
 import { getPostHogInstance, isPostHogInitialized } from './posthogClient'
 import { getAttributionSnapshot, getDeviceCategory } from './attribution'
+import type { AnalyticsEventMap, AnalyticsEventName } from './eventTypes'
+
+export type { AnalyticsEventMap, AnalyticsEventName }
+// productEventProps is intentionally NOT re-exported here — import it
+// from ./eventTypes directly. Re-exporting it from this 'use client'
+// file would recreate the exact bug this split fixes: any Server
+// Component importing it from here (instead of ./eventTypes) would get
+// an RSC client-reference stub instead of the real function again.
 
 /**
- * Every event this site can send to PostHog, with its exact property
- * shape. Track() is the only place components should ever call
+ * track() is the only place components should ever call
  * posthog.capture — this keeps event names and property keys from
- * drifting out of sync across the codebase.
+ * drifting out of sync across the codebase. Event names/shapes are
+ * defined in ./eventTypes.
  */
 
 interface CommonProps {
@@ -21,45 +29,6 @@ interface CommonProps {
   landing_page?: string | null
   device_category?: string
 }
-
-interface ProductProps {
-  product_id: string
-  product_slug: string
-  product_title: string
-  product_type: 'free' | 'paid'
-  displayed_price?: number
-  currency?: string
-}
-
-export interface AnalyticsEventMap {
-  homepage_viewed: {}
-  hero_cta_clicked: { button_location: string; destination: string }
-  navigation_clicked: { button_location: string; destination: string; label: string }
-  // products_section_viewed is intentionally not a separate event — it's
-  // covered by section_viewed with section_id: 'products' (see
-  // SectionEngagementTracker + data-section-id="products" on the
-  // homepage), avoiding two events for the same moment.
-  product_card_clicked: ProductProps & { button_location: string }
-  product_page_viewed: ProductProps
-  free_download_started: ProductProps
-  free_download_completed: ProductProps
-  free_download_failed: ProductProps & { reason?: string }
-  paid_checkout_started: ProductProps & { button_location: string }
-  paid_checkout_opened: ProductProps
-  paid_checkout_abandoned: ProductProps
-  purchase_completed: ProductProps
-  purchase_failed: ProductProps & { reason?: string }
-  email_signup_completed: { button_location: string }
-  outbound_social_clicked: { destination: string; label: string }
-  section_viewed: { section_id: string }
-  section_engagement_completed: {
-    section_id: string
-    engaged_seconds: number
-    maximum_visibility_percentage: number
-  }
-}
-
-export type AnalyticsEventName = keyof AnalyticsEventMap
 
 /**
  * Sends a typed analytics event. Safe to call unconditionally —
@@ -103,23 +72,5 @@ function attributionAsCommonProps(): CommonProps {
     }
   } catch {
     return {}
-  }
-}
-
-/** Builds the common ProductProps shape from a product-like object. */
-export function productEventProps(product: {
-  id: string
-  slug: string
-  title: string
-  price: number
-  currency?: string
-}): ProductProps {
-  return {
-    product_id: product.id,
-    product_slug: product.slug,
-    product_title: product.title,
-    product_type: product.price === 0 ? 'free' : 'paid',
-    displayed_price: product.price,
-    currency: product.currency || 'USD',
   }
 }

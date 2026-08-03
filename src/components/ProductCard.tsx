@@ -4,7 +4,8 @@ import Link from 'next/link'
 import ProductPreview from './ProductPreview'
 import { PreviewItem } from '@/src/types/product'
 import { formatPrice } from '@/src/lib/utils/format'
-import { track, productEventProps } from '@/src/lib/analytics/events'
+import { track } from '@/src/lib/analytics/events'
+import { productEventProps } from '@/src/lib/analytics/eventTypes'
 
 interface ProductCardProps {
   id: string
