@@ -4,6 +4,7 @@ export interface FreeDownload {
   product_slug: string
   product_title: string
   email: string
+  first_name: string | null
   download_status: 'pending' | 'delivered' | 'failed'
   email_delivery_status: 'pending' | 'sent' | 'failed'
   error_message: string | null

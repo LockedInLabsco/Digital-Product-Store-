@@ -4,6 +4,7 @@ const RESEND_API_URL = 'https://api.resend.com/emails'
 
 interface SendDownloadEmailParams {
   email: string
+  firstName?: string
   productTitle: string
   downloadUrl: string
   isFree?: boolean
@@ -11,10 +12,20 @@ interface SendDownloadEmailParams {
 
 export async function sendDownloadEmail({
   email,
+  firstName,
   productTitle,
   downloadUrl,
   isFree = true,
 }: SendDownloadEmailParams): Promise<{ success: boolean; error?: string }> {
+  const safeFirstName = firstName
+    ? firstName.replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[character] || character)
+    : ''
   const subject = isFree ? 'Your free guide is ready' : 'Your purchase is ready to download'
   const heading = isFree ? 'Your guide is ready' : 'Your purchase is ready'
   const introLine = isFree
@@ -110,7 +121,7 @@ export async function sendDownloadEmail({
     </div>
 
     <div class="content">
-      <p>Hi,</p>
+      <p>Hi${safeFirstName ? ` ${safeFirstName}` : ''},</p>
       <p>${introLine}</p>
       <p><a href="${downloadUrl}" class="button">Download Now</a></p>
       <p class="expiry">This link expires in 1 hour</p>

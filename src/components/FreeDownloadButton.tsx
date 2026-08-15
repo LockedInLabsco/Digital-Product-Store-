@@ -1,160 +1,29 @@
 'use client'
 
-import { useState } from 'react'
 import Button from './Button'
-import { track } from '@/src/lib/analytics/events'
-import { productEventProps } from '@/src/lib/analytics/eventTypes'
-import { getAttributionSnapshot, getDeviceCategory } from '@/src/lib/analytics/attribution'
-import { toAttributionPayload } from '@/src/types/attribution'
+import { useFreeProductClaim } from './FreeProductClaim'
 
 interface FreeDownloadButtonProps {
-  productId: string
-  productSlug: string
   productTitle: string
+  fullWidth?: boolean
 }
 
 export default function FreeDownloadButton({
-  productId,
-  productSlug,
   productTitle,
+  fullWidth = false,
 }: FreeDownloadButtonProps) {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [submittedEmail, setSubmittedEmail] = useState('')
-
-  const eventProps = productEventProps({
-    id: productId,
-    slug: productSlug,
-    title: productTitle,
-    price: 0,
-  })
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    track('free_download_started', eventProps)
-
-    try {
-      console.log('Submitting email for: ' + productSlug)
-
-      const response = await fetch(
-        `/api/download/free/${productSlug}/email`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            attribution: toAttributionPayload(getAttributionSnapshot()),
-            deviceCategory: getDeviceCategory(),
-          }),
-        }
-      )
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        console.error('API error:', data)
-        const message =
-          data.error || 'We could not send your guide right now. Please try again.'
-        setError(message)
-        track('free_download_failed', { ...eventProps, reason: message })
-        return
-      }
-
-      console.log('✅ Email sent successfully')
-      setSubmittedEmail(email.trim())
-      setSubmitted(true)
-      setSuccess(true)
-      setEmail('')
-      track('free_download_completed', eventProps)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      console.error('Submit error:', errorMessage)
-      setError(
-        'We could not reach the email service. Check your connection and try again.'
-      )
-      track('free_download_failed', { ...eventProps, reason: 'network_error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (submitted && success) {
-    return (
-      <div
-        className="rounded-sm border border-gold/30 bg-offwhite p-5 text-cream"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="text-xs font-semibold uppercase tracking-[0.1em]">
-          Success — check your inbox
-        </p>
-        <p className="mt-3 text-sm text-cream/70">
-          {productTitle} is on its way to {submittedEmail}. The download link
-          will arrive by email.
-        </p>
-        <button
-          onClick={() => {
-            setSubmitted(false)
-            setSuccess(false)
-            setSubmittedEmail('')
-            setError(null)
-          }}
-          className="mt-4 text-sm font-semibold text-cream underline underline-offset-4"
-        >
-          Send to another email
-        </button>
-      </div>
-    )
-  }
+  const { openClaim } = useFreeProductClaim()
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <input
-          type="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value)
-            if (error) setError(null)
-          }}
-          aria-label={`Email address for ${productTitle}`}
-          required
-          disabled={loading}
-          className="w-full rounded-sm border border-line/20 bg-offwhite px-4 py-3 text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink disabled:bg-charcoal disabled:text-cream/40"
-        />
-      </div>
-
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        disabled={loading || !email.trim()}
-      >
-        {loading ? 'Sending...' : 'Get Free Guide'}
-      </Button>
-
-      {error && (
-        <div
-          className="rounded-sm border border-line/20 bg-offwhite p-4 text-cream"
-          role="alert"
-          aria-live="assertive"
-        >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em]">
-            We couldn&apos;t send your guide
-          </p>
-          <p className="text-sm text-cream/70">
-            {error}
-          </p>
-        </div>
-      )}
-    </form>
+    <Button
+      type="button"
+      size="lg"
+      className={fullWidth ? 'w-full' : undefined}
+      aria-label={`Claim ${productTitle} for free`}
+      data-free-claim-trigger
+      onClick={(event) => openClaim(event.currentTarget)}
+    >
+      Get it for free
+    </Button>
   )
 }

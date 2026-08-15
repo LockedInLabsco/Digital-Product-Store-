@@ -7,6 +7,7 @@ import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
 import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
+import FreeProductClaimProvider from '@/src/components/FreeProductClaim'
 import PaidProductButton from '@/src/components/PaidProductButton'
 import TrackMount from '@/src/components/analytics/TrackMount'
 import { productEventProps } from '@/src/lib/analytics/eventTypes'
@@ -136,9 +137,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const PurchaseAction = ({ fullWidth = false }: { fullWidth?: boolean }) =>
     product.price === 0 ? (
       <FreeDownloadButton
-        productId={product.id}
-        productSlug={product.slug}
         productTitle={product.title}
+        fullWidth={fullWidth}
       />
     ) : product.paddlePriceId ? (
       <PaidProductButton
@@ -168,7 +168,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
     )
 
-  return (
+  const productPage = (
     <>
       {productTrackingProps && (
         <TrackMount event="product_page_viewed" properties={productTrackingProps} />
@@ -283,5 +283,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </main>
       <Footer media={media} />
     </>
+  )
+
+  return product.price === 0 ? (
+    <FreeProductClaimProvider
+      productId={product.id}
+      productSlug={product.slug}
+      productTitle={product.title}
+    >
+      {productPage}
+    </FreeProductClaimProvider>
+  ) : (
+    productPage
   )
 }
