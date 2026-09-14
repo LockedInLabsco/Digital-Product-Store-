@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import PathIllustration from './PathIllustration'
 
 interface GalleryImage {
   id: string
@@ -24,10 +25,11 @@ export default function ProductGallery({
 
   if (!selectedImage) {
     return (
-      <div className="flex aspect-square flex-col items-center justify-center rounded-sm border border-line/10 bg-offwhite">
-        <span className="font-serif text-3xl text-cream/25" aria-hidden="true">N4N</span>
-        <h3 className="mt-4 font-serif text-xl text-cream">Preview not available</h3>
-        <p className="mt-3 max-w-sm text-center text-sm text-cream/50">
+      <div className="flex aspect-square flex-col items-center justify-center rounded-md border border-line bg-offwhite">
+        <PathIllustration variant="focus" className="w-2/3 max-w-[280px] text-cream" />
+        <span className="text-sm font-bold text-cream" aria-hidden="true">N4N</span>
+        <h3 className="mt-4 font-sans font-bold tracking-tight text-xl text-cream">Preview not available</h3>
+        <p className="mt-3 max-w-sm text-center text-sm text-beige">
           A preview for {productTitle} has not been added yet.
         </p>
       </div>
@@ -38,7 +40,7 @@ export default function ProductGallery({
 
   return (
     <div className="w-full">
-      <div className="mb-5 aspect-square overflow-hidden rounded-sm border border-line/10 bg-offwhite">
+      <div className="mb-5 aspect-square overflow-hidden rounded-md border border-line bg-offwhite">
         {isImageFile ? (
           <Image
             key={selectedImage.id}
@@ -56,9 +58,9 @@ export default function ProductGallery({
             key={selectedImage.id}
             className="flex h-full w-full flex-col items-center justify-center bg-charcoal p-8 text-center text-cream"
           >
-            <span className="font-serif text-3xl text-cream/30" aria-hidden="true">N4N</span>
-            <h3 className="mt-4 font-serif text-xl">{selectedImage.label}</h3>
-            <p className="mt-3 max-w-md text-sm text-cream/55">{selectedImage.alt}</p>
+            <span className="font-sans font-bold tracking-tight text-3xl text-beige" aria-hidden="true">N4N</span>
+            <h3 className="mt-4 font-sans font-bold tracking-tight text-xl">{selectedImage.label}</h3>
+            <p className="mt-3 max-w-md text-sm text-beige">{selectedImage.alt}</p>
           </div>
         )}
       </div>
@@ -74,10 +76,10 @@ export default function ProductGallery({
               key={image.id}
               type="button"
               onClick={() => setSelectedImageIndex(index)}
-              className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-sm border text-center transition-colors ${
+              className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-md border text-center transition-colors ${
                 selectedImageIndex === index
-                  ? 'border-gold'
-                  : 'border-line/15 hover:border-line/40'
+                  ? 'border-cream ring-1 ring-cream'
+                  : 'border-neutral-500 hover:border-cream'
               }`}
               aria-label={`View ${image.label}`}
             >
@@ -92,8 +94,8 @@ export default function ProductGallery({
                 />
               ) : (
                 <>
-                  <span className="font-serif text-lg text-cream/30" aria-hidden="true">N4N</span>
-                  <p className="mt-1 line-clamp-2 px-2 text-[0.65rem] font-semibold text-cream/60">
+                  <span className="font-sans font-bold tracking-tight text-lg text-beige" aria-hidden="true">N4N</span>
+                  <p className="mt-1 line-clamp-2 px-2 text-[0.65rem] font-semibold text-beige">
                     {image.label}
                   </p>
                 </>

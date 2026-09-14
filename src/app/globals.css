@@ -6,36 +6,66 @@
   box-sizing: border-box;
 }
 
-/*
- * Not4Normal dark navy / electric-blue theme palette.
- * This is the single source of truth for every brand color in the app.
- * tailwind.config.ts reads these variables and wires them to Tailwind
- * utility classes (bg-ink, text-cream, border-gold, etc.) — the class
- * NAMES are kept stable on purpose so component markup never needed to
- * change between theme revisions; only the values below did.
- * Edit hex values ONLY here to re-theme the site later.
- */
+/* Legacy utility names retained for the monochrome public identity. */
 :root {
-  --color-bg: 3 6 21; /* #030615 — main background */
-  --color-bg-secondary: 7 11 32; /* #070B20 — secondary/alternate section background */
-  --color-bg-elevated: 11 18 48; /* #0B1230 — elevated surface (available for future use) */
-  --color-bg-card: 14 23 56; /* #0E1738 — card/panel surface */
-  --color-bg-deep: 5 10 42; /* #050A2A — deep navy (available for future use) */
-
-  --color-text-primary: 255 255 255; /* #FFFFFF — headings, primary text */
-  --color-text-secondary: 200 210 240; /* #C8D2F0 — supporting copy */
-  --color-text-muted: 135 146 181; /* #8792B5 — tertiary/muted text */
-
-  --color-accent: 23 76 255; /* #174CFF — electric blue: CTAs, active states */
-  --color-accent-bright: 47 107 255; /* #2F6BFF — bright blue accent / hover */
-  --color-btn-dark-text: 2 6 23; /* #020617 — dark text for light/white button surfaces */
-
-  --color-border: 110 145 255; /* used with alpha, e.g. border-line/18 */
-
-  --hairline-light: rgb(var(--color-border) / 0.18);
-  --hairline-dark: rgb(var(--color-border) / 0.34);
+  --color-bg: 255 255 255;
+  --color-bg-secondary: 250 250 250;
+  --color-bg-elevated: 245 245 245;
+  --color-bg-card: 245 245 245;
+  --color-bg-deep: 10 10 10;
+  --color-text-primary: 10 10 10;
+  --color-text-secondary: 82 82 82;
+  --color-text-muted: 115 115 115;
+  --color-accent: 10 10 10;
+  --color-accent-bright: 38 38 38;
+  --color-btn-dark-text: 255 255 255;
+  --color-border: 229 229 229;
+  --hairline-light: #e5e5e5;
+  --hairline-dark: #a3a3a3;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --duration: 560ms;
+}
+
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #0a0a0a;
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .site-container {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 640px) { .site-container { padding-inline: 2rem; } }
+  @media (min-width: 1024px) { .site-container { padding-inline: 2.5rem; } }
+  .public-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    line-height: 1.5;
+    transition: background-color 180ms, border-color 180ms, transform 180ms;
+  }
+  .public-button:active { transform: translateY(1px); }
+  .public-button:disabled { cursor: not-allowed; opacity: 0.5; transform: none; }
+  .button-primary, .button-inverse { background: #0a0a0a; color: #fff; }
+  .button-primary:hover, .button-inverse:hover { background: #262626; }
+  .button-secondary, .button-outline { background: #fff; color: #0a0a0a; border: 1px solid #737373; }
+  .button-secondary:hover, .button-outline:hover { background: #f5f5f5; border-color: #0a0a0a; }
+  .button-sm { padding: 0.625rem 1rem; font-size: 0.875rem; }
+  .button-md { padding: 0.75rem 1.5rem; font-size: 0.875rem; }
+  .button-lg { padding: 1rem 1.75rem; font-size: 1rem; }
+  .legal-copy { line-height: 1.8; overflow-wrap: anywhere; }
+  .legal-copy > :first-child { margin-top: 0; }
+  .legal-copy h2 { margin-top: 2.5rem; line-height: 1.3; }
+  .legal-copy li { padding-left: 0.25rem; }
+  .claim-field[aria-invalid='true'] { border: 2px solid #0a0a0a; }
 }
 
 html {
@@ -50,26 +80,14 @@ body {
 
 ::selection {
   background: rgb(var(--color-accent));
-  color: rgb(var(--color-text-primary));
-}
-
-/*
- * Subtle radial blue illumination — an optional atmospheric layer used
- * sparingly behind key sections (see .glow-top usage in page.tsx).
- * Pure background-image; adds no markup, spacing, or layout of its own.
- */
-.glow-top {
-  background-image: radial-gradient(
-    circle at top center,
-    rgb(var(--color-accent) / 0.18),
-    transparent 45%
-  );
+  color: #fff;
 }
 
 .eyebrow {
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 

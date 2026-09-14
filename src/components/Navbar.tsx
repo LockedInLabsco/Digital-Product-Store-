@@ -30,10 +30,10 @@ export default function Navbar({ media }: NavbarProps) {
   const closeMenu = () => setIsOpen(false)
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-line/10 bg-ink/95 backdrop-blur">
+    <nav className="sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur">
       <Container className="flex h-[76px] items-center justify-between">
         <Link href="/" aria-label="Not4Normal home" onClick={closeMenu}>
-          <BrandMark logoUrl={media?.logo_light_url} />
+          <BrandMark logoUrl={media?.logo_dark_url || media?.logo_light_url} className={!media?.logo_dark_url && media?.logo_light_url ? 'rounded-md bg-neutral-950 p-1' : ''} />
         </Link>
 
         <div className="hidden items-center gap-9 md:flex">
@@ -48,7 +48,7 @@ export default function Navbar({ media }: NavbarProps) {
                   label: link.label,
                 })
               }
-              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-gold"
+              className="text-sm font-medium text-beige transition-colors hover:text-gold"
             >
               {link.label}
             </Link>
@@ -62,7 +62,7 @@ export default function Navbar({ media }: NavbarProps) {
                 label: 'Explore Products',
               })
             }
-            className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
+            className="inline-flex items-center justify-center rounded-md bg-gold px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gold-hover"
           >
             Explore Products
           </Link>
@@ -70,7 +70,7 @@ export default function Navbar({ media }: NavbarProps) {
 
         <button
           type="button"
-          className="relative flex h-8 w-8 flex-col items-center justify-center gap-[5px] md:hidden"
+          className="relative flex h-11 w-11 flex-col items-center justify-center gap-[5px] md:hidden"
           onClick={() => setIsOpen((open) => !open)}
           aria-expanded={isOpen}
           aria-controls="mobile-navigation"
@@ -91,8 +91,8 @@ export default function Navbar({ media }: NavbarProps) {
 
       <div
         id="mobile-navigation"
-        className={`overflow-hidden border-t border-line/10 bg-ink transition-[max-height] duration-300 md:hidden ${
-          isOpen ? 'max-h-72' : 'max-h-0 border-t-0'
+        className={`overflow-hidden border-t border-line bg-ink transition-[max-height] duration-300 md:hidden ${
+          isOpen ? 'visible max-h-72' : 'invisible max-h-0 border-t-0'
         }`}
       >
         <Container className="flex flex-col gap-1 py-6">
@@ -108,7 +108,7 @@ export default function Navbar({ media }: NavbarProps) {
                 })
                 closeMenu()
               }}
-              className="py-3 text-sm font-semibold uppercase tracking-[0.1em] text-cream/80"
+              className="py-3 text-sm font-semibold text-beige"
             >
               {link.label}
             </Link>
@@ -123,7 +123,7 @@ export default function Navbar({ media }: NavbarProps) {
               })
               closeMenu()
             }}
-            className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
+            className="mt-3 inline-flex items-center justify-center rounded-md bg-gold px-6 py-3 text-sm font-semibold text-white"
           >
             Explore Products
           </Link>
