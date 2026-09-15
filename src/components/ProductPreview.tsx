@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import PathIllustration from './PathIllustration'
 
 interface PreviewItem {
   id: string
@@ -55,9 +54,8 @@ export default function ProductPreview({
 
   return (
     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center bg-charcoal p-6 text-center">
-      <PathIllustration variant="focus" className="w-3/4 max-w-[240px] text-cream" />
-      <span className="text-sm font-bold tracking-tight text-cream">N4N</span>
-      <p className="mt-2 text-sm font-medium text-beige">{currentPreview?.label || productTitle}</p>
+      <span className="font-serif text-2xl text-cream/30">N4N</span>
+      <p className="mt-2 text-sm font-medium text-cream/60">{currentPreview?.label || productTitle}</p>
     </div>
   )
 }

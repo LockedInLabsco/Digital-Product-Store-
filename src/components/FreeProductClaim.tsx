@@ -195,7 +195,7 @@ export default function FreeProductClaimProvider({
       {children}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[100] overflow-y-auto bg-ink/80 p-4 backdrop-blur-sm sm:p-6"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeClaim()
           }}
@@ -213,13 +213,13 @@ export default function FreeProductClaimProvider({
               aria-labelledby="free-claim-title"
               aria-describedby="free-claim-description"
               onKeyDown={handleDialogKeyDown}
-              className="relative w-full max-w-lg rounded-md border border-line bg-ink p-6 text-cream shadow-xl sm:p-9"
+              className="relative w-full max-w-lg rounded-sm border border-line/25 bg-offwhite p-6 text-cream shadow-[0_28px_90px_-24px_rgb(var(--color-accent-bright)/0.45)] sm:p-9"
             >
               <button
                 type="button"
                 onClick={closeClaim}
                 aria-label="Close free product claim"
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-md border border-neutral-500 text-xl text-beige transition-colors hover:border-gold/60 hover:text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-sm border border-line/20 text-xl text-cream/70 transition-colors hover:border-gold/60 hover:text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
               >
                 <span aria-hidden="true">×</span>
               </button>
@@ -231,11 +231,11 @@ export default function FreeProductClaimProvider({
                     id="free-claim-title"
                     ref={successRef}
                     tabIndex={-1}
-                    className="mt-3 font-sans font-bold tracking-tight text-3xl outline-none sm:text-4xl"
+                    className="mt-3 font-serif text-3xl outline-none sm:text-4xl"
                   >
                     Check your email.
                   </h2>
-                  <p id="free-claim-description" className="mt-4 leading-relaxed text-beige">
+                  <p id="free-claim-description" className="mt-4 leading-relaxed text-cream/70">
                     {productTitle} is on its way to {submittedEmail}. Your secure download link will arrive shortly.
                   </p>
                   <Button type="button" size="lg" className="mt-7 w-full" onClick={closeClaim}>
@@ -246,17 +246,17 @@ export default function FreeProductClaimProvider({
                 <>
                   <div className="pr-10">
                     <p className="eyebrow text-gold">Free digital tool</p>
-                    <h2 id="free-claim-title" className="mt-3 font-sans font-bold tracking-tight text-3xl sm:text-4xl">
+                    <h2 id="free-claim-title" className="mt-3 font-serif text-3xl sm:text-4xl">
                       {productTitle}
                     </h2>
-                    <p id="free-claim-description" className="mt-3 text-sm leading-relaxed text-beige sm:text-base">
+                    <p id="free-claim-description" className="mt-3 text-sm leading-relaxed text-cream/65 sm:text-base">
                       Tell us where to send your free copy. No account or payment required.
                     </p>
                   </div>
 
                   <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-5">
                     <div>
-                      <label htmlFor="free-claim-first-name" className="text-sm font-semibold text-beige">
+                      <label htmlFor="free-claim-first-name" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
                         First name
                       </label>
                       <input
@@ -275,18 +275,18 @@ export default function FreeProductClaimProvider({
                           setFirstName(event.target.value)
                           if (fieldErrors.firstName) setFieldErrors((current) => ({ ...current, firstName: undefined }))
                         }}
-                        className="claim-field mt-2 w-full rounded-md border border-neutral-500 bg-offwhite px-4 py-3.5 text-base text-cream placeholder:text-dust focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
+                        className="mt-2 w-full rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-base text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
                         placeholder="Your first name"
                       />
                       {fieldErrors.firstName && (
-                        <p id="free-claim-first-name-error" className="mt-2 text-sm text-cream font-medium">
+                        <p id="free-claim-first-name-error" className="mt-2 text-sm text-red-300">
                           {fieldErrors.firstName}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="free-claim-email" className="text-sm font-semibold text-beige">
+                      <label htmlFor="free-claim-email" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
                         Email address
                       </label>
                       <input
@@ -306,11 +306,11 @@ export default function FreeProductClaimProvider({
                           setEmail(event.target.value)
                           if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined }))
                         }}
-                        className="claim-field mt-2 w-full rounded-md border border-neutral-500 bg-offwhite px-4 py-3.5 text-base text-cream placeholder:text-dust focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
+                        className="mt-2 w-full rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-base text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
                         placeholder="you@example.com"
                       />
                       {fieldErrors.email && (
-                        <p id="free-claim-email-error" className="mt-2 text-sm text-cream font-medium">
+                        <p id="free-claim-email-error" className="mt-2 text-sm text-red-300">
                           {fieldErrors.email}
                         </p>
                       )}
@@ -321,8 +321,8 @@ export default function FreeProductClaimProvider({
                     </Button>
 
                     {error && (
-                      <div role="alert" aria-live="assertive" className="rounded-md border border-cream bg-ink p-4">
-                        <p className="text-sm text-cream">{error}</p>
+                      <div role="alert" aria-live="assertive" className="rounded-sm border border-red-300/30 bg-ink p-4">
+                        <p className="text-sm text-red-200">{error}</p>
                       </div>
                     )}
                   </form>

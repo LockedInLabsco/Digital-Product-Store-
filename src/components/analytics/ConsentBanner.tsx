@@ -14,10 +14,10 @@ export default function ConsentBanner({ onAccept, onReject }: ConsentBannerProps
       role="dialog"
       aria-live="polite"
       aria-label="Analytics consent"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white px-4 py-5 shadow-[0_-4px_24px_rgb(0_0_0/0.06)] sm:px-6"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-line/20 bg-offwhite/98 px-4 py-5 backdrop-blur sm:px-6"
     >
       <div className="mx-auto flex max-w-container flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-beige">
+        <p className="text-sm text-cream/70">
           We use optional analytics to understand how visitors use Not4Normal — page views, traffic
           sources, and session recordings with sensitive fields masked. It only runs if you say yes.{' '}
           <Link href="/privacy" className="text-cream underline hover:text-gold">

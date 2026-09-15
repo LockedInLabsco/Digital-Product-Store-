@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import PathIllustration from '../PathIllustration'
 import type { HeroSliderImage } from '@/src/types/settings'
 
 const AUTOPLAY_INTERVAL_MS = 4000
@@ -69,7 +68,7 @@ export default function HeroImageSlider({
   if (visibleSlides.length === 0) {
     return fallbackImageUrl ? (
       <div
-        className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-line"
+        className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10"
         data-reveal="fade"
       >
         <Image
@@ -83,16 +82,17 @@ export default function HeroImageSlider({
       </div>
     ) : (
       <div
-        className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-line bg-charcoal"
+        className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10 bg-gradient-to-br from-offwhite via-charcoal to-ink"
         data-reveal="fade"
         aria-hidden="true"
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          <PathIllustration className="h-[70%] w-[80%] -translate-y-4 text-cream" />
-          <span className="absolute left-6 top-6 text-sm font-bold tracking-tight text-cream">N4N</span>
+          <span className="font-serif text-6xl tracking-tight text-cream/15 sm:text-7xl">
+            N4N
+          </span>
         </div>
-        <div className="absolute bottom-6 left-6 right-6 border-t border-line pt-4">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-beige">
+        <div className="absolute bottom-6 left-6 right-6 border-t border-line/10 pt-4">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-cream/40">
             Est. 2026 — Not4Normal
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function HeroImageSlider({
 
   return (
     <div
-      className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-line bg-charcoal"
+      className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-line/10 bg-charcoal"
       data-reveal="fade"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -141,7 +141,7 @@ export default function HeroImageSlider({
                 fill
                 priority={index === 0}
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                className="object-cover contrast-[1.05] saturate-[0.9]"
                 style={{ objectPosition: slide.objectPosition || 'center' }}
                 onError={() => handleImageError(slide.id)}
               />
@@ -150,8 +150,31 @@ export default function HeroImageSlider({
         )
       })}
 
+      {/* Dark navy wash + soft blue edge glow so every photo reads as part of the site */}
+      <div className="pointer-events-none absolute inset-0 bg-ink/15" aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute inset-0 shadow-[inset_0_0_70px_14px_rgb(var(--color-accent-bright)/0.16)]"
+        aria-hidden="true"
+      />
+
+      {/* Very subtle blueprint grid + points — decorative only, hidden on mobile */}
+      <div
+        className="pointer-events-none absolute inset-0 hidden opacity-[0.07] sm:block"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgb(var(--color-accent-bright)) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--color-accent-bright)) 1px, transparent 1px)',
+          backgroundSize: '42px 42px',
+        }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute inset-0 hidden sm:block" aria-hidden="true">
+        <span className="absolute right-[12%] top-[16%] h-1 w-1 rounded-full bg-gold/50" />
+        <span className="absolute left-[10%] top-[62%] h-1 w-1 rounded-full bg-gold/40" />
+        <span className="absolute bottom-[20%] right-[22%] h-[3px] w-[3px] rounded-full bg-gold/30" />
+      </div>
+
       {visibleSlides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center justify-center gap-1 rounded-md border border-line bg-white p-1">
+        <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2">
           {visibleSlides.map((slide, index) => (
             <button
               key={slide.id}
@@ -159,10 +182,10 @@ export default function HeroImageSlider({
               onClick={() => setCurrentIndex(index)}
               aria-label={`Show slide ${index + 1}: ${slide.alt}`}
               aria-current={index === activeIndex}
-              className={`relative h-8 w-8 rounded-sm transition-colors after:absolute after:inset-x-2 after:top-[15px] after:h-0.5 after:bg-current ${
+              className={`h-1.5 rounded-full transition-all duration-300 ${
                 index === activeIndex
-                  ? 'bg-cream text-white'
-                  : 'bg-white text-cream hover:bg-offwhite'
+                  ? 'w-5 bg-gold'
+                  : 'w-1.5 bg-cream/30 hover:bg-cream/50'
               }`}
             />
           ))}

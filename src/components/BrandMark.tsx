@@ -36,7 +36,7 @@ export default function BrandMark({
 
   return (
     <span
-      className={`inline-block font-sans font-bold tracking-[-0.06em] ${
+      className={`inline-block font-serif font-semibold tracking-tight ${
         compact ? 'text-xl' : 'text-2xl'
       } ${className}`}
       aria-label="Not4Normal"
