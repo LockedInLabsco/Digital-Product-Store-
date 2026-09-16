@@ -41,10 +41,8 @@ export function validateWaitlistInput(
     fieldErrors.email = 'Enter a valid email address.'
   }
 
-  if (!instagramUsername) {
-    fieldErrors.instagramUsername = 'Enter your Instagram username.'
-  } else if (!INSTAGRAM_USERNAME_PATTERN.test(instagramUsername)) {
-    fieldErrors.instagramUsername = 'Enter a valid Instagram username.'
+  if (instagramUsername && !INSTAGRAM_USERNAME_PATTERN.test(instagramUsername)) {
+    fieldErrors.instagramUsername = 'Enter a valid Instagram handle.'
   }
 
   if (firstName.length > 80) {

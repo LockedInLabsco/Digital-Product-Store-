@@ -69,7 +69,7 @@ export async function POST(
     const { error: insertError } = await supabaseServer.from('waitlist_entries').insert({
       waitlist_id: waitlist.id,
       email,
-      instagram_username: instagramUsername,
+      instagram_username: instagramUsername || null,
       first_name: firstName || null,
       source,
     })

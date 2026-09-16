@@ -21,7 +21,7 @@ export interface WaitlistEntry {
   id: string
   waitlist_id: string
   email: string
-  instagram_username: string
+  instagram_username: string | null
   first_name: string | null
   source: string
   created_at: string

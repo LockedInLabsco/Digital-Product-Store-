@@ -169,11 +169,11 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
   const handleExportCsv = () => {
     if (!waitlist) return
     const rows: string[][] = [
-      ['First name', 'Email', 'Instagram username', 'Source', 'Joined date'],
+      ['First name', 'Email', 'Instagram handle', 'Source', 'Joined date'],
       ...entries.map((entry) => [
         entry.first_name || '',
         entry.email,
-        entry.instagram_username,
+        entry.instagram_username || '',
         entry.source,
         entry.created_at,
       ]),
@@ -185,7 +185,7 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
     const query = search.trim().toLowerCase()
     if (!query) return entries
     return entries.filter((entry) =>
-      [entry.email, entry.instagram_username, entry.first_name || '']
+      [entry.email, entry.instagram_username || '', entry.first_name || '']
         .join(' ')
         .toLowerCase()
         .includes(query)
@@ -216,9 +216,9 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
     },
     {
       key: 'instagram_username',
-      header: 'Instagram',
-      accessor: (row) => `@${row.instagram_username}`,
-      sortValue: (row) => row.instagram_username.toLowerCase(),
+      header: 'Handle',
+      accessor: (row) => (row.instagram_username ? `@${row.instagram_username}` : '-'),
+      sortValue: (row) => (row.instagram_username || '').toLowerCase(),
     },
     {
       key: 'source',

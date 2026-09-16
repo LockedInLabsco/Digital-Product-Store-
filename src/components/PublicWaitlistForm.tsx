@@ -53,7 +53,7 @@ export default function PublicWaitlistForm({
 
     if (!validation.value) {
       if (validation.fieldErrors.email) emailRef.current?.focus()
-      else instagramRef.current?.focus()
+      else if (validation.fieldErrors.instagramUsername) instagramRef.current?.focus()
       return
     }
 
@@ -150,7 +150,7 @@ export default function PublicWaitlistForm({
 
             <div>
               <label htmlFor="waitlist-instagram" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
-                Instagram username
+                Instagram handle <span className="normal-case tracking-normal text-cream/40">(optional)</span>
               </label>
               <div
                 className={`mt-2 flex w-full items-stretch overflow-hidden rounded-sm border bg-ink transition-colors focus-within:ring-2 focus-within:ring-gold ${
@@ -168,7 +168,6 @@ export default function PublicWaitlistForm({
                   autoCapitalize="none"
                   autoCorrect="off"
                   maxLength={30}
-                  required
                   disabled={loading}
                   value={instagramUsername}
                   aria-invalid={Boolean(fieldErrors.instagramUsername)}

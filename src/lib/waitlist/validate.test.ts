@@ -28,6 +28,17 @@ describe('waitlist validation', () => {
     ).toEqual({})
   })
 
+  it('allows an omitted instagram handle', () => {
+    expect(
+      validateWaitlistInput({ email: 'ana@example.com', instagramUsername: '' }).fieldErrors
+    ).toEqual({})
+    expect(validateWaitlistInput({ email: 'ana@example.com' }).value).toEqual({
+      email: 'ana@example.com',
+      instagramUsername: '',
+      firstName: '',
+    })
+  })
+
   it('strips a leading @ without requiring one', () => {
     expect(normalizeInstagramUsername('@ana.builds')).toBe('ana.builds')
     expect(normalizeInstagramUsername('ana.builds')).toBe('ana.builds')
@@ -36,15 +47,14 @@ describe('waitlist validation', () => {
   it('reports missing and invalid values by field', () => {
     expect(validateWaitlistInput({ email: 'not-an-email', instagramUsername: '' }).fieldErrors).toEqual({
       email: 'Enter a valid email address.',
-      instagramUsername: 'Enter your Instagram username.',
     })
   })
 
-  it('rejects an instagram username with invalid characters', () => {
+  it('rejects an instagram handle with invalid characters', () => {
     expect(
       validateWaitlistInput({ email: 'ana@example.com', instagramUsername: 'ana builds!' }).fieldErrors
         .instagramUsername
-    ).toBe('Enter a valid Instagram username.')
+    ).toBe('Enter a valid Instagram handle.')
   })
 
   it('normalizes email casing and whitespace', () => {
