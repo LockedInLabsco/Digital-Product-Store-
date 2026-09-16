@@ -1,5 +1,7 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const INSTAGRAM_USERNAME_PATTERN = /^[a-zA-Z0-9_.]{1,30}$/
+export const WAITLIST_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const SOURCE_PATTERN = /^[a-zA-Z0-9_-]{1,40}$/
 
 export interface WaitlistInput {
   email: string
@@ -54,4 +56,29 @@ export function validateWaitlistInput(
   }
 
   return { value: { email, instagramUsername, firstName }, fieldErrors }
+}
+
+export function slugifyWaitlistName(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+}
+
+export function isValidWaitlistSlug(value: string): boolean {
+  return WAITLIST_SLUG_PATTERN.test(value)
+}
+
+/**
+ * Sanitizes a caller-supplied source tag (e.g. ?source=instagram) to a
+ * safe, bounded value instead of trusting it verbatim. Falls back to
+ * fallback when missing or invalid so a malformed query param can never
+ * produce an empty or unsafe source column value.
+ */
+export function normalizeSource(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  const trimmed = value.trim()
+  return SOURCE_PATTERN.test(trimmed) ? trimmed : fallback
 }

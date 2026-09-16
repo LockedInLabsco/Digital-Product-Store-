@@ -192,26 +192,30 @@ export async function sendDownloadEmail({
 interface SendWaitlistConfirmationEmailParams {
   email: string
   firstName?: string
+  waitlistName: string
 }
 
 export async function sendWaitlistConfirmationEmail({
   email,
   firstName,
+  waitlistName,
 }: SendWaitlistConfirmationEmailParams): Promise<{ success: boolean; error?: string }> {
   if (!RESEND_API_KEY) {
     console.warn('[Resend] RESEND_API_KEY not configured — skipping waitlist confirmation email')
     return { success: false, error: 'Email service not configured' }
   }
 
-  const safeFirstName = firstName
-    ? firstName.replace(/[&<>"']/g, (character) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-      })[character] || character)
-    : ''
+  const escapeHtml = (value: string) =>
+    value.replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[character] || character)
+
+  const safeFirstName = firstName ? escapeHtml(firstName) : ''
+  const safeWaitlistName = escapeHtml(waitlistName)
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -259,7 +263,7 @@ export async function sendWaitlistConfirmationEmail({
     <h1>You're in.</h1>
     <div class="content">
       <p>Hi${safeFirstName ? ` ${safeFirstName}` : ''},</p>
-      <p>I'm currently building a better way to take back control of your phone.</p>
+      <p>You're on the <strong>${safeWaitlistName}</strong> waitlist.</p>
       <p>You'll be among the first to know when early access opens.</p>
     </div>
     <div class="footer">
@@ -280,7 +284,7 @@ export async function sendWaitlistConfirmationEmail({
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: email,
-        subject: "You're on the NOT4NORMAL app waitlist",
+        subject: `You're on the ${waitlistName} waitlist`,
         html: htmlContent,
       }),
     })

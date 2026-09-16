@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isValidWaitlistSlug,
   normalizeEmail,
   normalizeInstagramUsername,
+  normalizeSource,
+  slugifyWaitlistName,
   validateWaitlistInput,
 } from './validate'
 
@@ -46,5 +49,32 @@ describe('waitlist validation', () => {
 
   it('normalizes email casing and whitespace', () => {
     expect(normalizeEmail(' SAM@EXAMPLE.COM ')).toBe('sam@example.com')
+  })
+})
+
+describe('waitlist slug helpers', () => {
+  it('slugifies a name into a url-safe, hyphenated slug', () => {
+    expect(slugifyWaitlistName('Phone Control App')).toBe('phone-control-app')
+    expect(slugifyWaitlistName('  New Productivity App!! ')).toBe('new-productivity-app')
+    expect(slugifyWaitlistName('Über Cool---Thing')).toBe('ber-cool-thing')
+  })
+
+  it('validates slug format', () => {
+    expect(isValidWaitlistSlug('phone-control-app')).toBe(true)
+    expect(isValidWaitlistSlug('Phone-Control')).toBe(false)
+    expect(isValidWaitlistSlug('phone_control')).toBe(false)
+    expect(isValidWaitlistSlug('-phone-control')).toBe(false)
+  })
+})
+
+describe('normalizeSource', () => {
+  it('accepts a safe source value', () => {
+    expect(normalizeSource('instagram', 'waitlist_page')).toBe('instagram')
+  })
+
+  it('falls back for missing or unsafe values', () => {
+    expect(normalizeSource(undefined, 'waitlist_page')).toBe('waitlist_page')
+    expect(normalizeSource('has spaces', 'waitlist_page')).toBe('waitlist_page')
+    expect(normalizeSource('<script>', 'waitlist_page')).toBe('waitlist_page')
   })
 })

@@ -42,9 +42,9 @@ export interface AnalyticsEventMap {
   purchase_completed: ProductProps
   purchase_failed: ProductProps & { reason?: string }
   email_signup_completed: { button_location: string }
-  app_waitlist_signup_started: {}
-  app_waitlist_signup_completed: {}
-  app_waitlist_signup_failed: { reason?: string }
+  app_waitlist_signup_started: { waitlist_slug: string }
+  app_waitlist_signup_completed: { waitlist_slug: string }
+  app_waitlist_signup_failed: { waitlist_slug: string; reason?: string }
   outbound_social_clicked: { destination: string; label: string }
   section_viewed: { section_id: string }
   section_engagement_completed: {

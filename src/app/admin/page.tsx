@@ -76,6 +76,16 @@ export default function AdminPage() {
               </div>
             </Link>
 
+            <Link href="/admin/waitlists">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
+                <h3 className="text-lg font-bold mb-2">Waitlists</h3>
+                <p className="text-gray-600 mb-4">
+                  Create and manage waitlists for future apps and launches
+                </p>
+                <span className="text-sm text-black font-medium">View Waitlists -&gt;</span>
+              </div>
+            </Link>
+
             <Link href="/admin/analytics">
               <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full">
                 <h3 className="text-lg font-bold mb-2">Analytics</h3>

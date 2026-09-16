@@ -1,0 +1,148 @@
+import { cookies } from 'next/headers'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Container from '@/src/components/Container'
+import Navbar from '@/src/components/Navbar'
+import Footer from '@/src/components/Footer'
+import PublicWaitlistForm from '@/src/components/PublicWaitlistForm'
+import { getPublicWaitlistBySlug } from '@/src/lib/supabase/waitlists'
+import { getWebsiteMedia } from '@/src/lib/supabase/settings'
+import { supabaseServer } from '@/src/lib/supabase/server'
+import { isAdminSession } from '@/src/lib/admin/auth'
+import { normalizeSource } from '@/src/lib/waitlist/validate'
+import type { Waitlist } from '@/src/types/waitlist'
+
+interface WaitlistPageProps {
+  params: { slug: string }
+  searchParams: { source?: string; preview?: string }
+}
+
+const DEFAULT_HEADLINE = "You're early."
+const DEFAULT_SUPPORTING_TEXT = 'Join the waitlist to get early access and follow along as this gets built.'
+const DEFAULT_BUTTON_TEXT = 'Join the waitlist'
+
+/**
+ * Admin-only draft preview: a draft waitlist is invisible to the public
+ * anon-key query (RLS filters it out), so this is the "safe preview
+ * mode" — only reachable with ?preview=1 AND a valid admin session
+ * cookie, fetched with the service-role client which bypasses RLS.
+ */
+async function getPreviewWaitlist(slug: string): Promise<Waitlist | undefined> {
+  const cookieStore = cookies()
+  if (!isAdminSession(cookieStore)) return undefined
+
+  const { data } = await supabaseServer.from('waitlists').select('*').eq('slug', slug).maybeSingle()
+  return (data as Waitlist) || undefined
+}
+
+async function resolveWaitlist(slug: string, isPreview: boolean) {
+  const { waitlist, error } = await getPublicWaitlistBySlug(slug)
+  if (waitlist || error) return { waitlist, error, isDraftPreview: false }
+
+  if (isPreview) {
+    const previewWaitlist = await getPreviewWaitlist(slug)
+    if (previewWaitlist) {
+      return { waitlist: previewWaitlist, error: false, isDraftPreview: previewWaitlist.status === 'draft' }
+    }
+  }
+
+  return { waitlist: undefined, error: false, isDraftPreview: false }
+}
+
+export async function generateMetadata({ params }: WaitlistPageProps): Promise<Metadata> {
+  const { waitlist } = await getPublicWaitlistBySlug(decodeURIComponent(params.slug))
+
+  if (!waitlist) {
+    return { title: 'Waitlist not found' }
+  }
+
+  return {
+    title: `${waitlist.name} — Waitlist`,
+    description: waitlist.description || waitlist.supporting_text || undefined,
+  }
+}
+
+export default async function WaitlistPage({ params, searchParams }: WaitlistPageProps) {
+  const slug = decodeURIComponent(params.slug)
+  const isPreview = searchParams.preview === '1'
+  const { waitlist, error, isDraftPreview } = await resolveWaitlist(slug, isPreview)
+  const media = await getWebsiteMedia()
+  const source = normalizeSource(searchParams.source, 'waitlist_page')
+
+  if (!waitlist) {
+    return (
+      <>
+        <Navbar media={media} />
+        <main className="flex min-h-[60vh] items-center bg-ink">
+          <Container className="max-w-2xl text-center">
+            <p className="eyebrow text-gold">{error ? 'Connection interrupted' : '404 / Waitlist'}</p>
+            <h1 className="mt-4 font-serif text-4xl text-cream sm:text-5xl">
+              {error ? 'Temporarily unavailable.' : 'This waitlist is not here.'}
+            </h1>
+            <p className="mt-4 text-cream/60">
+              {error
+                ? 'We could not load this waitlist. Please try again in a little while.'
+                : 'The waitlist does not exist or is not open yet.'}
+            </p>
+            <Link
+              href="/"
+              className="mt-8 inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
+            >
+              Back home
+            </Link>
+          </Container>
+        </main>
+        <Footer media={media} />
+      </>
+    )
+  }
+
+  const headline = waitlist.headline || waitlist.name
+  const supportingText = waitlist.supporting_text || waitlist.description || DEFAULT_SUPPORTING_TEXT
+  const buttonText = waitlist.button_text || DEFAULT_BUTTON_TEXT
+
+  return (
+    <>
+      <Navbar media={media} />
+      <main className="bg-offwhite py-20 sm:py-24">
+        {isDraftPreview && (
+          <Container className="mx-auto mb-10 max-w-2xl">
+            <div className="rounded-sm border border-gold/40 bg-ink/40 p-4 text-center text-xs font-semibold uppercase tracking-[0.1em] text-gold">
+              Draft preview — this page is not publicly visible yet
+            </div>
+          </Container>
+        )}
+
+        {waitlist.status === 'draft' ? (
+          <Container className="mx-auto max-w-2xl text-center">
+            <p className="eyebrow text-gold">{DEFAULT_HEADLINE}</p>
+            <h1 className="mt-4 font-serif text-3xl leading-snug text-cream sm:text-4xl">{headline}</h1>
+            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cream/65">{supportingText}</p>
+            <p className="mx-auto mt-8 max-w-md rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-sm text-cream/60">
+              This waitlist isn&apos;t open to the public yet.
+            </p>
+          </Container>
+        ) : waitlist.status === 'closed' ? (
+          <Container className="mx-auto max-w-2xl text-center">
+            <p className="eyebrow text-gold">{DEFAULT_HEADLINE}</p>
+            <h1 className="mt-4 font-serif text-3xl leading-snug text-cream sm:text-4xl">{headline}</h1>
+            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cream/65">{supportingText}</p>
+            <p className="mx-auto mt-8 max-w-md rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-sm text-cream/60">
+              This waitlist is currently closed.
+            </p>
+          </Container>
+        ) : (
+          <PublicWaitlistForm
+            waitlistSlug={waitlist.slug}
+            eyebrow={DEFAULT_HEADLINE}
+            headline={headline}
+            supportingText={supportingText}
+            buttonText={buttonText}
+            source={source}
+          />
+        )}
+      </main>
+      <Footer media={media} />
+    </>
+  )
+}
