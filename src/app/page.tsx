@@ -4,7 +4,6 @@ import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
-import NewsletterForm from '@/src/components/NewsletterForm'
 import AppWaitlistSection from '@/src/components/AppWaitlistSection'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
 import TrackMount from '@/src/components/analytics/TrackMount'
@@ -266,34 +265,6 @@ export default async function Home() {
 
         {/* App waitlist */}
         <AppWaitlistSection />
-
-        {/* Newsletter */}
-        <section data-section-id="newsletter" className="relative overflow-hidden bg-charcoal py-16 text-cream sm:py-20">
-          {media.newsletter_image_url && (
-            <>
-              <Image
-                src={media.newsletter_image_url}
-                alt={media.newsletter_image_alt || ''}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                aria-hidden="true"
-              />
-              <div className="absolute inset-0 bg-charcoal/75" aria-hidden="true" />
-            </>
-          )}
-          <Container className="relative flex flex-col items-center gap-6 text-center">
-            <div data-reveal="up">
-              <h2 className="font-serif text-2xl sm:text-3xl">Join the Not4Normal Community</h2>
-              <p className="mt-3 max-w-md text-sm text-cream/60">
-                Get new tools, ideas, and product releases directly in your inbox.
-              </p>
-            </div>
-            <div data-reveal="up">
-              <NewsletterForm />
-            </div>
-          </Container>
-        </section>
 
         {/* Final CTA */}
         <section data-section-id="final_cta" className="relative overflow-hidden bg-ink py-16 sm:py-20">
