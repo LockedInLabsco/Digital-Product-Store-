@@ -4,19 +4,16 @@ import { getSignedDownloadUrl } from '@/src/lib/supabase/downloads'
 import { sendDownloadEmail } from '@/src/lib/email/resend'
 import { AttributionPayload } from '@/src/types/attribution'
 import { sanitizeAttribution, sanitizeDeviceCategory } from '@/src/lib/analytics/sanitizeAttribution'
+import { getDuplicateClaimCutoff, validateFreeClaimInput } from '@/src/lib/free-download/claim'
 
 const EMAIL_SIGNED_URL_EXPIRY_SECONDS = 60 * 60 // 1 hour
-
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
 
 interface RecordFreeDownloadInput {
   productId: string | null
   productSlug: string
   productTitle: string
   email: string
+  firstName: string
   downloadStatus: 'delivered' | 'failed'
   emailDeliveryStatus: 'sent' | 'failed'
   errorMessage?: string | null
@@ -30,6 +27,7 @@ async function recordFreeDownload(input: RecordFreeDownloadInput) {
     product_slug: input.productSlug,
     product_title: input.productTitle,
     email: input.email,
+    first_name: input.firstName,
     download_status: input.downloadStatus,
     email_delivery_status: input.emailDeliveryStatus,
     error_message: input.errorMessage || null,
@@ -69,28 +67,24 @@ export async function POST(
     }
 
     const body = await request.json()
-    const email = body.email?.trim()
+    const validation = validateFreeClaimInput({
+      firstName: body.firstName,
+      email: body.email,
+    })
     const attribution = sanitizeAttribution(body.attribution)
     const deviceCategory = sanitizeDeviceCategory(body.deviceCategory)
-    console.log(`📧 EMAIL: ${email}`)
 
-    if (!email) {
-      console.log('❌ Email is missing')
+    if (!validation.value) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        {
+          error: 'Check your name and email address.',
+          fieldErrors: validation.fieldErrors,
+        },
         { status: 400 }
       )
     }
 
-    if (!isValidEmail(email)) {
-      console.log(`❌ Email validation failed: ${email}`)
-      return NextResponse.json(
-        { error: 'Please enter a valid email address' },
-        { status: 400 }
-      )
-    }
-
-    console.log(`✅ Email validation passed`)
+    const { firstName, email } = validation.value
 
     console.log(`🔍 Fetching product from Supabase with slug: ${slug}`)
     const { data: product, error: queryError } = await supabaseServer
@@ -136,8 +130,28 @@ export async function POST(
       productSlug: slug,
       productTitle: product.title,
       email,
+      firstName,
       attribution,
       deviceCategory,
+    }
+
+    const { data: recentClaims, error: duplicateCheckError } = await supabaseServer
+      .from('free_downloads')
+      .select('id')
+      .eq('product_id', product.id)
+      .eq('email', email)
+      .eq('download_status', 'delivered')
+      .gte('created_at', getDuplicateClaimCutoff())
+      .limit(1)
+
+    if (duplicateCheckError) {
+      console.error('[Free Download] Duplicate check failed', duplicateCheckError.message)
+    } else if (recentClaims && recentClaims.length > 0) {
+      return NextResponse.json({
+        success: true,
+        duplicate: true,
+        message: 'Your guide was already sent. Check your email.',
+      })
     }
 
     if (!filePath) {
@@ -182,6 +196,7 @@ export async function POST(
     console.log(`📧 Calling sendDownloadEmail()...`)
     const emailResult = await sendDownloadEmail({
       email,
+      firstName,
       productTitle: product.title,
       downloadUrl: signedUrl,
       isFree: true,
