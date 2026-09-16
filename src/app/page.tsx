@@ -5,6 +5,7 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import NewsletterForm from '@/src/components/NewsletterForm'
+import AppWaitlistSection from '@/src/components/AppWaitlistSection'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
 import TrackMount from '@/src/components/analytics/TrackMount'
 import TrackedLink from '@/src/components/analytics/TrackedLink'
@@ -262,6 +263,9 @@ export default async function Home() {
             </p>
           </Container>
         </section>
+
+        {/* App waitlist */}
+        <AppWaitlistSection />
 
         {/* Newsletter */}
         <section data-section-id="newsletter" className="relative overflow-hidden bg-charcoal py-16 text-cream sm:py-20">

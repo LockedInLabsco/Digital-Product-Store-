@@ -188,3 +188,116 @@ export async function sendDownloadEmail({
     }
   }
 }
+
+interface SendWaitlistConfirmationEmailParams {
+  email: string
+  firstName?: string
+}
+
+export async function sendWaitlistConfirmationEmail({
+  email,
+  firstName,
+}: SendWaitlistConfirmationEmailParams): Promise<{ success: boolean; error?: string }> {
+  if (!RESEND_API_KEY) {
+    console.warn('[Resend] RESEND_API_KEY not configured — skipping waitlist confirmation email')
+    return { success: false, error: 'Email service not configured' }
+  }
+
+  const safeFirstName = firstName
+    ? firstName.replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[character] || character)
+    : ''
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 8px;
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #444;
+    }
+    .footer {
+      border-top: 1px solid #eee;
+      margin-top: 32px;
+      padding-top: 16px;
+      font-size: 13px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>You're in.</h1>
+    <div class="content">
+      <p>Hi${safeFirstName ? ` ${safeFirstName}` : ''},</p>
+      <p>I'm currently building a better way to take back control of your phone.</p>
+      <p>You'll be among the first to know when early access opens.</p>
+    </div>
+    <div class="footer">
+      <p>NOT4NORMAL</p>
+    </div>
+  </div>
+</body>
+</html>
+  `
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: email,
+        subject: "You're on the NOT4NORMAL app waitlist",
+        html: htmlContent,
+      }),
+    })
+
+    const responseData = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      console.error('[Resend] Waitlist confirmation email failed', responseData)
+      return {
+        success: false,
+        error: responseData.message || 'Failed to send confirmation email.',
+      }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('[Resend] Waitlist confirmation email exception', error)
+    return { success: false, error: 'Failed to send confirmation email.' }
+  }
+}
