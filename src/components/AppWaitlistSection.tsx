@@ -1,17 +1,34 @@
 import PublicWaitlistForm from './PublicWaitlistForm'
+import { resolveWaitlistTheme } from '@/src/lib/waitlist/theme'
+import {
+  SLOWDAY_BUTTON_TEXT,
+  SLOWDAY_EYEBROW,
+  SLOWDAY_FEATURES,
+  SLOWDAY_HEADLINE,
+  SLOWDAY_SUPPORTING_TEXT,
+  SLOWDAY_WAITLIST_SLUG,
+} from '@/src/lib/waitlist/slowdayContent'
 
-const PHONE_APP_WAITLIST_SLUG = 'phone-control-app'
+const SLOWDAY_THEME = resolveWaitlistTheme({ preset: 'slowday' })
 
 export default function AppWaitlistSection() {
   return (
-    <section data-section-id="app_waitlist" className="bg-offwhite py-20 sm:py-24">
+    <section
+      data-section-id="app_waitlist"
+      className="py-20 sm:py-24"
+      style={{ backgroundColor: SLOWDAY_THEME.background }}
+    >
       <PublicWaitlistForm
-        waitlistSlug={PHONE_APP_WAITLIST_SLUG}
-        eyebrow="Building in public"
-        headline="A better way to take back control of your phone."
-        supportingText="I'm building a minimal Android app for screen-time control, app blocking, grayscale, focus, and smarter rewards. Join the waitlist to get early access and follow the build."
-        buttonText="Join the waitlist"
+        waitlistSlug={SLOWDAY_WAITLIST_SLUG}
+        eyebrow={SLOWDAY_EYEBROW}
+        headline={SLOWDAY_HEADLINE}
+        supportingText={SLOWDAY_SUPPORTING_TEXT}
+        buttonText={SLOWDAY_BUTTON_TEXT}
         source="homepage"
+        theme={SLOWDAY_THEME}
+        features={SLOWDAY_FEATURES}
+        headlineFont="sans"
+        panel
       />
     </section>
   )

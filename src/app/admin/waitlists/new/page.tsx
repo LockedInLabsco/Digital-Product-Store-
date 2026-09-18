@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
 import WaitlistForm from '@/src/components/admin/WaitlistForm'
-import type { WaitlistStatus } from '@/src/types/waitlist'
+import type { WaitlistStatus, WaitlistThemeConfig } from '@/src/types/waitlist'
 
 interface WaitlistFormData {
   name: string
@@ -15,6 +15,7 @@ interface WaitlistFormData {
   supporting_text: string
   button_text: string
   status: WaitlistStatus
+  theme_config: WaitlistThemeConfig
 }
 
 export default function NewWaitlistPage() {
@@ -66,7 +67,7 @@ export default function NewWaitlistPage() {
       </div>
 
       <Container className="py-12">
-        <div className="max-w-2xl">
+        <div className="max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Create waitlist</h1>
             <p className="text-gray-600">Set up a new waitlist with its own public signup page</p>

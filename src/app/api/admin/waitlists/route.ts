@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { isAdminRequest } from '@/src/lib/admin/auth'
 import { isValidWaitlistSlug } from '@/src/lib/waitlist/validate'
+import { parseThemeConfigInput } from '@/src/lib/waitlist/theme'
 
 const STATUS_VALUES = ['draft', 'active', 'closed']
 
@@ -57,6 +58,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const theme = parseThemeConfigInput(body.theme_config)
+    if (!theme.value) {
+      return NextResponse.json({ error: theme.error || 'Invalid theme' }, { status: 400 })
+    }
+
     const { data: existing } = await supabaseServer
       .from('waitlists')
       .select('id')
@@ -80,6 +86,7 @@ export async function POST(request: NextRequest) {
         supporting_text: body.supporting_text?.trim() || null,
         button_text: body.button_text?.trim() || null,
         status,
+        theme_config: theme.value,
       })
       .select()
       .single()

@@ -10,6 +10,8 @@ import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { isAdminSession } from '@/src/lib/admin/auth'
 import { normalizeSource } from '@/src/lib/waitlist/validate'
+import { resolveWaitlistTheme } from '@/src/lib/waitlist/theme'
+import { SLOWDAY_EYEBROW, SLOWDAY_FEATURES, SLOWDAY_WAITLIST_SLUG } from '@/src/lib/waitlist/slowdayContent'
 import type { Waitlist } from '@/src/types/waitlist'
 
 interface WaitlistPageProps {
@@ -100,14 +102,21 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
   const headline = waitlist.headline || waitlist.name
   const supportingText = waitlist.supporting_text || waitlist.description || DEFAULT_SUPPORTING_TEXT
   const buttonText = waitlist.button_text || DEFAULT_BUTTON_TEXT
+  const theme = resolveWaitlistTheme(waitlist.theme_config)
+  const isSlowday = waitlist.slug === SLOWDAY_WAITLIST_SLUG
+  const eyebrowText = isSlowday ? SLOWDAY_EYEBROW : DEFAULT_HEADLINE
+  const headlineFontClass = isSlowday ? 'font-sans font-semibold' : 'font-serif'
 
   return (
     <>
       <Navbar media={media} />
-      <main className="bg-offwhite py-20 sm:py-24">
+      <main className="py-20 sm:py-24" style={{ backgroundColor: theme.background }}>
         {isDraftPreview && (
           <Container className="mx-auto mb-10 max-w-2xl">
-            <div className="rounded-sm border border-gold/40 bg-ink/40 p-4 text-center text-xs font-semibold uppercase tracking-[0.1em] text-gold">
+            <div
+              className="rounded-sm border p-4 text-center text-xs font-semibold uppercase tracking-[0.1em]"
+              style={{ borderColor: theme.accent, color: theme.accent }}
+            >
               Draft preview — this page is not publicly visible yet
             </div>
           </Container>
@@ -115,30 +124,52 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
 
         {waitlist.status === 'draft' ? (
           <Container className="mx-auto max-w-2xl text-center">
-            <p className="eyebrow text-gold">{DEFAULT_HEADLINE}</p>
-            <h1 className="mt-4 font-serif text-3xl leading-snug text-cream sm:text-4xl">{headline}</h1>
-            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cream/65">{supportingText}</p>
-            <p className="mx-auto mt-8 max-w-md rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-sm text-cream/60">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]" style={{ color: theme.accent }}>
+              {eyebrowText}
+            </p>
+            <h1 className={`mt-4 ${headlineFontClass} text-3xl leading-snug sm:text-4xl`} style={{ color: theme.text }}>
+              {headline}
+            </h1>
+            <p className="mx-auto mt-5 max-w-lg leading-relaxed" style={{ color: theme.secondaryText }}>
+              {supportingText}
+            </p>
+            <p
+              className="mx-auto mt-8 max-w-md rounded-sm border px-4 py-3.5 text-sm"
+              style={{ borderColor: theme.border, backgroundColor: theme.surface, color: theme.secondaryText }}
+            >
               This waitlist isn&apos;t open to the public yet.
             </p>
           </Container>
         ) : waitlist.status === 'closed' ? (
           <Container className="mx-auto max-w-2xl text-center">
-            <p className="eyebrow text-gold">{DEFAULT_HEADLINE}</p>
-            <h1 className="mt-4 font-serif text-3xl leading-snug text-cream sm:text-4xl">{headline}</h1>
-            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cream/65">{supportingText}</p>
-            <p className="mx-auto mt-8 max-w-md rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-sm text-cream/60">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]" style={{ color: theme.accent }}>
+              {eyebrowText}
+            </p>
+            <h1 className={`mt-4 ${headlineFontClass} text-3xl leading-snug sm:text-4xl`} style={{ color: theme.text }}>
+              {headline}
+            </h1>
+            <p className="mx-auto mt-5 max-w-lg leading-relaxed" style={{ color: theme.secondaryText }}>
+              {supportingText}
+            </p>
+            <p
+              className="mx-auto mt-8 max-w-md rounded-sm border px-4 py-3.5 text-sm"
+              style={{ borderColor: theme.border, backgroundColor: theme.surface, color: theme.secondaryText }}
+            >
               This waitlist is currently closed.
             </p>
           </Container>
         ) : (
           <PublicWaitlistForm
             waitlistSlug={waitlist.slug}
-            eyebrow={DEFAULT_HEADLINE}
+            eyebrow={eyebrowText}
             headline={headline}
             supportingText={supportingText}
             buttonText={buttonText}
             source={source}
+            theme={theme}
+            features={isSlowday ? SLOWDAY_FEATURES : undefined}
+            headlineFont={isSlowday ? 'sans' : 'serif'}
+            panel={isSlowday}
           />
         )}
       </main>

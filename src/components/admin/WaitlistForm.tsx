@@ -1,9 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Button from './AdminButton'
+import WaitlistThemePreview from './WaitlistThemePreview'
 import { isValidWaitlistSlug, slugifyWaitlistName } from '@/src/lib/waitlist/validate'
-import type { WaitlistStatus } from '@/src/types/waitlist'
+import {
+  getContrastRatio,
+  isValidHexColor,
+  LOW_CONTRAST_THRESHOLD,
+  PRESET_LABELS,
+  resolveWaitlistTheme,
+  type WaitlistThemeColors,
+} from '@/src/lib/waitlist/theme'
+import type { WaitlistStatus, WaitlistThemeConfig, WaitlistThemePreset } from '@/src/types/waitlist'
 
 interface WaitlistFormData {
   name: string
@@ -13,6 +22,7 @@ interface WaitlistFormData {
   supporting_text: string
   button_text: string
   status: WaitlistStatus
+  theme_config: WaitlistThemeConfig
 }
 
 interface WaitlistFormProps {
@@ -21,6 +31,25 @@ interface WaitlistFormProps {
   isLoading?: boolean
   mode: 'create' | 'edit'
 }
+
+const PRESET_OPTIONS: WaitlistThemePreset[] = [
+  'not4normal-dark',
+  'minimal-white',
+  'monochrome',
+  'warm-paper',
+  'slowday',
+  'custom',
+]
+
+const COLOR_FIELDS: { key: keyof WaitlistThemeColors; label: string; required: boolean }[] = [
+  { key: 'background', label: 'Background', required: true },
+  { key: 'text', label: 'Primary text', required: true },
+  { key: 'secondaryText', label: 'Secondary text', required: true },
+  { key: 'accent', label: 'Accent / button color', required: true },
+  { key: 'accentText', label: 'Button text', required: true },
+  { key: 'border', label: 'Border / divider', required: true },
+  { key: 'surface', label: 'Card / surface color', required: false },
+]
 
 export default function WaitlistForm({
   initialData,
@@ -36,10 +65,23 @@ export default function WaitlistForm({
     supporting_text: initialData?.supporting_text || '',
     button_text: initialData?.button_text || '',
     status: initialData?.status || 'draft',
+    theme_config: initialData?.theme_config || { preset: 'not4normal-dark' },
   })
   // Once the admin has hand-edited the slug, stop overwriting it from the name.
   const [slugTouched, setSlugTouched] = useState(mode === 'edit')
   const [error, setError] = useState('')
+
+  // Seeds the custom color editor from whatever theme is currently
+  // active, so switching to Custom starts from a real look instead of
+  // blank fields. Kept separate from formData.theme_config so a preset
+  // selection never carries stray color fields into what gets saved.
+  const [customColors, setCustomColors] = useState<WaitlistThemeColors>(() =>
+    resolveWaitlistTheme(initialData?.theme_config)
+  )
+
+  const preset = formData.theme_config.preset
+  const isCustom = preset === 'custom'
+  const previewTheme = isCustom ? customColors : resolveWaitlistTheme({ preset })
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -64,6 +106,30 @@ export default function WaitlistForm({
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handlePresetChange = (nextPreset: WaitlistThemePreset) => {
+    setFormData((prev) => ({ ...prev, theme_config: { preset: nextPreset } }))
+  }
+
+  const handleColorChange = (key: keyof WaitlistThemeColors, value: string) => {
+    setCustomColors((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const contrastWarnings = useMemo(() => {
+    if (!isCustom) return []
+    const warnings: string[] = []
+    if (isValidHexColor(customColors.text) && isValidHexColor(customColors.background)) {
+      if (getContrastRatio(customColors.text, customColors.background) < LOW_CONTRAST_THRESHOLD) {
+        warnings.push('Primary text may be hard to read against the background.')
+      }
+    }
+    if (isValidHexColor(customColors.accentText) && isValidHexColor(customColors.accent)) {
+      if (getContrastRatio(customColors.accentText, customColors.accent) < LOW_CONTRAST_THRESHOLD) {
+        warnings.push('Button text may be hard to read against the button color.')
+      }
+    }
+    return warnings
+  }, [isCustom, customColors])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -77,8 +143,34 @@ export default function WaitlistForm({
       return
     }
 
+    if (isCustom) {
+      for (const field of COLOR_FIELDS) {
+        const value = customColors[field.key]
+        if (field.required && !isValidHexColor(value)) {
+          setError(`Enter a valid hex color for "${field.label}" (e.g. #F6F3EA)`)
+          return
+        }
+        if (value && !isValidHexColor(value)) {
+          setError(`Enter a valid hex color for "${field.label}" (e.g. #F6F3EA)`)
+          return
+        }
+      }
+      if (customColors.text.toLowerCase() === customColors.background.toLowerCase()) {
+        setError('Primary text and background colors cannot be the same')
+        return
+      }
+      if (customColors.accentText.toLowerCase() === customColors.accent.toLowerCase()) {
+        setError('Button text and button color cannot be the same')
+        return
+      }
+    }
+
+    const theme_config: WaitlistThemeConfig = isCustom
+      ? { preset: 'custom', ...customColors }
+      : { preset }
+
     try {
-      await onSubmit({ ...formData, slug: formData.slug.trim() })
+      await onSubmit({ ...formData, slug: formData.slug.trim(), theme_config })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save waitlist')
     }
@@ -212,6 +304,82 @@ export default function WaitlistForm({
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Join the waitlist"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t pt-8">
+        <h3 className="text-lg font-bold mb-2">Theme</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Controls only this waitlist&apos;s public page — the rest of the site is never affected.
+        </p>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium mb-2">Preset</label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {PRESET_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handlePresetChange(option)}
+                  className={`rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    preset === option
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {PRESET_LABELS[option]}
+                </button>
+              ))}
+            </div>
+
+            {isCustom && (
+              <div className="mt-6 space-y-4">
+                {COLOR_FIELDS.map((field) => (
+                  <div key={field.key}>
+                    <label htmlFor={`theme-${field.key}`} className="block text-sm font-medium mb-2">
+                      {field.label} {!field.required && <span className="text-gray-400">(optional)</span>}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        aria-label={`${field.label} color picker`}
+                        value={isValidHexColor(customColors[field.key]) ? customColors[field.key] : '#000000'}
+                        onChange={(e) => handleColorChange(field.key, e.target.value)}
+                        className="h-10 w-12 flex-shrink-0 cursor-pointer rounded border border-gray-300 p-1"
+                      />
+                      <input
+                        id={`theme-${field.key}`}
+                        type="text"
+                        value={customColors[field.key] || ''}
+                        onChange={(e) => handleColorChange(field.key, e.target.value)}
+                        placeholder="#RRGGBB"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {contrastWarnings.length > 0 && (
+                  <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+                    {contrastWarnings.map((warning) => (
+                      <p key={warning}>⚠ {warning}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Live preview</label>
+            <WaitlistThemePreview
+              theme={previewTheme}
+              headline={formData.headline}
+              supportingText={formData.supporting_text}
+              buttonText={formData.button_text}
             />
           </div>
         </div>

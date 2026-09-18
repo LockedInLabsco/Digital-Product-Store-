@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
 import WaitlistForm from '@/src/components/admin/WaitlistForm'
-import type { Waitlist, WaitlistStatus } from '@/src/types/waitlist'
+import type { Waitlist, WaitlistStatus, WaitlistThemeConfig } from '@/src/types/waitlist'
 
 interface WaitlistFormData {
   name: string
@@ -15,6 +15,7 @@ interface WaitlistFormData {
   supporting_text: string
   button_text: string
   status: WaitlistStatus
+  theme_config: WaitlistThemeConfig
 }
 
 export default function EditWaitlistPage({ params }: { params: { id: string } }) {
@@ -83,7 +84,7 @@ export default function EditWaitlistPage({ params }: { params: { id: string } })
       </div>
 
       <Container className="py-12">
-        <div className="max-w-2xl">
+        <div className="max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Edit waitlist</h1>
             <p className="text-gray-600">Update its content, slug, or status</p>
@@ -107,6 +108,7 @@ export default function EditWaitlistPage({ params }: { params: { id: string } })
                   supporting_text: waitlist.supporting_text || '',
                   button_text: waitlist.button_text || '',
                   status: waitlist.status,
+                  theme_config: waitlist.theme_config,
                 }}
                 onSubmit={handleSubmit}
                 isLoading={isLoading}

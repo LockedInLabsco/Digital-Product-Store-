@@ -1,10 +1,10 @@
 'use client'
 
-import { useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import Container from './Container'
-import Button from './Button'
 import { track } from '@/src/lib/analytics/events'
 import { validateWaitlistInput } from '@/src/lib/waitlist/validate'
+import { hexToRgba, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 
 type FieldErrors = Partial<Record<'email' | 'instagramUsername' | 'firstName', string>>
 
@@ -15,14 +15,33 @@ interface PublicWaitlistFormProps {
   supportingText: string
   buttonText: string
   source: string
+  theme: WaitlistThemeColors
+  /** Minimal value-prop bullets shown under the supporting text. Omit to render none (default — every existing waitlist keeps its current layout). */
+  features?: string[]
+  /** Headline/eyebrow typeface. Defaults to 'serif' (the site's existing editorial look) so nothing changes unless a caller opts into the calmer sans look. */
+  headlineFont?: 'serif' | 'sans'
+  /**
+   * Wraps the form in a soft, lightly frosted card (translucent surface,
+   * thin border, soft shadow) instead of bare fields on the page
+   * background — the "premium panel" treatment. Defaults to false so
+   * existing waitlists render exactly as before; SlowDay opts in.
+   */
+  panel?: boolean
 }
 
 /**
  * Self-contained waitlist signup section — heading, form, and all
  * loading/success/duplicate/error states. Used both by the homepage's
  * hardcoded app-waitlist section and by the generic /waitlist/[slug]
- * public page, with the copy and target waitlist/source as props so the
- * two never duplicate the form logic itself.
+ * public page, with the copy/theme/target waitlist/source as props so
+ * the two never duplicate the form logic itself.
+ *
+ * Colors come entirely from the `theme` prop via inline styles rather
+ * than the site's bg-ink/text-cream/etc. Tailwind classes — those are
+ * fixed to the global site theme, and this component's whole purpose
+ * is letting each waitlist look different from that. Layout, spacing,
+ * type scale, and radii stay as Tailwind classes since those aren't
+ * themeable (see the admin Theme section — colors + presets only).
  */
 export default function PublicWaitlistForm({
   waitlistSlug,
@@ -31,6 +50,10 @@ export default function PublicWaitlistForm({
   supportingText,
   buttonText,
   source,
+  theme,
+  features,
+  headlineFont = 'serif',
+  panel = false,
 }: PublicWaitlistFormProps) {
   const [email, setEmail] = useState('')
   const [instagramUsername, setInstagramUsername] = useState('')
@@ -89,36 +112,90 @@ export default function PublicWaitlistForm({
     }
   }
 
+  const focusRingStyle = { '--tw-ring-color': theme.accent } as CSSProperties
+  const inputStyle: CSSProperties = {
+    backgroundColor: theme.surface,
+    borderColor: theme.border,
+    color: theme.text,
+    ...focusRingStyle,
+  }
+  const headlineClass = headlineFont === 'sans' ? 'font-sans font-semibold' : 'font-serif'
+  const radiusClass = panel ? 'rounded-xl' : 'rounded-sm'
+  const fieldGapClass = panel ? 'gap-5' : 'gap-4'
+  const formStyle: CSSProperties | undefined = panel
+    ? { backgroundColor: hexToRgba(theme.surface, 0.72), borderColor: theme.border }
+    : undefined
+  const formClassName = `mx-auto mt-8 flex max-w-md flex-col ${fieldGapClass} text-left${
+    panel
+      ? ' rounded-2xl border p-6 backdrop-blur-xl shadow-[0_1px_1px_rgba(0,0,0,0.03),0_20px_45px_-24px_rgba(0,0,0,0.22)] sm:p-8'
+      : ''
+  }`
+
   return (
     <Container className="mx-auto max-w-2xl text-center">
       {status !== 'idle' ? (
         <div role="status" aria-live="polite">
-          <p className="eyebrow text-gold">{status === 'duplicate' ? 'Already in' : 'Confirmed'}</p>
-          <h2 className="mt-4 font-serif text-3xl text-cream sm:text-4xl">
+          <p
+            className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: theme.accent }}
+          >
+            {status === 'duplicate' ? 'Already in' : 'Confirmed'}
+          </p>
+          <h2 className={`mt-4 ${headlineClass} text-3xl sm:text-4xl`} style={{ color: theme.text }}>
             {status === 'duplicate' ? "You're already on this waitlist." : "You're on the list."}
           </h2>
-          <p className="mt-4 leading-relaxed text-cream/65">
-            I&apos;ll let you know when early access opens.
+          <p className="mt-4 leading-relaxed" style={{ color: theme.secondaryText }}>
+            We&apos;ll let you know as soon as it&apos;s ready.
           </p>
         </div>
       ) : (
         <>
-          <p className="eyebrow text-gold" data-reveal="up">{eyebrow}</p>
-          <h2 className="mt-4 font-serif text-3xl leading-snug text-cream sm:text-4xl" data-reveal="up">
+          <p
+            className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: theme.accent }}
+            data-reveal="up"
+          >
+            {eyebrow}
+          </p>
+          <h2 className={`mt-4 ${headlineClass} text-3xl leading-snug sm:text-4xl`} style={{ color: theme.text }} data-reveal="up">
             {headline}
           </h2>
-          <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cream/65" data-reveal="up">
+          <p className="mx-auto mt-5 max-w-lg leading-relaxed" style={{ color: theme.secondaryText }} data-reveal="up">
             {supportingText}
           </p>
+
+          {features && features.length > 0 && (
+            <ul
+              className="mx-auto mt-6 flex max-w-lg flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm"
+              style={{ color: theme.secondaryText }}
+              data-reveal="up"
+            >
+              {features.map((feature) => (
+                <li key={feature} className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="h-1 w-1 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: theme.secondaryText }}
+                  />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          )}
 
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="mx-auto mt-8 flex max-w-md flex-col gap-4 text-left"
+            className={formClassName}
+            style={formStyle}
             data-reveal="up"
           >
             <div>
-              <label htmlFor="waitlist-email" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
+              <label
+                htmlFor="waitlist-email"
+                className="text-xs font-semibold uppercase tracking-[0.1em]"
+                style={{ color: theme.secondaryText }}
+              >
                 Email
               </label>
               <input
@@ -138,26 +215,40 @@ export default function PublicWaitlistForm({
                   setEmail(event.target.value)
                   if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined }))
                 }}
-                className="mt-2 w-full rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-base text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
+                style={inputStyle}
+                className={`mt-2 w-full ${radiusClass} border px-4 py-3.5 text-base focus:outline-none focus:ring-2 disabled:opacity-60`}
                 placeholder="you@example.com"
               />
               {fieldErrors.email && (
-                <p id="waitlist-email-error" className="mt-2 text-sm text-red-300">
+                <p id="waitlist-email-error" className="mt-2 text-sm text-red-500">
                   {fieldErrors.email}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="waitlist-instagram" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
-                Instagram handle <span className="normal-case tracking-normal text-cream/40">(optional)</span>
+              <label
+                htmlFor="waitlist-instagram"
+                className="text-xs font-semibold uppercase tracking-[0.1em]"
+                style={{ color: theme.secondaryText }}
+              >
+                Instagram handle <span className="normal-case tracking-normal opacity-70">(optional)</span>
               </label>
               <div
-                className={`mt-2 flex w-full items-stretch overflow-hidden rounded-sm border bg-ink transition-colors focus-within:ring-2 focus-within:ring-gold ${
-                  fieldErrors.instagramUsername ? 'border-red-300/40' : 'border-line/25'
-                } ${loading ? 'opacity-60' : ''}`}
+                style={{
+                  backgroundColor: theme.surface,
+                  borderColor: fieldErrors.instagramUsername ? '#F87171' : theme.border,
+                  ...focusRingStyle,
+                }}
+                className={`mt-2 flex w-full items-stretch overflow-hidden ${radiusClass} border transition-colors focus-within:ring-2 ${
+                  loading ? 'opacity-60' : ''
+                }`}
               >
-                <span className="flex select-none items-center border-r border-line/25 pl-4 pr-2 text-base text-cream/40" aria-hidden="true">
+                <span
+                  className="flex select-none items-center border-r pl-4 pr-2 text-base"
+                  style={{ borderColor: theme.border, color: theme.secondaryText }}
+                  aria-hidden="true"
+                >
                   @
                 </span>
                 <input
@@ -178,20 +269,25 @@ export default function PublicWaitlistForm({
                       setFieldErrors((current) => ({ ...current, instagramUsername: undefined }))
                     }
                   }}
-                  className="w-full flex-1 bg-transparent px-3 py-3.5 text-base text-cream placeholder:text-cream/35 focus:outline-none disabled:opacity-60"
+                  style={{ color: theme.text }}
+                  className="w-full flex-1 bg-transparent px-3 py-3.5 text-base focus:outline-none disabled:opacity-60"
                   placeholder="yourusername"
                 />
               </div>
               {fieldErrors.instagramUsername && (
-                <p id="waitlist-instagram-error" className="mt-2 text-sm text-red-300">
+                <p id="waitlist-instagram-error" className="mt-2 text-sm text-red-500">
                   {fieldErrors.instagramUsername}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="waitlist-first-name" className="text-xs font-semibold uppercase tracking-[0.1em] text-cream/80">
-                First name <span className="normal-case tracking-normal text-cream/40">(optional)</span>
+              <label
+                htmlFor="waitlist-first-name"
+                className="text-xs font-semibold uppercase tracking-[0.1em]"
+                style={{ color: theme.secondaryText }}
+              >
+                First name <span className="normal-case tracking-normal opacity-70">(optional)</span>
               </label>
               <input
                 id="waitlist-first-name"
@@ -207,28 +303,39 @@ export default function PublicWaitlistForm({
                   setFirstName(event.target.value)
                   if (fieldErrors.firstName) setFieldErrors((current) => ({ ...current, firstName: undefined }))
                 }}
-                className="mt-2 w-full rounded-sm border border-line/25 bg-ink px-4 py-3.5 text-base text-cream placeholder:text-cream/35 focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
+                style={inputStyle}
+                className={`mt-2 w-full ${radiusClass} border px-4 py-3.5 text-base focus:outline-none focus:ring-2 disabled:opacity-60`}
                 placeholder="Your first name"
               />
               {fieldErrors.firstName && (
-                <p id="waitlist-first-name-error" className="mt-2 text-sm text-red-300">
+                <p id="waitlist-first-name-error" className="mt-2 text-sm text-red-500">
                   {fieldErrors.firstName}
                 </p>
               )}
             </div>
 
-            <Button type="submit" size="lg" className="mt-1 w-full" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ backgroundColor: theme.accent, color: theme.accentText }}
+              className={`mt-1 inline-flex w-full items-center justify-center gap-2 ${radiusClass} px-7 py-4 text-sm font-semibold uppercase tracking-[0.12em] transition-opacity duration-200 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100`}
+            >
               {loading ? 'Joining the waitlist…' : buttonText}
-            </Button>
+            </button>
 
             {error && (
-              <div role="alert" aria-live="assertive" className="rounded-sm border border-red-300/30 bg-ink p-4">
-                <p className="text-sm text-red-200">{error}</p>
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={`${radiusClass} border p-4`}
+                style={{ backgroundColor: theme.surface, borderColor: '#F87171' }}
+              >
+                <p className="text-sm text-red-500">{error}</p>
               </div>
             )}
 
-            <p className="text-center text-xs text-cream/45">
-              No spam. Just launch updates and early access.
+            <p className="text-center text-xs opacity-60" style={{ color: theme.secondaryText }}>
+              No spam. Just early access and important updates.
             </p>
           </form>
         </>
