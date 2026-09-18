@@ -4,7 +4,6 @@ import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
-import AppWaitlistSection from '@/src/components/AppWaitlistSection'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
 import TrackMount from '@/src/components/analytics/TrackMount'
 import TrackedLink from '@/src/components/analytics/TrackedLink'
@@ -262,9 +261,6 @@ export default async function Home() {
             </p>
           </Container>
         </section>
-
-        {/* App waitlist */}
-        <AppWaitlistSection />
 
         {/* Final CTA */}
         <section data-section-id="final_cta" className="relative overflow-hidden bg-ink py-16 sm:py-20">
