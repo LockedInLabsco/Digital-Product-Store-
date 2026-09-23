@@ -191,9 +191,10 @@ export default function WaitlistForm({
       }
     }
 
+    const layout = formData.theme_config.layout
     const theme_config: WaitlistThemeConfig = isCustom
-      ? { preset: 'custom', ...customColors }
-      : { preset }
+      ? { preset: 'custom', ...customColors, ...(layout ? { layout } : {}) }
+      : { preset, ...(layout ? { layout } : {}) }
 
     try {
       await onSubmit({ ...formData, slug: formData.slug.trim(), theme_config })
