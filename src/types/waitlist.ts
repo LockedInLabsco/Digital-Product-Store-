@@ -35,6 +35,22 @@ export interface WaitlistThemeConfig {
   layout?: WaitlistLayout
 }
 
+/**
+ * Admin-uploaded screenshot URLs for the standalone layout's phone
+ * frames (see components/waitlist/Slowday{Hero,Preview}.tsx and
+ * lib/waitlist/slowdayContent.ts's SLOWDAY_SCREENS for the fixed
+ * home/focus/slowday/progress slots — resolveSlowdayScreens() merges
+ * these over the static placeholders). Any key can be absent, which just
+ * keeps that slot's placeholder frame. Unused (but harmless) for a
+ * waitlist not on the standalone layout.
+ */
+export interface WaitlistScreenshots {
+  home?: string
+  focus?: string
+  slowday?: string
+  progress?: string
+}
+
 export interface Waitlist {
   id: string
   name: string
@@ -45,6 +61,7 @@ export interface Waitlist {
   button_text: string | null
   status: WaitlistStatus
   theme_config: WaitlistThemeConfig
+  screenshots: WaitlistScreenshots
   created_at: string
   updated_at: string
 }

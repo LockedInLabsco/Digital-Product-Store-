@@ -3,7 +3,11 @@ import PublicWaitlistForm from '@/src/components/PublicWaitlistForm'
 import SlowdayPhoneFrame from './SlowdayPhoneFrame'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { WaitlistStatus } from '@/src/types/waitlist'
-import { SLOWDAY_HERO_SUPPORTING_NOTE, SLOWDAY_SCREENS, SLOWDAY_TRUST_TEXT } from '@/src/lib/waitlist/slowdayContent'
+import {
+  SLOWDAY_HERO_SUPPORTING_NOTE,
+  SLOWDAY_TRUST_TEXT,
+  type ResolvedSlowdayScreen,
+} from '@/src/lib/waitlist/slowdayContent'
 
 interface SlowdayHeroProps {
   waitlistSlug: string
@@ -14,6 +18,9 @@ interface SlowdayHeroProps {
   buttonText: string
   source: string
   theme: WaitlistThemeColors
+  /** Resolved via resolveSlowdayScreens() so admin-uploaded screenshots
+   * (if any) are already merged in — see StandaloneWaitlistPage. */
+  screens: ResolvedSlowdayScreen[]
 }
 
 /**
@@ -35,8 +42,9 @@ export default function SlowdayHero({
   buttonText,
   source,
   theme,
+  screens,
 }: SlowdayHeroProps) {
-  const heroScreens = SLOWDAY_SCREENS.slice(0, 2)
+  const heroScreens = screens.slice(0, 2)
 
   return (
     <div id="join" className="scroll-mt-20 sm:scroll-mt-24">

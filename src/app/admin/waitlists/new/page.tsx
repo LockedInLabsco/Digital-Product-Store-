@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
 import WaitlistForm from '@/src/components/admin/WaitlistForm'
-import type { WaitlistStatus, WaitlistThemeConfig } from '@/src/types/waitlist'
+import type { WaitlistScreenshots, WaitlistStatus, WaitlistThemeConfig } from '@/src/types/waitlist'
 
 interface WaitlistFormData {
   name: string
@@ -16,6 +16,7 @@ interface WaitlistFormData {
   button_text: string
   status: WaitlistStatus
   theme_config: WaitlistThemeConfig
+  screenshots: WaitlistScreenshots
 }
 
 export default function NewWaitlistPage() {

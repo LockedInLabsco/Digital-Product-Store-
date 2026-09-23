@@ -10,6 +10,7 @@ export type MediaFolder =
   | 'sections'
   | 'social'
   | 'backgrounds'
+  | 'waitlist'
 
 const MEDIA_FOLDERS: MediaFolder[] = [
   'logos',
@@ -18,6 +19,7 @@ const MEDIA_FOLDERS: MediaFolder[] = [
   'sections',
   'social',
   'backgrounds',
+  'waitlist',
 ]
 
 const LOGO_MIME_TYPES = ['image/png', 'image/webp', 'image/svg+xml']
@@ -30,6 +32,7 @@ const ALLOWED_MIME_BY_FOLDER: Record<MediaFolder, string[]> = {
   sections: PHOTO_MIME_TYPES,
   social: ['image/jpeg', 'image/png'],
   backgrounds: PHOTO_MIME_TYPES,
+  waitlist: PHOTO_MIME_TYPES,
 }
 
 const MAX_SIZE_BYTES_BY_FOLDER: Record<MediaFolder, number> = {
@@ -39,6 +42,7 @@ const MAX_SIZE_BYTES_BY_FOLDER: Record<MediaFolder, number> = {
   sections: 8 * 1024 * 1024,
   social: 8 * 1024 * 1024,
   backgrounds: 8 * 1024 * 1024,
+  waitlist: 8 * 1024 * 1024,
 }
 
 const EXTENSION_BY_MIME: Record<string, string> = {

@@ -1,3 +1,5 @@
+import type { WaitlistScreenshots } from '@/src/types/waitlist'
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const INSTAGRAM_USERNAME_PATTERN = /^[a-zA-Z0-9_.]{1,30}$/
 export const WAITLIST_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -79,4 +81,41 @@ export function normalizeSource(value: unknown, fallback: string): string {
   if (typeof value !== 'string') return fallback
   const trimmed = value.trim()
   return SOURCE_PATTERN.test(trimmed) ? trimmed : fallback
+}
+
+const SCREENSHOT_KEYS: (keyof WaitlistScreenshots)[] = ['home', 'focus', 'slowday', 'progress']
+const MAX_SCREENSHOT_URL_LENGTH = 2048
+
+export interface ScreenshotsValidationResult {
+  value?: WaitlistScreenshots
+  error?: string
+}
+
+/**
+ * Validates admin-submitted screenshot URLs (from MediaFieldUpload,
+ * which returns a Supabase Storage public URL) before saving. Missing
+ * input defaults to no screenshots, same "absent means default" contract
+ * as parseThemeConfigInput.
+ */
+export function parseScreenshotsInput(input: unknown): ScreenshotsValidationResult {
+  if (input === undefined || input === null) {
+    return { value: {} }
+  }
+  if (typeof input !== 'object') {
+    return { error: 'Invalid screenshots data' }
+  }
+
+  const raw = input as Record<string, unknown>
+  const value: WaitlistScreenshots = {}
+
+  for (const key of SCREENSHOT_KEYS) {
+    const url = raw[key]
+    if (url === undefined || url === null || url === '') continue
+    if (typeof url !== 'string' || url.length > MAX_SCREENSHOT_URL_LENGTH) {
+      return { error: `Invalid screenshot URL for "${key}"` }
+    }
+    value[key] = url
+  }
+
+  return { value }
 }

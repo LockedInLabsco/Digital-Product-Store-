@@ -1,19 +1,21 @@
 import SlowdaySection from './SlowdaySection'
 import SlowdayPhoneFrame from './SlowdayPhoneFrame'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
-import { SLOWDAY_SCREENS } from '@/src/lib/waitlist/slowdayContent'
+import type { ResolvedSlowdayScreen } from '@/src/lib/waitlist/slowdayContent'
 
 interface SlowdayPreviewProps {
   theme: WaitlistThemeColors
+  /** Resolved via resolveSlowdayScreens() — see StandaloneWaitlistPage. */
+  screens: ResolvedSlowdayScreen[]
 }
 
 /**
  * "A look inside SlowDay" — the app made visually central, with minimal
- * copy. Each slot is ready for a real screenshot: see SLOWDAY_SCREENS in
- * lib/waitlist/slowdayContent.ts and SlowdayPhoneFrame's doc comment for
- * exactly how to wire real files in without touching this layout.
+ * copy. Real screenshots come from the waitlist's own `screenshots`
+ * column (Admin -> Waitlists -> SlowDay -> Edit -> Screenshots); any
+ * slot left empty renders SlowdayPhoneFrame's calm placeholder instead.
  */
-export default function SlowdayPreview({ theme }: SlowdayPreviewProps) {
+export default function SlowdayPreview({ theme, screens }: SlowdayPreviewProps) {
   return (
     <SlowdaySection maxWidth="4xl">
       <h2
@@ -28,7 +30,7 @@ export default function SlowdayPreview({ theme }: SlowdayPreviewProps) {
         className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:gap-6 lg:max-w-none lg:grid-cols-4"
         data-reveal="up"
       >
-        {SLOWDAY_SCREENS.map((screen) => (
+        {screens.map((screen) => (
           <div key={screen.key} className="flex flex-col items-center gap-3">
             <SlowdayPhoneFrame label={screen.label} src={screen.src} theme={theme} />
             <p

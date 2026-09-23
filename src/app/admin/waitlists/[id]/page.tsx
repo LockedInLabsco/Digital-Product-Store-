@@ -142,6 +142,7 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
           button_text: waitlist.button_text,
           status,
           theme_config: waitlist.theme_config,
+          screenshots: waitlist.screenshots,
         }),
       })
       const data = await response.json()

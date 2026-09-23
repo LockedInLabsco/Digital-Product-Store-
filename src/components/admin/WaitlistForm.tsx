@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Button from './AdminButton'
+import MediaFieldUpload from './MediaFieldUpload'
 import WaitlistThemePreview from './WaitlistThemePreview'
 import { isValidWaitlistSlug, slugifyWaitlistName } from '@/src/lib/waitlist/validate'
 import {
@@ -12,7 +13,7 @@ import {
   resolveWaitlistTheme,
   type WaitlistThemeColors,
 } from '@/src/lib/waitlist/theme'
-import type { WaitlistStatus, WaitlistThemeConfig, WaitlistThemePreset } from '@/src/types/waitlist'
+import type { WaitlistScreenshots, WaitlistStatus, WaitlistThemeConfig, WaitlistThemePreset } from '@/src/types/waitlist'
 
 interface WaitlistFormData {
   name: string
@@ -23,7 +24,15 @@ interface WaitlistFormData {
   button_text: string
   status: WaitlistStatus
   theme_config: WaitlistThemeConfig
+  screenshots: WaitlistScreenshots
 }
+
+const SCREENSHOT_FIELDS: { key: keyof WaitlistScreenshots; label: string }[] = [
+  { key: 'home', label: 'Home' },
+  { key: 'focus', label: 'Focus' },
+  { key: 'slowday', label: 'SlowDay' },
+  { key: 'progress', label: 'Progress' },
+]
 
 interface WaitlistFormProps {
   initialData?: Partial<WaitlistFormData>
@@ -66,6 +75,7 @@ export default function WaitlistForm({
     button_text: initialData?.button_text || '',
     status: initialData?.status || 'draft',
     theme_config: initialData?.theme_config || { preset: 'not4normal-dark' },
+    screenshots: initialData?.screenshots || {},
   })
   // Once the admin has hand-edited the slug, stop overwriting it from the name.
   const [slugTouched, setSlugTouched] = useState(mode === 'edit')
@@ -124,6 +134,10 @@ export default function WaitlistForm({
 
   const handleColorChange = (key: keyof WaitlistThemeColors, value: string) => {
     setCustomColors((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleScreenshotChange = (key: keyof WaitlistScreenshots, url: string) => {
+    setFormData((prev) => ({ ...prev, screenshots: { ...prev.screenshots, [key]: url || undefined } }))
   }
 
   const contrastWarnings = useMemo(() => {
@@ -413,6 +427,29 @@ export default function WaitlistForm({
           </div>
         </div>
       </div>
+
+      {isStandalone && (
+        <div className="border-t pt-8">
+          <h3 className="text-lg font-bold mb-2">Screenshots</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Shown as phone-frame screenshots on the standalone page (two in the hero, all four in the
+            &quot;A look inside&quot; section). Leave any slot empty to keep its placeholder frame.
+          </p>
+          <div className="space-y-4">
+            {SCREENSHOT_FIELDS.map((field) => (
+              <MediaFieldUpload
+                key={field.key}
+                label={field.label}
+                dimensions="Portrait phone screenshot, e.g. 1170×2532px"
+                folder="waitlist"
+                fit="cover"
+                value={formData.screenshots[field.key] || ''}
+                onChange={(url) => handleScreenshotChange(field.key, url)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="border-t pt-8 flex gap-4">
         <Button type="submit" disabled={isLoading} className="bg-black text-white hover:bg-gray-900">

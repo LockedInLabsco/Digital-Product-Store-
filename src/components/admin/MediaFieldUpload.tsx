@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 interface MediaFieldUploadProps {
   label: string
   dimensions: string
-  folder: 'logos' | 'symbols' | 'hero' | 'sections' | 'social' | 'backgrounds'
+  folder: 'logos' | 'symbols' | 'hero' | 'sections' | 'social' | 'backgrounds' | 'waitlist'
   value: string
   onChange: (url: string) => void
   altValue?: string

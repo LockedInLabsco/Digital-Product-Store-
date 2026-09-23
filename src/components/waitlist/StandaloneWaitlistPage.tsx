@@ -9,7 +9,7 @@ import SlowdayFinalCta from './SlowdayFinalCta'
 import SlowdayFooter from './SlowdayFooter'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { Waitlist } from '@/src/types/waitlist'
-import { SLOWDAY_DEFAULT_SUPPORTING_TEXT, SLOWDAY_EYEBROW } from '@/src/lib/waitlist/slowdayContent'
+import { SLOWDAY_DEFAULT_SUPPORTING_TEXT, SLOWDAY_EYEBROW, resolveSlowdayScreens } from '@/src/lib/waitlist/slowdayContent'
 
 const DEFAULT_BUTTON_TEXT = 'Join the waitlist'
 
@@ -46,6 +46,7 @@ export default function StandaloneWaitlistPage({
   const supportingText = waitlist.supporting_text || waitlist.description || SLOWDAY_DEFAULT_SUPPORTING_TEXT
   const buttonText = waitlist.button_text || DEFAULT_BUTTON_TEXT
   const status = waitlist.status
+  const screens = resolveSlowdayScreens(waitlist.screenshots)
 
   if (status === 'draft') {
     return (
@@ -91,10 +92,11 @@ export default function StandaloneWaitlistPage({
           buttonText={buttonText}
           source={source}
           theme={theme}
+          screens={screens}
         />
         <SlowdayAudience theme={theme} />
         <SlowdayProblemSection theme={theme} />
-        <SlowdayPreview theme={theme} />
+        <SlowdayPreview theme={theme} screens={screens} />
         <SlowdayHowItHelps theme={theme} />
         <SlowdayFinalCta theme={theme} />
       </main>

@@ -1,3 +1,5 @@
+import type { WaitlistScreenshots } from '@/src/types/waitlist'
+
 /**
  * SlowDay-specific presentation used by the dedicated /waitlist/[slug]
  * page (the headline/supporting text/button copy itself lives on the
@@ -49,15 +51,32 @@ export const SLOWDAY_PROBLEM_PROMPTS = [
   'You struggle to leave your phone alone while studying or working.',
 ]
 
-/** "A look inside SlowDay" — screenshot slots. Drop real screenshots into
- * /public/slowday/screenshots/<key>.png and set `src` to enable them;
- * until then each renders a calm placeholder frame with just the label. */
-export const SLOWDAY_SCREENS: { key: string; label: string; src?: string }[] = [
+/** "A look inside SlowDay" — screenshot slots and their static fallback
+ * (no `src`, so SlowdayPhoneFrame renders its placeholder). Real
+ * screenshots come from the waitlist's own `screenshots` column, set via
+ * Admin -> Waitlists -> SlowDay -> Edit -> Screenshots — see
+ * resolveSlowdayScreens below, which merges the two. */
+export const SLOWDAY_SCREENS: { key: keyof WaitlistScreenshots; label: string; src?: string }[] = [
   { key: 'home', label: 'Home' },
   { key: 'focus', label: 'Focus' },
   { key: 'slowday', label: 'SlowDay' },
   { key: 'progress', label: 'Progress' },
 ]
+
+export type ResolvedSlowdayScreen = { key: keyof WaitlistScreenshots; label: string; src?: string }
+
+/**
+ * Merges admin-uploaded screenshot URLs over the static slot list — a
+ * slot with no uploaded URL keeps rendering its placeholder frame. Pass
+ * the result to SlowdayHero/SlowdayPreview instead of importing
+ * SLOWDAY_SCREENS directly, so both stay in sync with one source.
+ */
+export function resolveSlowdayScreens(screenshots: WaitlistScreenshots | undefined): ResolvedSlowdayScreen[] {
+  return SLOWDAY_SCREENS.map((screen) => ({
+    ...screen,
+    src: screenshots?.[screen.key] || screen.src,
+  }))
+}
 
 /** "How SlowDay helps" — benefits, phrased as outcomes, not feature names. */
 export const SLOWDAY_BENEFITS = [
