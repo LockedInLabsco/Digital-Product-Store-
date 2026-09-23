@@ -107,7 +107,19 @@ export default function WaitlistForm({
   }
 
   const handlePresetChange = (nextPreset: WaitlistThemePreset) => {
-    setFormData((prev) => ({ ...prev, theme_config: { preset: nextPreset } }))
+    setFormData((prev) => ({
+      ...prev,
+      theme_config: { preset: nextPreset, ...(prev.theme_config.layout ? { layout: prev.theme_config.layout } : {}) },
+    }))
+  }
+
+  const isStandalone = formData.theme_config.layout === 'standalone'
+
+  const handleStandaloneToggle = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      theme_config: { ...prev.theme_config, ...(checked ? { layout: 'standalone' } : { layout: undefined }) },
+    }))
   }
 
   const handleColorChange = (key: keyof WaitlistThemeColors, value: string) => {
@@ -314,6 +326,23 @@ export default function WaitlistForm({
         <p className="text-sm text-gray-600 mb-6">
           Controls only this waitlist&apos;s public page — the rest of the site is never affected.
         </p>
+
+        <label className="mb-8 flex items-start gap-3 rounded-lg border border-gray-200 p-4 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isStandalone}
+            onChange={(e) => handleStandaloneToggle(e.target.checked)}
+            className="mt-0.5 h-4 w-4"
+          />
+          <span>
+            <span className="block text-sm font-medium">Standalone landing page</span>
+            <span className="block text-xs text-gray-600 mt-0.5">
+              Replaces the generic NOT4NORMAL header/footer with a dedicated, self-contained page — its own
+              minimal header, hero, audience/problem sections, screenshot preview, and footer. Used by SlowDay;
+              enable for any other waitlist that needs its own standalone identity.
+            </span>
+          </span>
+        </label>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div>

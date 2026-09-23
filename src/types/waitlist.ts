@@ -8,11 +8,20 @@ export type WaitlistThemePreset =
   | 'slowday'
   | 'custom'
 
+export type WaitlistLayout = 'standard' | 'standalone'
+
 /**
  * Colors are only ever populated when preset is 'custom' — a built-in
  * preset is resolved from PRESET_THEMES (see lib/waitlist/theme.ts) at
  * render time, not duplicated into every waitlist row. surface is the
  * one optional color (falls back to background when absent).
+ *
+ * `layout` is a separate, independent concern from color: 'standalone'
+ * swaps the public page from the generic NOT4NORMAL-chrome layout to a
+ * dedicated, self-contained landing-page presentation (own header/hero/
+ * sections/footer — see components/waitlist/StandaloneWaitlistPage).
+ * Omitted/absent means 'standard', so every existing waitlist row keeps
+ * rendering exactly as it already does.
  */
 export interface WaitlistThemeConfig {
   preset: WaitlistThemePreset
@@ -23,6 +32,7 @@ export interface WaitlistThemeConfig {
   accentText?: string
   surface?: string
   border?: string
+  layout?: WaitlistLayout
 }
 
 export interface Waitlist {

@@ -27,6 +27,9 @@ interface PublicWaitlistFormProps {
    * existing waitlists render exactly as before; SlowDay opts in.
    */
   panel?: boolean
+  /** Overrides the fixed trust line under the submit button. Defaults to
+   * the line every existing waitlist already shows, so this is opt-in. */
+  trustText?: string
 }
 
 /**
@@ -54,6 +57,7 @@ export default function PublicWaitlistForm({
   features,
   headlineFont = 'serif',
   panel = false,
+  trustText = 'No spam. Just early access and important updates.',
 }: PublicWaitlistFormProps) {
   const [email, setEmail] = useState('')
   const [instagramUsername, setInstagramUsername] = useState('')
@@ -335,7 +339,7 @@ export default function PublicWaitlistForm({
             )}
 
             <p className="text-center text-xs opacity-60" style={{ color: theme.secondaryText }}>
-              No spam. Just early access and important updates.
+              {trustText}
             </p>
           </form>
         </>

@@ -6,7 +6,10 @@ import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Button from '@/src/components/admin/AdminButton'
 import SortableTable, { ColumnDef } from '@/src/components/admin/analytics/SortableTable'
+import WaitlistAnalyticsPanel from '@/src/components/admin/analytics/WaitlistAnalyticsPanel'
 import type { Waitlist, WaitlistEntry, WaitlistStatus } from '@/src/types/waitlist'
+
+type DetailTab = 'entries' | 'analytics'
 
 function formatDate(value: string) {
   if (!value) return '-'
@@ -53,6 +56,7 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [activeTab, setActiveTab] = useState<DetailTab>('entries')
 
   const fetchAll = useCallback(async () => {
     try {
@@ -339,37 +343,68 @@ export default function WaitlistDetailPage({ params }: { params: { id: string } 
               </div>
 
               <div className="mt-12 border-t border-gray-200 pt-8">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold">Leads</h3>
-                    <p className="text-sm text-gray-600">
-                      {filteredEntries.length} of {entries.length} shown
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search email, Instagram, or name"
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black w-64 max-w-full"
-                    />
-                    <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={entries.length === 0}>
-                      Export CSV
-                    </Button>
-                  </div>
+                <div className="mb-6 flex gap-1 border-b border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('entries')}
+                    className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 transition-colors ${
+                      activeTab === 'entries'
+                        ? 'border-black text-black'
+                        : 'border-transparent text-gray-500 hover:text-black'
+                    }`}
+                  >
+                    Entries
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('analytics')}
+                    className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 transition-colors ${
+                      activeTab === 'analytics'
+                        ? 'border-black text-black'
+                        : 'border-transparent text-gray-500 hover:text-black'
+                    }`}
+                  >
+                    Analytics
+                  </button>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <SortableTable
-                    columns={columns}
-                    rows={filteredEntries}
-                    rowKey={(row) => row.id}
-                    emptyMessage={entries.length === 0 ? 'No leads yet' : 'No leads match your search'}
-                    defaultSortKey="created_at"
-                    defaultSortDirection="desc"
-                  />
-                </div>
+                {activeTab === 'entries' ? (
+                  <>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                      <div>
+                        <h3 className="text-xl font-bold">Leads</h3>
+                        <p className="text-sm text-gray-600">
+                          {filteredEntries.length} of {entries.length} shown
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          placeholder="Search email, Instagram, or name"
+                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black w-64 max-w-full"
+                        />
+                        <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={entries.length === 0}>
+                          Export CSV
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      <SortableTable
+                        columns={columns}
+                        rows={filteredEntries}
+                        rowKey={(row) => row.id}
+                        emptyMessage={entries.length === 0 ? 'No leads yet' : 'No leads match your search'}
+                        defaultSortKey="created_at"
+                        defaultSortDirection="desc"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <WaitlistAnalyticsPanel waitlistId={waitlist.id} />
+                )}
               </div>
 
               <div className="mt-12 border-t border-gray-200 pt-8">

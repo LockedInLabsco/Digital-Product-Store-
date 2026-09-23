@@ -420,6 +420,100 @@ export async function getProductViewCounts(
   return { ok: true, data: map }
 }
 
+// HogQL string literals use SQL-style quoting — this is the one place in
+// this file that interpolates a value that isn't already a validated
+// Date/ISO string (see the module-level date-range note above), so it
+// gets escaped defensively even though `slug` is DB-derived and already
+// constrained to [a-z0-9-] by isValidWaitlistSlug at write time.
+function escapeHogQLLiteral(value: string): string {
+  return value.replace(/'/g, "''")
+}
+
+export interface WaitlistBehaviorSummary {
+  uniqueVisitors: number
+  signupStarted: number
+  signupCompleted: number
+  signupFailed: number
+}
+
+/**
+ * Behavioral funnel for one waitlist's public page, filtered by the
+ * `waitlist_slug` property every relevant event already carries
+ * (waitlist_page_viewed, app_waitlist_signup_started/completed/failed —
+ * see eventTypes.ts). uniqueVisitors counts distinct persons who fired
+ * waitlist_page_viewed, not raw pageviews.
+ */
+export async function getWaitlistBehaviorSummary(
+  slug: string,
+  from: string,
+  to: string
+): Promise<PostHogResult<WaitlistBehaviorSummary>> {
+  const safeSlug = escapeHogQLLiteral(slug)
+  const result = await hogQL(`
+    SELECT
+      count(DISTINCT if(event = 'waitlist_page_viewed', person_id, NULL)) AS unique_visitors,
+      countIf(event = 'app_waitlist_signup_started') AS signup_started,
+      countIf(event = 'app_waitlist_signup_completed') AS signup_completed,
+      countIf(event = 'app_waitlist_signup_failed') AS signup_failed
+    FROM events
+    WHERE properties.waitlist_slug = '${safeSlug}'
+      AND event IN ('waitlist_page_viewed', 'app_waitlist_signup_started', 'app_waitlist_signup_completed', 'app_waitlist_signup_failed')
+      AND timestamp >= toDateTime('${from}') AND timestamp <= toDateTime('${to}')
+  `)
+  if (!result.ok) return result
+
+  const [uniqueVisitors, signupStarted, signupCompleted, signupFailed] = result.data[0] || [0, 0, 0, 0]
+  return {
+    ok: true,
+    data: {
+      uniqueVisitors: Number(uniqueVisitors || 0),
+      signupStarted: Number(signupStarted || 0),
+      signupCompleted: Number(signupCompleted || 0),
+      signupFailed: Number(signupFailed || 0),
+    },
+  }
+}
+
+export interface WaitlistVisitorAttributionRow {
+  source: string
+  deviceCategory: string
+  visitors: number
+}
+
+/** Visitor-side (not signup-side — see waitlistAnalytics.ts's Supabase
+ * `source` breakdown for that) traffic/device attribution for one
+ * waitlist page, from the common attribution props track() attaches
+ * automatically to every event (see events.ts). */
+export async function getWaitlistVisitorAttribution(
+  slug: string,
+  from: string,
+  to: string
+): Promise<PostHogResult<WaitlistVisitorAttributionRow[]>> {
+  const safeSlug = escapeHogQLLiteral(slug)
+  const result = await hogQL(`
+    SELECT
+      coalesce(nullIf(properties.source, ''), 'direct') AS source,
+      coalesce(nullIf(properties.device_category, ''), 'unknown') AS device_category,
+      count(DISTINCT person_id) AS visitors
+    FROM events
+    WHERE event = 'waitlist_page_viewed' AND properties.waitlist_slug = '${safeSlug}'
+      AND timestamp >= toDateTime('${from}') AND timestamp <= toDateTime('${to}')
+    GROUP BY source, device_category
+    ORDER BY visitors DESC
+    LIMIT 25
+  `)
+  if (!result.ok) return result
+
+  return {
+    ok: true,
+    data: result.data.map((row) => ({
+      source: String(row[0]),
+      deviceCategory: String(row[1]),
+      visitors: Number(row[2] || 0),
+    })),
+  }
+}
+
 export interface SessionRecordingSummary {
   id: string
   startTime: string | null

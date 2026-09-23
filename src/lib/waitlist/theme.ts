@@ -1,4 +1,4 @@
-import type { WaitlistThemeConfig, WaitlistThemePreset } from '@/src/types/waitlist'
+import type { WaitlistLayout, WaitlistThemeConfig, WaitlistThemePreset } from '@/src/types/waitlist'
 
 export interface WaitlistThemeColors {
   background: string
@@ -156,6 +156,22 @@ export function resolveWaitlistTheme(config: unknown): WaitlistThemeColors {
   }
 }
 
+const LAYOUT_VALUES: WaitlistLayout[] = ['standard', 'standalone']
+
+/**
+ * Reads the layout flag straight off the raw stored config — deliberately
+ * independent of resolveWaitlistTheme (which only ever returns colors),
+ * so a page can decide its whole presentation before touching color
+ * resolution at all. Missing/malformed data safely falls back to
+ * 'standard', same "never breaks on bad data" contract as the rest of
+ * this module.
+ */
+export function isStandaloneLayout(config: unknown): boolean {
+  if (!config || typeof config !== 'object') return false
+  const layout = (config as { layout?: unknown }).layout
+  return layout === 'standalone'
+}
+
 export interface ThemeValidationResult {
   value?: WaitlistThemeConfig
   error?: string
@@ -184,8 +200,13 @@ export function parseThemeConfigInput(input: unknown): ThemeValidationResult {
     return { error: 'Invalid theme preset' }
   }
 
+  const layout: WaitlistLayout | undefined =
+    typeof raw.layout === 'string' && LAYOUT_VALUES.includes(raw.layout as WaitlistLayout)
+      ? (raw.layout as WaitlistLayout)
+      : undefined
+
   if (preset !== 'custom') {
-    return { value: { preset: preset as WaitlistThemePreset } }
+    return { value: { preset: preset as WaitlistThemePreset, ...(layout ? { layout } : {}) } }
   }
 
   const requiredFields: (keyof WaitlistThemeColors)[] = [
@@ -227,6 +248,7 @@ export function parseThemeConfigInput(input: unknown): ThemeValidationResult {
       accentText,
       border: normalizeHex(raw.border as string),
       ...(surface ? { surface } : {}),
+      ...(layout ? { layout } : {}),
     },
   }
 }

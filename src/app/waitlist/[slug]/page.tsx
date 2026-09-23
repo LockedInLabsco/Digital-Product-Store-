@@ -5,12 +5,14 @@ import Container from '@/src/components/Container'
 import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import PublicWaitlistForm from '@/src/components/PublicWaitlistForm'
+import TrackMount from '@/src/components/analytics/TrackMount'
+import StandaloneWaitlistPage from '@/src/components/waitlist/StandaloneWaitlistPage'
 import { getPublicWaitlistBySlug } from '@/src/lib/supabase/waitlists'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { isAdminSession } from '@/src/lib/admin/auth'
 import { normalizeSource } from '@/src/lib/waitlist/validate'
-import { resolveWaitlistTheme } from '@/src/lib/waitlist/theme'
+import { isStandaloneLayout, resolveWaitlistTheme } from '@/src/lib/waitlist/theme'
 import { SLOWDAY_EYEBROW, SLOWDAY_FEATURES, SLOWDAY_WAITLIST_SLUG } from '@/src/lib/waitlist/slowdayContent'
 import type { Waitlist } from '@/src/types/waitlist'
 
@@ -70,6 +72,12 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
   const { waitlist, error, isDraftPreview } = await resolveWaitlist(slug, isPreview)
   const media = await getWebsiteMedia()
   const source = normalizeSource(searchParams.source, 'waitlist_page')
+  // An admin browsing/previewing their own waitlist should never count
+  // as public traffic in per-waitlist analytics (see waitlist_page_viewed
+  // below) — checked directly off the session cookie rather than just
+  // isDraftPreview, since that only covers the draft-status case.
+  const isAdminViewer = isAdminSession(cookies())
+  const shouldTrackPageView = Boolean(waitlist) && !isAdminViewer
 
   if (!waitlist) {
     return (
@@ -99,16 +107,31 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
     )
   }
 
+  const theme = resolveWaitlistTheme(waitlist.theme_config)
+
+  // Standalone waitlists (SlowDay today; any future waitlist can opt in
+  // the same way from the admin Theme section) get their own dedicated
+  // page instead of the generic NOT4NORMAL-chrome layout below — see
+  // StandaloneWaitlistPage's doc comment.
+  if (isStandaloneLayout(waitlist.theme_config)) {
+    return (
+      <>
+        {shouldTrackPageView && <TrackMount event="waitlist_page_viewed" properties={{ waitlist_slug: waitlist.slug }} />}
+        <StandaloneWaitlistPage waitlist={waitlist} theme={theme} source={source} isDraftPreview={isDraftPreview} />
+      </>
+    )
+  }
+
   const headline = waitlist.headline || waitlist.name
   const supportingText = waitlist.supporting_text || waitlist.description || DEFAULT_SUPPORTING_TEXT
   const buttonText = waitlist.button_text || DEFAULT_BUTTON_TEXT
-  const theme = resolveWaitlistTheme(waitlist.theme_config)
   const isSlowday = waitlist.slug === SLOWDAY_WAITLIST_SLUG
   const eyebrowText = isSlowday ? SLOWDAY_EYEBROW : DEFAULT_HEADLINE
   const headlineFontClass = isSlowday ? 'font-sans font-semibold' : 'font-serif'
 
   return (
     <>
+      {shouldTrackPageView && <TrackMount event="waitlist_page_viewed" properties={{ waitlist_slug: waitlist.slug }} />}
       <Navbar media={media} />
       <main className="py-20 sm:py-24" style={{ backgroundColor: theme.background }}>
         {isDraftPreview && (

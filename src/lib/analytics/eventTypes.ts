@@ -45,6 +45,7 @@ export interface AnalyticsEventMap {
   app_waitlist_signup_started: { waitlist_slug: string }
   app_waitlist_signup_completed: { waitlist_slug: string }
   app_waitlist_signup_failed: { waitlist_slug: string; reason?: string }
+  waitlist_page_viewed: { waitlist_slug: string }
   outbound_social_clicked: { destination: string; label: string }
   section_viewed: { section_id: string }
   section_engagement_completed: {
