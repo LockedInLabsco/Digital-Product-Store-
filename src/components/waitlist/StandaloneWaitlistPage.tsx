@@ -5,7 +5,6 @@ import SlowdayAudience from './SlowdayAudience'
 import SlowdayProblemSection from './SlowdayProblemSection'
 import SlowdayPreview from './SlowdayPreview'
 import SlowdayHowItHelps from './SlowdayHowItHelps'
-import SlowdayWaitlistSection from './SlowdayWaitlistSection'
 import SlowdayFinalCta from './SlowdayFinalCta'
 import SlowdayFooter from './SlowdayFooter'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
@@ -28,12 +27,14 @@ interface StandaloneWaitlistPageProps {
  * keeps going through the existing generic Navbar/Footer/PublicWaitlistForm
  * layout in that same file, untouched.
  *
- * Copy hierarchy follows the design brief: problem-identity (Hero) → who
- * it's for (Audience) → emotional relevance (Problem prompts) → the
- * product (Preview) → how it helps (benefits) → join (Waitlist section) →
- * final CTA. Headline/supporting text/button text stay admin-editable
- * (same waitlist row, same WaitlistForm), everything else below the hero
- * is SlowDay-specific static copy (see lib/waitlist/slowdayContent.ts).
+ * The hero doubles as the join section — signup form front and center at
+ * the top, screenshots beside it — so converting never requires
+ * scrolling. Problem-identity/who-it's-for/emotional-relevance/product/
+ * benefits content follows below for anyone who scrolls to learn more,
+ * closing with a final CTA that scrolls back up to the same form.
+ * Headline/supporting text/button text stay admin-editable (same
+ * waitlist row, same WaitlistForm); everything else is SlowDay-specific
+ * static copy (see lib/waitlist/slowdayContent.ts).
  */
 export default function StandaloneWaitlistPage({
   waitlist,
@@ -48,7 +49,7 @@ export default function StandaloneWaitlistPage({
 
   if (status === 'draft') {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: theme.background }}>
+      <div id="top" className="min-h-screen" style={{ backgroundColor: theme.background }}>
         <SlowdayHeader theme={theme} buttonText={buttonText} />
         <main className="flex min-h-[60vh] items-center">
           <Container className="mx-auto max-w-xl text-center">
@@ -73,7 +74,7 @@ export default function StandaloneWaitlistPage({
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.background, color: theme.text }}>
+    <div id="top" className="min-h-screen" style={{ backgroundColor: theme.background, color: theme.text }}>
       <SlowdayHeader theme={theme} buttonText={buttonText} />
       {isDraftPreview && (
         <Container className="mx-auto mt-6 max-w-2xl">
@@ -81,18 +82,20 @@ export default function StandaloneWaitlistPage({
         </Container>
       )}
       <main>
-        <SlowdayHero eyebrow={SLOWDAY_EYEBROW} headline={headline} supportingText={supportingText} theme={theme} />
-        <SlowdayAudience theme={theme} />
-        <SlowdayProblemSection theme={theme} />
-        <SlowdayPreview theme={theme} />
-        <SlowdayHowItHelps theme={theme} />
-        <SlowdayWaitlistSection
+        <SlowdayHero
           waitlistSlug={waitlist.slug}
           status={status}
+          eyebrow={SLOWDAY_EYEBROW}
+          headline={headline}
+          supportingText={supportingText}
           buttonText={buttonText}
           source={source}
           theme={theme}
         />
+        <SlowdayAudience theme={theme} />
+        <SlowdayProblemSection theme={theme} />
+        <SlowdayPreview theme={theme} />
+        <SlowdayHowItHelps theme={theme} />
         <SlowdayFinalCta theme={theme} />
       </main>
       <SlowdayFooter theme={theme} />

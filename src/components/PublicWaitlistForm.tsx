@@ -10,9 +10,10 @@ type FieldErrors = Partial<Record<'email' | 'instagramUsername' | 'firstName', s
 
 interface PublicWaitlistFormProps {
   waitlistSlug: string
-  eyebrow: string
-  headline: string
-  supportingText: string
+  /** Required unless `embedded` is true (embedded mode never renders these). */
+  eyebrow?: string
+  headline?: string
+  supportingText?: string
   buttonText: string
   source: string
   theme: WaitlistThemeColors
@@ -30,6 +31,16 @@ interface PublicWaitlistFormProps {
   /** Overrides the fixed trust line under the submit button. Defaults to
    * the line every existing waitlist already shows, so this is opt-in. */
   trustText?: string
+  /**
+   * Drops the outer centered Container/max-width and the eyebrow/
+   * headline/supporting-text/features intro block, so just the form
+   * (and the success/duplicate/error states) render left-aligned,
+   * filling whatever width the caller gives it — for embedding next to
+   * other content (e.g. screenshots) instead of as its own centered
+   * page section. Defaults to false so every existing usage is
+   * unaffected.
+   */
+  embedded?: boolean
 }
 
 /**
@@ -58,6 +69,7 @@ export default function PublicWaitlistForm({
   headlineFont = 'serif',
   panel = false,
   trustText = 'No spam. Just early access and important updates.',
+  embedded = false,
 }: PublicWaitlistFormProps) {
   const [email, setEmail] = useState('')
   const [instagramUsername, setInstagramUsername] = useState('')
@@ -129,14 +141,16 @@ export default function PublicWaitlistForm({
   const formStyle: CSSProperties | undefined = panel
     ? { backgroundColor: hexToRgba(theme.surface, 0.72), borderColor: theme.border }
     : undefined
-  const formClassName = `mx-auto mt-8 flex max-w-md flex-col ${fieldGapClass} text-left${
+  const formClassName = `${embedded ? 'mt-0 w-full' : 'mx-auto mt-8 max-w-md'} flex flex-col ${fieldGapClass} text-left${
     panel
       ? ' rounded-2xl border p-6 backdrop-blur-xl shadow-[0_1px_1px_rgba(0,0,0,0.03),0_20px_45px_-24px_rgba(0,0,0,0.22)] sm:p-8'
       : ''
   }`
+  const Wrapper = embedded ? 'div' : Container
+  const wrapperClassName = embedded ? 'w-full text-left' : 'mx-auto max-w-2xl text-center'
 
   return (
-    <Container className="mx-auto max-w-2xl text-center">
+    <Wrapper className={wrapperClassName}>
       {status !== 'idle' ? (
         <div role="status" aria-live="polite">
           <p
@@ -154,37 +168,41 @@ export default function PublicWaitlistForm({
         </div>
       ) : (
         <>
-          <p
-            className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: theme.accent }}
-            data-reveal="up"
-          >
-            {eyebrow}
-          </p>
-          <h2 className={`mt-4 ${headlineClass} text-3xl leading-snug sm:text-4xl`} style={{ color: theme.text }} data-reveal="up">
-            {headline}
-          </h2>
-          <p className="mx-auto mt-5 max-w-lg leading-relaxed" style={{ color: theme.secondaryText }} data-reveal="up">
-            {supportingText}
-          </p>
+          {!embedded && (
+            <>
+              <p
+                className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]"
+                style={{ color: theme.accent }}
+                data-reveal="up"
+              >
+                {eyebrow}
+              </p>
+              <h2 className={`mt-4 ${headlineClass} text-3xl leading-snug sm:text-4xl`} style={{ color: theme.text }} data-reveal="up">
+                {headline}
+              </h2>
+              <p className="mx-auto mt-5 max-w-lg leading-relaxed" style={{ color: theme.secondaryText }} data-reveal="up">
+                {supportingText}
+              </p>
 
-          {features && features.length > 0 && (
-            <ul
-              className="mx-auto mt-6 flex max-w-lg flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm"
-              style={{ color: theme.secondaryText }}
-              data-reveal="up"
-            >
-              {features.map((feature) => (
-                <li key={feature} className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="h-1 w-1 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: theme.secondaryText }}
-                  />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+              {features && features.length > 0 && (
+                <ul
+                  className="mx-auto mt-6 flex max-w-lg flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm"
+                  style={{ color: theme.secondaryText }}
+                  data-reveal="up"
+                >
+                  {features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="h-1 w-1 flex-shrink-0 rounded-full"
+                        style={{ backgroundColor: theme.secondaryText }}
+                      />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
 
           <form
@@ -338,12 +356,12 @@ export default function PublicWaitlistForm({
               </div>
             )}
 
-            <p className="text-center text-xs opacity-60" style={{ color: theme.secondaryText }}>
+            <p className={`${embedded ? 'text-left' : 'text-center'} text-xs opacity-60`} style={{ color: theme.secondaryText }}>
               {trustText}
             </p>
           </form>
         </>
       )}
-    </Container>
+    </Wrapper>
   )
 }

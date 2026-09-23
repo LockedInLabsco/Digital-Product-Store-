@@ -10,7 +10,7 @@
  * standalone components (components/waitlist/Standalone*).
  */
 
-export const SLOWDAY_WAITLIST_SLUG = 'phone-control-app'
+export const SLOWDAY_WAITLIST_SLUG = 'slowday'
 
 export const SLOWDAY_EYEBROW = 'SlowDay'
 
