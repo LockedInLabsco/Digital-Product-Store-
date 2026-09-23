@@ -92,7 +92,6 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('admin_token')
           router.push('/admin/login')
           return
         }

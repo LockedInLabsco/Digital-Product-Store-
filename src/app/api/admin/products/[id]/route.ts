@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -13,8 +13,9 @@ export async function GET(
   console.log(`🔍 [GET /api/admin/products/${id}] Fetching product`)
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('products:read')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data, error } = await supabaseServer
@@ -51,8 +52,9 @@ export async function PUT(
   console.log(`✏️ [PUT /api/admin/products/${id}] Updating product`)
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('products:write')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const body = await request.json()
@@ -144,8 +146,9 @@ export async function DELETE(
   console.log(`🗑️ [DELETE /api/admin/products/${id}] Deleting product`)
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('products:write')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data, error } = await supabaseServer

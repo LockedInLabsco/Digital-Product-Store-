@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
-import { ADMIN_SESSION_COOKIE } from '@/src/lib/admin/auth'
+import { createSupabaseServerClient } from '@/src/lib/supabase/auth'
 
+/**
+ * Signs out of Supabase Auth server-side — this is what actually
+ * invalidates the session and clears its cookies, replacing the old
+ * custom httpOnly-cookie clear. The admin shell's sign-out button (see
+ * components/admin/AdminShell.tsx) calls this route and then also calls
+ * signOut() on its own browser Supabase client, so both the server
+ * session and any client-held session are cleared together.
+ */
 export async function POST() {
-  const response = NextResponse.json({ success: true })
-
-  response.cookies.set(ADMIN_SESSION_COOKIE, '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 0,
-  })
-
-  return response
+  const supabase = createSupabaseServerClient()
+  await supabase.auth.signOut()
+  return NextResponse.json({ success: true })
 }

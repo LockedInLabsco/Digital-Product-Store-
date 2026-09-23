@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { getSignedDownloadUrl, verifyProductFileExists } from '@/src/lib/supabase/downloads'
 import { sendDownloadEmail } from '@/src/lib/email/resend'
@@ -40,8 +40,9 @@ export async function POST(
   })
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('orders:write')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data: order, error: orderError } = await supabaseServer

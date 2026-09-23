@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 // GET all products (for admin listing)
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log('🔍 [GET /api/admin/products] Fetching all products for admin')
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('products:read')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     // Get all products including inactive ones
@@ -43,8 +44,9 @@ export async function POST(request: NextRequest) {
   console.log('📝 [POST /api/admin/products] Creating new product')
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('products:write')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const body = await request.json()

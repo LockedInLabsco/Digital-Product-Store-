@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Container from '@/src/components/Container'
@@ -10,7 +9,7 @@ import StandaloneWaitlistPage from '@/src/components/waitlist/StandaloneWaitlist
 import { getPublicWaitlistBySlug } from '@/src/lib/supabase/waitlists'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { isAdminSession } from '@/src/lib/admin/auth'
+import { getCurrentAdmin, hasPermission } from '@/src/lib/admin/auth'
 import { normalizeSource } from '@/src/lib/waitlist/validate'
 import { isStandaloneLayout, resolveWaitlistTheme } from '@/src/lib/waitlist/theme'
 import { SLOWDAY_EYEBROW, SLOWDAY_FEATURES, SLOWDAY_WAITLIST_SLUG } from '@/src/lib/waitlist/slowdayContent'
@@ -28,12 +27,13 @@ const DEFAULT_BUTTON_TEXT = 'Join the waitlist'
 /**
  * Admin-only draft preview: a draft waitlist is invisible to the public
  * anon-key query (RLS filters it out), so this is the "safe preview
- * mode" — only reachable with ?preview=1 AND a valid admin session
- * cookie, fetched with the service-role client which bypasses RLS.
+ * mode" — only reachable with ?preview=1 AND a signed-in admin who has
+ * waitlists:read, fetched with the service-role client which bypasses
+ * RLS.
  */
 async function getPreviewWaitlist(slug: string): Promise<Waitlist | undefined> {
-  const cookieStore = cookies()
-  if (!isAdminSession(cookieStore)) return undefined
+  const admin = await getCurrentAdmin()
+  if (!hasPermission(admin, 'waitlists:read')) return undefined
 
   const { data } = await supabaseServer.from('waitlists').select('*').eq('slug', slug).maybeSingle()
   return (data as Waitlist) || undefined
@@ -74,9 +74,9 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
   const source = normalizeSource(searchParams.source, 'waitlist_page')
   // An admin browsing/previewing their own waitlist should never count
   // as public traffic in per-waitlist analytics (see waitlist_page_viewed
-  // below) — checked directly off the session cookie rather than just
-  // isDraftPreview, since that only covers the draft-status case.
-  const isAdminViewer = isAdminSession(cookies())
+  // below) — checked directly against a real admin session rather than
+  // just isDraftPreview, since that only covers the draft-status case.
+  const isAdminViewer = Boolean(await getCurrentAdmin())
   const shouldTrackPageView = Boolean(waitlist) && !isAdminViewer
 
   if (!waitlist) {

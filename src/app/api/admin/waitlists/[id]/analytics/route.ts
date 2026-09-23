@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
  * (see parseAnalyticsRequest) — this just also scopes to one waitlist.
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const parsed = parseAnalyticsRequest(request)
+  const parsed = await parseAnalyticsRequest(request)
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status })
   }

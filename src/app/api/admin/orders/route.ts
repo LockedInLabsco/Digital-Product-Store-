@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { NextResponse } from 'next/server'
+import { requirePermission } from '@/src/lib/admin/auth'
 import { supabaseServer } from '@/src/lib/supabase/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log('[GET /api/admin/orders] Fetching recent orders')
 
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('orders:read')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data, error } = await supabaseServer

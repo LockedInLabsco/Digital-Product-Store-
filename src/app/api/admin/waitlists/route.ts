@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 import { isValidWaitlistSlug, parseScreenshotsInput } from '@/src/lib/waitlist/validate'
 import { parseThemeConfigInput } from '@/src/lib/waitlist/theme'
 
 const STATUS_VALUES = ['draft', 'active', 'closed']
 
 // GET all waitlists (for admin listing), with a lead count per waitlist
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('waitlists:read')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data, error } = await supabaseServer
@@ -38,8 +39,9 @@ export async function GET(request: NextRequest) {
 // POST create a new waitlist
 export async function POST(request: NextRequest) {
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('waitlists:write')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const body = await request.json().catch(() => ({}))

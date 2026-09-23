@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 import { isMediaFolder, uploadMediaFile, MediaUploadError } from '@/src/lib/admin/mediaUpload'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Shared upload pipeline for every image folder (logos, hero, sections,
+  // waitlist screenshots, ...) — gated on the broadest of the relevant
+  // write permissions. media:write covers uploading; waitlist-specific
+  // screenshot uploads are additionally protected by waitlists:write on
+  // the route that actually saves the URL onto a waitlist row.
+  const auth = await requirePermission('media:write')
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
   try {

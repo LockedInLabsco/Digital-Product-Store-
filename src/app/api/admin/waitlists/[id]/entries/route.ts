@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 
 // Lightweight lead list for the admin detail page — search/sort/CSV are
 // all done client-side against this one payload, which is plenty for a
@@ -13,8 +13,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    if (!isAdminRequest(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requirePermission('waitlists:read')
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { data, error } = await supabaseServer

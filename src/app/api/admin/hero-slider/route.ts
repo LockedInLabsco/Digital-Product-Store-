@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 import {
   getHeroSliderImagesAdmin,
   saveHeroSliderImages,
@@ -9,9 +9,10 @@ import { HeroSliderImage, HERO_SLIDER_MAX_IMAGES } from '@/src/types/settings'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET() {
+  const auth = await requirePermission('hero_slider:read')
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
   try {
@@ -83,8 +84,9 @@ function validateImages(body: unknown): { images: HeroSliderImage[] } | { error:
 }
 
 export async function PUT(request: NextRequest) {
-  if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requirePermission('hero_slider:write')
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
   try {

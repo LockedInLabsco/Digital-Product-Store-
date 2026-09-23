@@ -1,6 +1,6 @@
 import 'server-only'
 import { NextRequest } from 'next/server'
-import { isAdminRequest } from '@/src/lib/admin/auth'
+import { requirePermission } from '@/src/lib/admin/auth'
 import { resolveDateRange, ResolvedDateRange } from './dateRange'
 
 export type AnalyticsRequestResult =
@@ -8,13 +8,15 @@ export type AnalyticsRequestResult =
   | { ok: false; status: number; error: string }
 
 /**
- * Every /api/admin/analytics/* route starts with this: server-side auth
- * (never just "hidden in the UI"), then a validated date range so no
- * route can be tricked into an unbounded or malformed query.
+ * Every /api/admin/analytics/* route starts with this: server-side
+ * authorization (never just "hidden in the UI") requiring analytics:read,
+ * then a validated date range so no route can be tricked into an
+ * unbounded or malformed query.
  */
-export function parseAnalyticsRequest(request: NextRequest): AnalyticsRequestResult {
-  if (!isAdminRequest(request)) {
-    return { ok: false, status: 401, error: 'Unauthorized' }
+export async function parseAnalyticsRequest(request: NextRequest): Promise<AnalyticsRequestResult> {
+  const auth = await requirePermission('analytics:read')
+  if (!auth.ok) {
+    return { ok: false, status: auth.status, error: auth.error }
   }
 
   const { searchParams } = new URL(request.url)

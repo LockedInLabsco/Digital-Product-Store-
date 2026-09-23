@@ -11,7 +11,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const parsed = parseAnalyticsRequest(request)
+  const parsed = await parseAnalyticsRequest(request)
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status })
   }
