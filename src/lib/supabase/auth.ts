@@ -59,3 +59,18 @@ export async function getSupabaseUser() {
   } = await supabase.auth.getUser()
   return user
 }
+
+/**
+ * True if this session has a verified TOTP factor enrolled but hasn't
+ * completed that second-factor challenge yet this session (aal1, with
+ * aal2 available) — i.e. it needs to be sent to /admin/mfa-challenge
+ * before it's treated as fully authenticated. A session with no MFA
+ * factor enrolled at all has nextLevel === currentLevel === 'aal1' and
+ * this returns false, so MFA stays opt-in per admin rather than forced.
+ */
+export async function needsMfaChallenge(): Promise<boolean> {
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (error || !data) return false
+  return data.nextLevel === 'aal2' && data.currentLevel !== data.nextLevel
+}

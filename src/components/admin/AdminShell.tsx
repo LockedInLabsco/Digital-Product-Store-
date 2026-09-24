@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/media', label: 'Media', permission: 'media:read' },
   { href: '/admin/hero-slider', label: 'Hero Slider', permission: 'hero_slider:read' },
   { href: '/admin/team', label: 'Team', permission: 'team:read' },
+  { href: '/admin/account', label: 'Account', permission: 'dashboard:read' },
 ]
 
 /**
@@ -42,7 +43,9 @@ export default function AdminShell({ admin, children }: { admin: CurrentAdmin; c
             NOT4NORMAL Admin
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <span className="hidden text-gray-600 sm:inline">{admin.user.email}</span>
+            <Link href="/admin/account" className="hidden text-gray-600 hover:text-black sm:inline" title="Account settings">
+              {admin.user.email}
+            </Link>
             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium capitalize text-gray-700">
               {ADMIN_ROLE_LABELS[admin.role]}
             </span>
