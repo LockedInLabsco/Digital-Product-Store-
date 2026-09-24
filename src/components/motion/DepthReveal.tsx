@@ -43,7 +43,7 @@ interface DepthRevealProps {
   delay?: number
 }
 
-const DEFAULT_FROM: DepthVars = { y: 60, z: -180, scale: 0.94, opacity: 0 }
+const DEFAULT_FROM: DepthVars = { y: 70, z: -220, scale: 0.92, opacity: 0 }
 
 /**
  * The core scroll-depth primitive: wraps ordinary HTML content and
@@ -65,8 +65,8 @@ export default function DepthReveal({
   end = 'top 35%',
   scrub = false,
   stagger,
-  duration = 1.1,
-  ease = 'power3.out',
+  duration = 0.95,
+  ease = 'power4.out',
   delay = 0,
 }: DepthRevealProps) {
   const scopeRef = useRef<HTMLDivElement>(null)

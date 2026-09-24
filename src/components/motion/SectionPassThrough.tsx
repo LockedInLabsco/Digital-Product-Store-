@@ -24,6 +24,11 @@ interface SectionPassThroughProps {
    * what creates the "the user travelled past it" sensation. */
   to?: DepthVars
   perspective?: number
+  /** Skip the entrance phase entirely and only animate the exit — for
+   * a section that's already visible at the top of the page on load
+   * (the hero), which must render fully settled on first paint rather
+   * than mid-entrance. */
+  skipEntrance?: boolean
 }
 
 const DEFAULT_FROM: DepthVars = { y: 50, z: -150, opacity: 0, scale: 0.96 }
@@ -44,6 +49,7 @@ export default function SectionPassThrough({
   from = DEFAULT_FROM,
   to = DEFAULT_TO,
   perspective = 1200,
+  skipEntrance = false,
 }: SectionPassThroughProps) {
   const scopeRef = useRef<HTMLDivElement>(null)
 
@@ -70,29 +76,32 @@ export default function SectionPassThrough({
           const tl = gsap.timeline({
             scrollTrigger: {
               trigger: el,
-              start: 'top bottom',
+              start: skipEntrance ? 'top top' : 'top bottom',
               end: 'bottom top',
               scrub: true,
             },
           })
 
-          tl.fromTo(
-            el,
-            {
-              x: scaled(from.x),
-              y: scaled(from.y),
-              z: scaled(from.z),
-              rotateX: scaled(from.rotateX),
-              rotateY: scaled(from.rotateY),
-              rotateZ: scaled(from.rotateZ),
-              scale: scale(from.scale),
-              opacity: from.opacity ?? 1,
-              transformPerspective: perspective,
-              force3D: true,
-            },
-            { x: 0, y: 0, z: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 1, opacity: 1, duration: 0.35, ease: 'none' }
-          )
-            .to(el, { duration: 0.3, ease: 'none' }) // hold flat and fully readable
+          gsap.set(el, { transformPerspective: perspective, force3D: true })
+
+          if (!skipEntrance) {
+            tl.fromTo(
+              el,
+              {
+                x: scaled(from.x),
+                y: scaled(from.y),
+                z: scaled(from.z),
+                rotateX: scaled(from.rotateX),
+                rotateY: scaled(from.rotateY),
+                rotateZ: scaled(from.rotateZ),
+                scale: scale(from.scale),
+                opacity: from.opacity ?? 1,
+              },
+              { x: 0, y: 0, z: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 1, opacity: 1, duration: 0.35, ease: 'none' }
+            )
+          }
+
+          tl.to(el, { duration: skipEntrance ? 0.6 : 0.3, ease: 'none' }) // hold flat and fully readable
             .to(el, {
               x: scaled(to.x),
               y: scaled(to.y),
@@ -102,7 +111,7 @@ export default function SectionPassThrough({
               rotateZ: scaled(to.rotateZ),
               scale: scale(to.scale),
               opacity: to.opacity ?? 1,
-              duration: 0.35,
+              duration: skipEntrance ? 0.4 : 0.35,
               ease: 'none',
             })
 
@@ -113,7 +122,7 @@ export default function SectionPassThrough({
         }
       )
     },
-    []
+    [skipEntrance]
   )
 
   return (

@@ -8,6 +8,7 @@ import HeroImageSlider from '@/src/components/home/HeroImageSlider'
 import DepthReveal from '@/src/components/motion/DepthReveal'
 import ScrollParallax from '@/src/components/motion/ScrollParallax'
 import SectionPassThrough from '@/src/components/motion/SectionPassThrough'
+import PinnedScene from '@/src/components/motion/PinnedScene'
 import TrackMount from '@/src/components/analytics/TrackMount'
 import TrackedLink from '@/src/components/analytics/TrackedLink'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
@@ -59,8 +60,8 @@ export default async function Home() {
           <Container className="py-20 sm:py-24 lg:py-28">
             <SectionPassThrough
               className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16"
-              from={{ y: 40, z: -120, opacity: 0, scale: 0.97 }}
-              to={{ y: -70, z: -130, rotateX: 5, opacity: 0.25, scale: 0.95 }}
+              to={{ y: -110, z: -220, rotateX: 8, opacity: 0.15, scale: 0.9 }}
+              skipEntrance
             >
               <div>
                 <p className="eyebrow text-gold">For the ones who refuse the default</p>
@@ -225,7 +226,7 @@ export default async function Home() {
                 <DepthReveal
                   key={category.title}
                   className="border-t border-gold/50 pt-5"
-                  from={{ x: index % 2 === 0 ? -55 : 55, z: -150, opacity: 0 }}
+                  from={{ x: index % 2 === 0 ? -70 : 70, z: -190, opacity: 0 }}
                   start="top 92%"
                 >
                   <h3 className="font-serif text-lg text-cream">{category.title}</h3>
@@ -243,13 +244,13 @@ export default async function Home() {
             fade-up. */}
         <section className="bg-ink py-20 sm:py-24">
           <Container className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-            <ScrollParallax speed={0.15} range={70}>
+            <ScrollParallax speed={0.1} range={95}>
               <p className="eyebrow text-gold">Why Not4Normal</p>
               <h2 className="mt-3 font-serif text-3xl text-cream sm:text-4xl">
                 Practical progress, not noise.
               </h2>
             </ScrollParallax>
-            <ScrollParallax speed={0.5} range={70}>
+            <ScrollParallax speed={0.6} range={95}>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {BENEFITS.map((benefit) => (
                   <li
@@ -265,38 +266,43 @@ export default async function Home() {
           </Container>
         </section>
 
-        {/* Manifesto — the large statement, our "typography
-            perspective" moment: the background image drifts slower
-            than the quote (real depth separation) and the quote itself
-            tilts flat into place. */}
-        <section id="manifesto" data-section-id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-20 text-cream sm:py-24">
-          {media.manifesto_image_url && (
-            <ScrollParallax speed={0.2} range={50} className="absolute inset-x-0 -top-16 -bottom-16">
-              <Image
-                src={media.manifesto_image_url}
-                alt={media.manifesto_image_alt || ''}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                aria-hidden="true"
-              />
-              <div className="absolute inset-0 bg-ink/70" aria-hidden="true" />
-            </ScrollParallax>
-          )}
-          <Container className="relative max-w-3xl text-center">
-            <DepthReveal from={{ rotateX: 10, y: 30, opacity: 0 }} perspective={1000}>
-              <p className="eyebrow text-gold">This is your move</p>
-              <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-4xl">
-                Normal is the default.
-                <br />
-                Your path does not have to be.
-              </h2>
-              <p className="mt-5 text-cream/60">
-                You were not made to repeat someone else&apos;s path.
-              </p>
-            </DepthReveal>
+        {/* Manifesto — the single biggest moment on the page: pinned
+            while the quote arrives with real perspective (a "camera
+            stopped" beat), the background drifting slower underneath
+            it for depth separation, then releases into normal scroll. */}
+        <PinnedScene
+          id="manifesto"
+          dataSectionId="manifesto"
+          className="relative scroll-mt-20 flex min-h-screen items-center overflow-hidden bg-ink py-20 text-cream sm:py-24"
+          distanceVh={65}
+          background={
+            media.manifesto_image_url ? (
+              <ScrollParallax speed={0.2} range={50} className="absolute inset-x-0 -top-16 -bottom-16">
+                <Image
+                  src={media.manifesto_image_url}
+                  alt={media.manifesto_image_alt || ''}
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  aria-hidden="true"
+                />
+                <div className="absolute inset-0 bg-ink/70" aria-hidden="true" />
+              </ScrollParallax>
+            ) : undefined
+          }
+        >
+          <Container className="relative mx-auto max-w-3xl text-center">
+            <p className="eyebrow text-gold">This is your move</p>
+            <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-4xl">
+              Normal is the default.
+              <br />
+              Your path does not have to be.
+            </h2>
+            <p className="mt-5 text-cream/60">
+              You were not made to repeat someone else&apos;s path.
+            </p>
           </Container>
-        </section>
+        </PinnedScene>
 
         {/* Final CTA — clean, quiet depth reveal to close the page. */}
         <section data-section-id="final_cta" className="relative overflow-hidden bg-ink py-16 sm:py-20">
@@ -316,7 +322,7 @@ export default async function Home() {
           <Container className="relative">
             <DepthReveal
               className="flex flex-col items-center gap-6 text-center"
-              from={{ y: 40, z: -100, scale: 0.96, opacity: 0 }}
+              from={{ y: 50, z: -160, scale: 0.94, opacity: 0 }}
               perspective={1000}
             >
               <h2 className="font-serif text-3xl text-cream sm:text-4xl">
