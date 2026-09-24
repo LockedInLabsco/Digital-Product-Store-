@@ -19,6 +19,11 @@ interface ProductCardProps {
   revealDelay?: number
   /** Where on the page this card renders, e.g. "homepage_featured", "products_page". */
   location?: string
+  /** Skip this card's own data-reveal fade-up. Set when a parent
+   * already animates the whole grid (e.g. a scroll-depth stagger on the
+   * homepage) so the two reveal systems don't double-animate the same
+   * element. Defaults to false — every other usage is unaffected. */
+  disableReveal?: boolean
 }
 
 export default function ProductCard({
@@ -31,6 +36,7 @@ export default function ProductCard({
   coverImageUrl,
   revealDelay = 0,
   location = 'products_page',
+  disableReveal = false,
 }: ProductCardProps) {
   const handleClick = () => {
     track('product_card_clicked', {
@@ -44,8 +50,9 @@ export default function ProductCard({
       href={`/products/${slug}`}
       onClick={handleClick}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-4 focus-visible:ring-offset-ink"
-      data-reveal="up"
-      data-reveal-delay={String(Math.min(revealDelay, 2))}
+      {...(disableReveal
+        ? {}
+        : { 'data-reveal': 'up', 'data-reveal-delay': String(Math.min(revealDelay, 2)) })}
     >
       <article className="flex h-full flex-col overflow-hidden rounded-sm border border-line/10 bg-offwhite transition-all duration-300 group-hover:border-gold/30 group-hover:shadow-[0_18px_40px_-16px_rgb(var(--color-accent-bright)/0.28)]">
         <ProductPreview

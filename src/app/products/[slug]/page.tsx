@@ -5,6 +5,7 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import Button from '@/src/components/Button'
 import ProductGallery from '@/src/components/ProductGallery'
+import DepthReveal from '@/src/components/motion/DepthReveal'
 import FAQAccordion from '@/src/components/FAQAccordion'
 import FreeDownloadButton from '@/src/components/FreeDownloadButton'
 import FreeProductClaimProvider from '@/src/components/FreeProductClaim'
@@ -187,14 +188,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             <div className="mt-8 lg:grid lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-x-16 lg:gap-y-8">
               {/* 1. Title */}
-              <div>
+              <DepthReveal from={{ y: 30, opacity: 0 }} perspective={800}>
                 <p className="eyebrow text-gold">
                   Digital Tool / {product.price === 0 ? 'Free' : 'Paid'}
                 </p>
                 <h1 className="mt-3 font-serif text-4xl text-cream sm:text-5xl">
                   {product.title}
                 </h1>
-              </div>
+              </DepthReveal>
 
               {/* 2. Short promise */}
               <p className="mt-4 max-w-xl text-lg text-cream/65 lg:mt-4">
@@ -206,13 +207,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {formatPrice(product.price)}
               </p>
 
-              {/* Gallery — desktop left column, spans the text rows */}
-              <div className="mt-8 lg:col-start-1 lg:row-start-1 lg:row-end-8 lg:mt-0">
+              {/* Gallery — desktop left column, spans the text rows.
+                  The product cover approaches from depth with a slight
+                  turn, like a physical object being presented, using
+                  the existing 2D gallery image — no 3D model. */}
+              <DepthReveal
+                className="mt-8 lg:col-start-1 lg:row-start-1 lg:row-end-8 lg:mt-0"
+                from={{ rotateY: -6, z: -110, opacity: 0 }}
+                perspective={1400}
+              >
                 <ProductGallery
                   images={galleryImages}
                   productTitle={product.title}
                 />
-              </div>
+              </DepthReveal>
 
               {/* 5. CTA */}
               <div className="mt-8 lg:mt-4">
