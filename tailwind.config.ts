@@ -52,6 +52,20 @@ const config: Config = {
       maxWidth: {
         container: '1280px',
       },
+      keyframes: {
+        'drift-slow': {
+          '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
+          '50%': { transform: 'translate3d(0, -14px, 0)' },
+        },
+        marquee: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(-50%, 0, 0)' },
+        },
+      },
+      animation: {
+        'drift-slow': 'drift-slow 7s var(--tw-ease, ease-in-out) infinite',
+        marquee: 'marquee 28s linear infinite',
+      },
     },
   },
   plugins: [],

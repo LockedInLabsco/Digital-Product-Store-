@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
 import MotionProvider from '@/src/components/MotionProvider'
 import AnalyticsProvider from '@/src/components/analytics/AnalyticsProvider'
+import GrainOverlay from '@/src/components/GrainOverlay'
 import { getWebsiteMedia } from '@/src/lib/supabase/settings'
 
 const playfairDisplay = Playfair_Display({
@@ -58,6 +59,7 @@ export default function RootLayout({
       <body className="bg-ink text-cream antialiased font-sans">
         <MotionProvider />
         <AnalyticsProvider />
+        <GrainOverlay />
         {children}
       </body>
     </html>

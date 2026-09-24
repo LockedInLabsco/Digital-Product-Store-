@@ -74,10 +74,10 @@ export default function ProductGallery({
               key={image.id}
               type="button"
               onClick={() => setSelectedImageIndex(index)}
-              className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-sm border text-center transition-colors ${
+              className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-sm border text-center transition-all duration-200 ${
                 selectedImageIndex === index
-                  ? 'border-gold'
-                  : 'border-line/15 hover:border-line/40'
+                  ? 'border-gold opacity-100'
+                  : 'border-line/15 opacity-70 hover:border-line/40 hover:opacity-100'
               }`}
               aria-label={`View ${image.label}`}
             >

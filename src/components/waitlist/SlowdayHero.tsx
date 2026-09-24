@@ -1,6 +1,7 @@
 import Container from '@/src/components/Container'
 import PublicWaitlistForm from '@/src/components/PublicWaitlistForm'
 import SlowdayPhoneFrame from './SlowdayPhoneFrame'
+import DepthCard from '@/src/components/motion/DepthCard'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { WaitlistStatus } from '@/src/types/waitlist'
 import {
@@ -95,21 +96,23 @@ export default function SlowdayHero({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:gap-5" data-reveal="up" data-reveal-delay="2">
-            <SlowdayPhoneFrame
-              label={heroScreens[0]?.label || 'Home'}
-              src={heroScreens[0]?.src}
-              theme={theme}
-              className="translate-y-4"
-              priority
-            />
-            <SlowdayPhoneFrame
-              label={heroScreens[1]?.label || 'Focus'}
-              src={heroScreens[1]?.src}
-              theme={theme}
-              className="-translate-y-4"
-              priority
-            />
+          <div className="perspective-1000 grid grid-cols-2 gap-4 sm:gap-5" data-reveal="up" data-reveal-delay="2">
+            <DepthCard maxTilt={5} baseTranslateY="1rem">
+              <SlowdayPhoneFrame
+                label={heroScreens[0]?.label || 'Home'}
+                src={heroScreens[0]?.src}
+                theme={theme}
+                priority
+              />
+            </DepthCard>
+            <DepthCard maxTilt={5} baseTranslateY="-1rem">
+              <SlowdayPhoneFrame
+                label={heroScreens[1]?.label || 'Focus'}
+                src={heroScreens[1]?.src}
+                theme={theme}
+                priority
+              />
+            </DepthCard>
           </div>
         </div>
       </Container>

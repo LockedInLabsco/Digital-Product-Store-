@@ -13,13 +13,21 @@ export default async function ProductsPage() {
     <>
       <Navbar media={media} />
       <main className="bg-ink">
-        <section className="border-b border-line/10 py-16 sm:py-20">
-          <Container>
+        <section className="relative overflow-hidden border-b border-line/10 py-20 sm:py-28">
+          <div
+            className="pointer-events-none absolute inset-x-0 -top-6 select-none whitespace-nowrap text-center font-serif text-[22vw] leading-none tracking-tight text-cream/[0.03] sm:text-[13vw]"
+            aria-hidden="true"
+          >
+            PRODUCTS
+          </div>
+          <Container className="relative">
             <p className="eyebrow text-gold" data-reveal="up">The Not4Normal system</p>
-            <h1 className="mt-4 max-w-2xl font-serif text-4xl text-cream sm:text-5xl" data-reveal="up">
-              Tools for the work.
-            </h1>
-            <p className="mt-4 max-w-xl text-base text-cream/60" data-reveal="up">
+            <div className="mask-reveal mt-4" data-reveal="fade">
+              <h1 className="max-w-2xl font-serif text-4xl text-cream sm:text-6xl">
+                Tools for the work.
+              </h1>
+            </div>
+            <p className="mt-5 max-w-xl text-base text-cream/60" data-reveal="up">
               Practical guides for building focus, discipline, and momentum. Own
               them once. Use them for as long as the work takes.
             </p>

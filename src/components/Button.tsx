@@ -14,10 +14,10 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 rounded-sm text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100'
+    'tactile-press inline-flex items-center justify-center gap-2 rounded-sm text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100'
 
   const variantClasses = {
-    primary: 'bg-gold text-cream hover:bg-gold-hover shadow-[0_8px_24px_-8px_rgb(var(--color-accent-bright)/0.45)]',
+    primary: 'bg-gold text-btn-dark hover:bg-gold-hover shadow-[0_10px_28px_-10px_rgb(0_0_0/0.6)]',
     secondary: 'bg-charcoal text-cream border border-line/25 hover:border-gold/50 hover:bg-gold/10',
     outline: 'border border-line/40 bg-transparent text-cream hover:border-line hover:bg-gold/10',
     inverse: 'bg-cream text-btn-dark hover:bg-cream/85',

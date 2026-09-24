@@ -24,17 +24,17 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
             key={index}
             type="button"
             onClick={() => setOpenIndex(isOpen ? null : index)}
-            className="w-full border-b border-line/10 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+            className="group w-full border-b border-line/10 text-left transition-colors duration-200 hover:border-line/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             aria-expanded={isOpen}
           >
             <div className="py-5">
               <div className="flex items-start justify-between gap-4">
-                <h4 className="font-serif text-lg text-cream">{item.question}</h4>
+                <h4 className="font-serif text-lg text-cream transition-transform duration-200 group-hover:translate-x-1">{item.question}</h4>
                 <span
-                  className="flex-shrink-0 text-xl text-cream/50"
+                  className={`flex-shrink-0 text-xl text-cream/50 transition-transform duration-300 ease-out ${isOpen ? 'rotate-45' : ''}`}
                   aria-hidden="true"
                 >
-                  {isOpen ? '−' : '+'}
+                  +
                 </span>
               </div>
               <div className={`faq-answer ${isOpen ? 'is-open' : ''}`}>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Container from './Container'
 import BrandMark from './BrandMark'
+import MagneticButton from './motion/MagneticButton'
 import { WebsiteMedia } from '@/src/types/settings'
 import { track } from '@/src/lib/analytics/events'
 
@@ -16,12 +17,14 @@ function trackFooterClick(destination: string, label: string) {
 
 export default function Footer({ media }: FooterProps) {
   return (
-    <footer className="bg-ink text-cream">
+    <footer className="border-t border-line/10 bg-ink text-cream">
       <Container className="py-16 sm:py-20">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
           <div>
             <Link href="/" className="inline-block">
-              <BrandMark className="text-cream" logoUrl={media?.logo_light_url} />
+              <MagneticButton strength={8}>
+                <BrandMark className="text-cream" logoUrl={media?.logo_light_url} />
+              </MagneticButton>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-cream/60">
               Not made for normal. Tools for people building their way out.
@@ -56,7 +59,13 @@ export default function Footer({ media }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-line/10 pt-6 text-xs uppercase tracking-[0.1em] text-cream/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mask-reveal mt-20 border-t border-line/10 pt-10" data-reveal="fade">
+          <p className="font-serif text-[13vw] leading-[0.85] tracking-tight text-cream/[0.06] sm:text-[7rem] lg:text-[8.5rem]">
+            NOT4NORMAL
+          </p>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3 text-xs uppercase tracking-[0.1em] text-cream/40 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Not4Normal</p>
           <p>Create your own path.</p>
         </div>

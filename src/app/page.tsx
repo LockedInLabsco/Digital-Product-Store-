@@ -5,6 +5,9 @@ import Navbar from '@/src/components/Navbar'
 import Footer from '@/src/components/Footer'
 import ProductCard from '@/src/components/ProductCard'
 import HeroImageSlider from '@/src/components/home/HeroImageSlider'
+import N4NHero from '@/src/components/three/N4NHero'
+import MagneticButton from '@/src/components/motion/MagneticButton'
+import ParallaxText from '@/src/components/motion/ParallaxText'
 import TrackMount from '@/src/components/analytics/TrackMount'
 import TrackedLink from '@/src/components/analytics/TrackedLink'
 import { getActiveProducts } from '@/src/lib/supabase/queries'
@@ -42,50 +45,84 @@ export default async function Home() {
   const media = await getWebsiteMedia()
   const heroSliderImages = await getHeroSliderImages()
   const featuredProducts = products.slice(0, 6)
+  const hasHeroPhoto = heroSliderImages.some((image) => image.enabled && image.url) || Boolean(media.hero_image_url)
 
   return (
     <>
       <TrackMount event="homepage_viewed" properties={{}} />
       <Navbar media={media} />
       <main>
-        {/* Hero */}
-        <section data-section-id="hero" className="glow-top border-b border-line/10 bg-ink">
-          <Container className="grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:py-28">
-            <div data-reveal="up">
+        {/* Hero — the N4N object is the scene; the admin-managed photo
+            (hero slider, unchanged logic) sits in front as a framed
+            insert when configured, so nothing about that feature is
+            lost, only re-composed. */}
+        <section
+          data-section-id="hero"
+          className="glow-top relative overflow-hidden border-b border-line/10 bg-ink"
+        >
+          <div
+            className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+            aria-hidden="true"
+          >
+            <p className="select-none whitespace-nowrap font-serif text-[26vw] leading-none tracking-tight text-cream/[0.035] sm:text-[17vw]">
+              NOT4NORMAL
+            </p>
+          </div>
+
+          <Container className="relative grid grid-cols-1 items-center gap-14 py-20 sm:py-24 lg:grid-cols-2 lg:gap-10 lg:py-28">
+            <div className="relative z-20" data-reveal="up">
               <p className="eyebrow text-gold">For the ones who refuse the default</p>
-              <h1 className="mt-5 font-serif text-5xl leading-[1.08] text-cream sm:text-6xl lg:text-[3.75rem]">
-                Not made for normal.
-              </h1>
-              <p className="mt-5 max-w-md text-lg text-cream/70">
+              <div className="mask-reveal mt-5" data-reveal="fade">
+                <h1 className="font-serif text-5xl leading-[1.05] text-cream sm:text-6xl lg:text-[4rem]">
+                  Not made for normal.
+                </h1>
+              </div>
+              <p className="mt-6 max-w-md text-lg text-cream/70">
                 Build better systems. Create your own path.
               </p>
               <p className="mt-3 max-w-md text-base text-cream/55">
                 Premium digital tools for focus, discipline, habits, and personal
                 growth.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <TrackedLink
-                  href="/products"
-                  event="hero_cta_clicked"
-                  eventProperties={{ button_location: 'hero_primary', destination: '/products' }}
-                  className="inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
-                >
-                  Explore Products
-                </TrackedLink>
+              <div className="mt-9 flex flex-wrap items-center gap-4">
+                <MagneticButton>
+                  <TrackedLink
+                    href="/products"
+                    event="hero_cta_clicked"
+                    eventProperties={{ button_location: 'hero_primary', destination: '/products' }}
+                    className="tactile-press inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-btn-dark transition-colors hover:bg-gold-hover"
+                  >
+                    Explore Products
+                  </TrackedLink>
+                </MagneticButton>
                 <Link
                   href="/#about"
-                  className="inline-flex items-center justify-center rounded-sm border border-line/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-line hover:bg-gold/10"
+                  className="tactile-press inline-flex items-center justify-center rounded-sm border border-line/25 px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:border-line hover:bg-gold/10"
                 >
                   Discover the Brand
                 </Link>
               </div>
             </div>
 
-            <HeroImageSlider
-              images={heroSliderImages}
-              fallbackImageUrl={media.hero_image_url}
-              fallbackImageAlt={media.hero_image_alt}
-            />
+            <div className="relative z-10 mx-auto aspect-square w-full max-w-md sm:max-w-lg lg:max-w-none">
+              <N4NHero className="h-full w-full" />
+
+              {hasHeroPhoto && (
+                <div
+                  className="absolute -bottom-6 -right-4 z-20 w-[46%] rotate-[-4deg] sm:-bottom-8 sm:-right-6 sm:w-[42%]"
+                  data-reveal="up"
+                  data-reveal-delay="1"
+                >
+                  <div className="border-4 border-ink bg-ink shadow-[0_30px_70px_-24px_rgba(0,0,0,0.85)]">
+                    <HeroImageSlider
+                      images={heroSliderImages}
+                      fallbackImageUrl={media.hero_image_url}
+                      fallbackImageAlt={media.hero_image_alt}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </Container>
         </section>
 
@@ -105,7 +142,7 @@ export default async function Home() {
                   alt={media.about_image_alt || 'Not4Normal'}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
+                  className="object-cover grayscale-[0.15] contrast-[1.05]"
                 />
               </div>
             ) : (
@@ -197,11 +234,13 @@ export default async function Home() {
               {CATEGORIES.map((category, index) => (
                 <div
                   key={category.title}
-                  className="border-t border-gold/50 pt-5"
+                  className="group border-t border-gold/40 pt-5 transition-colors duration-300 hover:border-gold"
                   data-reveal="up"
                   data-reveal-delay={String(index % 2)}
                 >
-                  <h3 className="font-serif text-lg text-cream">{category.title}</h3>
+                  <h3 className="font-serif text-lg text-cream transition-transform duration-300 group-hover:translate-x-1">
+                    {category.title}
+                  </h3>
                   <p className="mt-2 text-sm leading-relaxed text-cream/60">
                     {category.description}
                   </p>
@@ -235,7 +274,7 @@ export default async function Home() {
         </section>
 
         {/* Manifesto */}
-        <section id="manifesto" data-section-id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-20 text-cream sm:py-24">
+        <section id="manifesto" data-section-id="manifesto" className="relative scroll-mt-20 overflow-hidden bg-ink py-24 text-cream sm:py-32">
           {media.manifesto_image_url && (
             <>
               <Image
@@ -243,19 +282,21 @@ export default async function Home() {
                 alt={media.manifesto_image_alt || ''}
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-cover grayscale-[0.3] contrast-[1.08]"
                 aria-hidden="true"
               />
-              <div className="absolute inset-0 bg-ink/70" aria-hidden="true" />
+              <div className="absolute inset-0 bg-ink/75" aria-hidden="true" />
             </>
           )}
           <Container className="relative max-w-3xl text-center">
             <p className="eyebrow text-gold" data-reveal="fade">This is your move</p>
-            <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-4xl" data-reveal="up">
-              Normal is the default.
-              <br />
-              Your path does not have to be.
-            </h2>
+            <ParallaxText speed={18}>
+              <h2 className="mt-5 font-serif text-3xl leading-snug sm:text-5xl" data-reveal="up">
+                Normal is the default.
+                <br />
+                Your path does not have to be.
+              </h2>
+            </ParallaxText>
             <p className="mt-5 text-cream/60" data-reveal="up">
               You were not made to repeat someone else&apos;s path.
             </p>
@@ -271,7 +312,7 @@ export default async function Home() {
                 alt={media.final_cta_image_alt || ''}
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-cover grayscale-[0.3] contrast-[1.08]"
                 aria-hidden="true"
               />
               <div className="absolute inset-0 bg-ink/80" aria-hidden="true" />
@@ -281,15 +322,17 @@ export default async function Home() {
             <h2 className="font-serif text-3xl text-cream sm:text-4xl" data-reveal="up">
               Create Your Own Path.
             </h2>
-            <TrackedLink
-              href="/products"
-              event="navigation_clicked"
-              eventProperties={{ button_location: 'final_cta', destination: '/products', label: 'Explore Products' }}
-              className="inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
-              data-reveal="up"
-            >
-              Explore Products
-            </TrackedLink>
+            <MagneticButton>
+              <TrackedLink
+                href="/products"
+                event="navigation_clicked"
+                eventProperties={{ button_location: 'final_cta', destination: '/products', label: 'Explore Products' }}
+                className="tactile-press inline-flex items-center justify-center rounded-sm bg-gold px-8 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-btn-dark transition-colors hover:bg-gold-hover"
+                data-reveal="up"
+              >
+                Explore Products
+              </TrackedLink>
+            </MagneticButton>
           </Container>
         </section>
       </main>

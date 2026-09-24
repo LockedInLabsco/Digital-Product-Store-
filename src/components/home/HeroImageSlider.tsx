@@ -150,28 +150,12 @@ export default function HeroImageSlider({
         )
       })}
 
-      {/* Dark navy wash + soft blue edge glow so every photo reads as part of the site */}
-      <div className="pointer-events-none absolute inset-0 bg-ink/15" aria-hidden="true" />
+      {/* Subtle dark wash + soft edge vignette so every photo reads as part of the site */}
+      <div className="pointer-events-none absolute inset-0 bg-ink/10" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute inset-0 shadow-[inset_0_0_70px_14px_rgb(var(--color-accent-bright)/0.16)]"
+        className="pointer-events-none absolute inset-0 shadow-[inset_0_0_50px_10px_rgba(0,0,0,0.35)]"
         aria-hidden="true"
       />
-
-      {/* Very subtle blueprint grid + points — decorative only, hidden on mobile */}
-      <div
-        className="pointer-events-none absolute inset-0 hidden opacity-[0.07] sm:block"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgb(var(--color-accent-bright)) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--color-accent-bright)) 1px, transparent 1px)',
-          backgroundSize: '42px 42px',
-        }}
-        aria-hidden="true"
-      />
-      <div className="pointer-events-none absolute inset-0 hidden sm:block" aria-hidden="true">
-        <span className="absolute right-[12%] top-[16%] h-1 w-1 rounded-full bg-gold/50" />
-        <span className="absolute left-[10%] top-[62%] h-1 w-1 rounded-full bg-gold/40" />
-        <span className="absolute bottom-[20%] right-[22%] h-[3px] w-[3px] rounded-full bg-gold/30" />
-      </div>
 
       {visibleSlides.length > 1 && (
         <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2">
