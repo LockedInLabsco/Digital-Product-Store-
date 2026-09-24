@@ -25,7 +25,7 @@ export default function MediaFieldUpload({
   altValue,
   onAltChange,
   fit = 'cover',
-  previewClassName = 'bg-gray-100',
+  previewClassName = 'bg-admin-surface2',
   onUploadPath,
 }: MediaFieldUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -66,10 +66,10 @@ export default function MediaFieldUpload({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg p-5">
+    <div className="border border-admin-border rounded-lg p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div
-          className={`flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 ${previewClassName}`}
+          className={`flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-admin-border ${previewClassName}`}
         >
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -79,13 +79,13 @@ export default function MediaFieldUpload({
               className={`h-full w-full ${fit === 'contain' ? 'object-contain p-2' : 'object-cover'}`}
             />
           ) : (
-            <span className="text-xs text-gray-400">No image</span>
+            <span className="text-xs text-admin-faint">No image</span>
           )}
         </div>
 
         <div className="flex-1">
           <p className="font-semibold text-sm">{label}</p>
-          <p className="text-xs text-gray-500 mb-3">Recommended: {dimensions}</p>
+          <p className="text-xs text-admin-muted mb-3">Recommended: {dimensions}</p>
 
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -99,7 +99,7 @@ export default function MediaFieldUpload({
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={isUploading}
-              className="text-xs font-semibold border border-gray-300 rounded px-3 py-1.5 hover:border-black disabled:opacity-50"
+              className="text-xs font-semibold border border-admin-border rounded px-3 py-1.5 hover:border-admin-text disabled:opacity-50"
             >
               {isUploading ? 'Uploading...' : value ? 'Replace' : 'Upload'}
             </button>
@@ -108,7 +108,7 @@ export default function MediaFieldUpload({
                 type="button"
                 onClick={() => onChange('')}
                 disabled={isUploading}
-                className="text-xs font-semibold text-red-600 border border-red-200 rounded px-3 py-1.5 hover:border-red-400 disabled:opacity-50"
+                className="text-xs font-semibold text-red-400 border border-red-900 rounded px-3 py-1.5 hover:border-red-700 disabled:opacity-50"
               >
                 Remove
               </button>
@@ -121,11 +121,11 @@ export default function MediaFieldUpload({
               value={altValue || ''}
               onChange={(e) => onAltChange(e.target.value)}
               placeholder="Alt text (for accessibility)"
-              className="mt-3 w-full max-w-sm border border-gray-300 rounded px-3 py-1.5 text-xs"
+              className="mt-3 w-full max-w-sm border border-admin-border rounded px-3 py-1.5 text-xs"
             />
           )}
 
-          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         </div>
       </div>
     </div>

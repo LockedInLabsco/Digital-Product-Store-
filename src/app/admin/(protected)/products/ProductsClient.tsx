@@ -69,36 +69,36 @@ export default function ProductsClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
         <div className="max-w-6xl">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-3xl font-bold mb-2">Products</h2>
-              <p className="text-gray-600">Manage all your digital products</p>
+              <p className="text-admin-muted">Manage all your digital products</p>
             </div>
             <Link href="/admin/products/new">
-              <Button className="bg-black text-white hover:bg-gray-900">
+              <Button className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                 + New Product
               </Button>
             </Link>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-8">
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 mb-8">
               {error}
             </div>
           )}
 
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Loading products...</p>
+              <p className="text-admin-muted">Loading products...</p>
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-12 border border-gray-200 rounded-lg bg-white">
-              <p className="text-gray-600 mb-6">No products yet</p>
+            <div className="text-center py-12 border border-admin-border rounded-lg bg-admin-surface">
+              <p className="text-admin-muted mb-6">No products yet</p>
               <Link href="/admin/products/new">
-                <Button className="bg-black text-white hover:bg-gray-900">
+                <Button className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                   Create Your First Product
                 </Button>
               </Link>
@@ -107,7 +107,7 @@ export default function ProductsClient() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-white">
+                  <tr className="border-b border-admin-border bg-admin-surface">
                     <th className="text-left py-4 px-4 font-semibold">Title</th>
                     <th className="text-left py-4 px-4 font-semibold">Slug</th>
                     <th className="text-left py-4 px-4 font-semibold">Price</th>
@@ -119,13 +119,13 @@ export default function ProductsClient() {
                   {products.map((product) => (
                     <tr
                       key={product.id}
-                      className="border-b border-gray-200 bg-white hover:bg-gray-50"
+                      className="border-b border-admin-border bg-admin-surface hover:bg-admin-surface2"
                     >
                       <td className="py-4 px-4">
                         <p className="font-medium">{product.title}</p>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-gray-600 text-sm">{product.slug}</p>
+                        <p className="text-admin-muted text-sm">{product.slug}</p>
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-medium">
@@ -136,8 +136,8 @@ export default function ProductsClient() {
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                             product.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-green-950/40 text-green-400'
+                              : 'bg-admin-surface2 text-admin-text'
                           }`}
                         >
                           {product.is_active ? 'Active' : 'Inactive'}
@@ -146,13 +146,13 @@ export default function ProductsClient() {
                       <td className="py-4 px-4">
                         <div className="flex gap-2">
                           <Link href={`/admin/products/${product.id}/edit`}>
-                            <button className="text-black hover:text-gray-600 text-sm font-medium">
+                            <button className="text-admin-text hover:text-admin-muted text-sm font-medium">
                               Edit
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDelete(product.id, product.title)}
-                            className="text-red-600 hover:text-red-900 text-sm font-medium"
+                            className="text-red-400 hover:text-red-300 text-sm font-medium"
                           >
                             Delete
                           </button>

@@ -56,22 +56,22 @@ export default function MfaChallengeClient() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center">
+    <main className="min-h-screen bg-admin-surface flex items-center justify-center">
       <Container>
         <div className="max-w-sm w-full mx-auto text-center">
           <h1 className="text-2xl font-bold mb-2">Two-factor verification</h1>
-          <p className="text-gray-600 text-sm mb-8">
+          <p className="text-admin-muted text-sm mb-8">
             Enter the 6-digit code from your authenticator app to finish signing in.
           </p>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-6 text-left">
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 text-sm mb-6 text-left">
               {error}
             </div>
           )}
 
           {isLoadingFactor ? (
-            <p className="text-gray-500 text-sm">Loading…</p>
+            <p className="text-admin-muted text-sm">Loading…</p>
           ) : factorId ? (
             <form onSubmit={handleVerify} className="space-y-4 text-left">
               <div>
@@ -87,7 +87,7 @@ export default function MfaChallengeClient() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="000000"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-2.5 border border-admin-border rounded-lg text-center text-lg tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-admin-accent"
                   autoFocus
                   required
                 />
@@ -95,7 +95,7 @@ export default function MfaChallengeClient() {
               <button
                 type="submit"
                 disabled={isVerifying || code.length !== 6}
-                className="w-full bg-black text-white text-sm font-semibold rounded-lg py-3 hover:bg-gray-900 disabled:opacity-50"
+                className="w-full bg-admin-accent text-admin-accentText text-sm font-semibold rounded-lg py-3 hover:bg-admin-accentHover disabled:opacity-50"
               >
                 {isVerifying ? 'Verifying…' : 'Verify'}
               </button>

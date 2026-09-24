@@ -97,14 +97,14 @@ export default function HeroSliderClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white">
+    <main className="min-h-screen bg-admin-bg">
+      <div className="border-b border-admin-border bg-admin-surface">
         <Container className="py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Hero Slider Images</h1>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-black text-white text-sm font-semibold rounded px-5 py-2.5 disabled:opacity-50"
+            className="bg-admin-accent text-admin-accentText text-sm font-semibold rounded px-5 py-2.5 disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -113,7 +113,7 @@ export default function HeroSliderClient() {
 
       <Container className="py-10">
         <div className="max-w-3xl space-y-6">
-          <p className="text-gray-600 text-sm">
+          <p className="text-admin-muted text-sm">
             Manage the auto-sliding image showcase on the homepage hero. Enabled images play
             in this order. If no images are enabled, the homepage falls back to the hero
             image set under Website Media. Changes take effect after you click{' '}
@@ -121,19 +121,19 @@ export default function HeroSliderClient() {
           </p>
 
           {error && (
-            <div className="border border-red-200 bg-red-50 text-red-700 text-sm rounded p-4">
+            <div className="border border-red-900 bg-red-950/40 text-red-400 text-sm rounded p-4">
               {error}
             </div>
           )}
           {success && (
-            <div className="border border-green-200 bg-green-50 text-green-700 text-sm rounded p-4">
+            <div className="border border-green-900 bg-green-950/40 text-green-400 text-sm rounded p-4">
               Saved successfully. The homepage has been updated.
             </div>
           )}
 
           {images.length === 0 && (
-            <div className="text-center py-12 border border-gray-200 rounded-lg bg-white">
-              <p className="text-gray-600">No hero slider images yet.</p>
+            <div className="text-center py-12 border border-admin-border rounded-lg bg-admin-surface">
+              <p className="text-admin-muted">No hero slider images yet.</p>
             </div>
           )}
 
@@ -156,11 +156,11 @@ export default function HeroSliderClient() {
             type="button"
             onClick={addImage}
             disabled={images.length >= HERO_SLIDER_MAX_IMAGES}
-            className="border border-gray-300 rounded-lg px-5 py-3 text-sm font-semibold hover:border-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+            className="border border-admin-border rounded-lg px-5 py-3 text-sm font-semibold hover:border-admin-text disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-admin-border"
           >
             + Add Image
           </button>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-admin-muted">
             {images.length} / {HERO_SLIDER_MAX_IMAGES} images
           </p>
         </div>

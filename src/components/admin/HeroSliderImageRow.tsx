@@ -23,10 +23,10 @@ export default function HeroSliderImageRow({
   onMoveDown,
 }: HeroSliderImageRowProps) {
   return (
-    <div className="border border-gray-200 rounded-lg p-5 bg-white">
+    <div className="border border-admin-border rounded-lg p-5 bg-admin-surface">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-admin-surface2 text-xs font-semibold text-admin-muted">
             {index + 1}
           </span>
           <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
@@ -34,7 +34,7 @@ export default function HeroSliderImageRow({
               type="checkbox"
               checked={image.enabled}
               onChange={(e) => onChange(image.id, { enabled: e.target.checked })}
-              className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+              className="w-4 h-4 rounded border-admin-border cursor-pointer"
             />
             {image.enabled ? 'Enabled' : 'Disabled'}
           </label>
@@ -46,7 +46,7 @@ export default function HeroSliderImageRow({
             onClick={() => onMoveUp(image.id)}
             disabled={index === 0}
             aria-label="Move image up"
-            className="text-xs font-semibold border border-gray-300 rounded px-2 py-1 hover:border-black disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-xs font-semibold border border-admin-border rounded px-2 py-1 hover:border-admin-text disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↑ Up
           </button>
@@ -55,7 +55,7 @@ export default function HeroSliderImageRow({
             onClick={() => onMoveDown(image.id)}
             disabled={index === total - 1}
             aria-label="Move image down"
-            className="text-xs font-semibold border border-gray-300 rounded px-2 py-1 hover:border-black disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-xs font-semibold border border-admin-border rounded px-2 py-1 hover:border-admin-text disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↓ Down
           </button>
@@ -63,7 +63,7 @@ export default function HeroSliderImageRow({
             type="button"
             onClick={() => onRemove(image.id)}
             aria-label="Remove image"
-            className="text-xs font-semibold text-red-600 border border-red-200 rounded px-2 py-1 hover:border-red-400"
+            className="text-xs font-semibold text-red-400 border border-red-900 rounded px-2 py-1 hover:border-red-700"
           >
             Remove
           </button>
@@ -84,7 +84,7 @@ export default function HeroSliderImageRow({
 
       <div className="mt-3">
         <label htmlFor={`object-position-${image.id}`} className="block text-sm font-medium mb-1">
-          Object position <span className="text-gray-500 font-normal">(optional)</span>
+          Object position <span className="text-admin-muted font-normal">(optional)</span>
         </label>
         <input
           id={`object-position-${image.id}`}
@@ -92,9 +92,9 @@ export default function HeroSliderImageRow({
           value={image.objectPosition || ''}
           onChange={(e) => onChange(image.id, { objectPosition: e.target.value })}
           placeholder="e.g. center, 75% center, top"
-          className="w-full max-w-xs px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full max-w-xs px-3 py-1.5 border border-admin-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-admin-accent"
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-admin-muted mt-1">
           Controls which part of the photo stays visible when cropped. Leave blank for center.
         </p>
       </div>

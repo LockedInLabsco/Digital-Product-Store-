@@ -17,9 +17,9 @@ function formatDate(value: string) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  draft: 'bg-gray-100 text-gray-800',
-  closed: 'bg-red-100 text-red-800',
+  active: 'bg-green-950/40 text-green-400',
+  draft: 'bg-admin-surface2 text-admin-text',
+  closed: 'bg-red-950/40 text-red-400',
 }
 
 function csvEscape(value: string) {
@@ -206,7 +206,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
         <button
           type="button"
           onClick={() => handleCopyEmail(row.email)}
-          className="text-black hover:underline"
+          className="text-admin-text hover:underline"
           title="Copy email"
         >
           {copiedEmail === row.email ? 'Copied!' : row.email}
@@ -235,24 +235,24 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
   ]
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
         <div className="max-w-6xl">
-          <Link href="/admin/waitlists" className="text-gray-600 hover:text-black text-sm">
+          <Link href="/admin/waitlists" className="text-admin-muted hover:text-admin-text text-sm">
             ← Back to Waitlists
           </Link>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 my-6">{error}</div>
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 my-6">{error}</div>
           )}
 
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Loading...</p>
+              <p className="text-admin-muted">Loading...</p>
             </div>
           ) : !waitlist ? (
-            <div className="text-center py-12 border border-gray-200 rounded-lg bg-white mt-6">
-              <p className="text-gray-600">Waitlist not found</p>
+            <div className="text-center py-12 border border-admin-border rounded-lg bg-admin-surface mt-6">
+              <p className="text-admin-muted">Waitlist not found</p>
             </div>
           ) : (
             <>
@@ -262,24 +262,24 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                     <h2 className="text-3xl font-bold">{waitlist.name}</h2>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium capitalize ${
-                        STATUS_STYLES[waitlist.status] || 'bg-gray-100 text-gray-800'
+                        STATUS_STYLES[waitlist.status] || 'bg-admin-surface2 text-admin-text'
                       }`}
                     >
                       {waitlist.status}
                     </span>
                   </div>
-                  {waitlist.description && <p className="mt-2 text-gray-600 max-w-xl">{waitlist.description}</p>}
+                  {waitlist.description && <p className="mt-2 text-admin-muted max-w-xl">{waitlist.description}</p>}
                   <p className="mt-3 text-sm">
-                    <a href={publicUrl} target="_blank" rel="noreferrer" className="font-mono text-black hover:underline break-all">
+                    <a href={publicUrl} target="_blank" rel="noreferrer" className="font-mono text-admin-text hover:underline break-all">
                       {publicUrl}
                     </a>
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                    <span className="text-gray-600">
-                      <span className="font-semibold text-black">{waitlist.entry_count}</span> total leads
+                    <span className="text-admin-muted">
+                      <span className="font-semibold text-admin-text">{waitlist.entry_count}</span> total leads
                     </span>
-                    <span className="text-gray-400">·</span>
-                    <span className="text-gray-600">Created {formatDate(waitlist.created_at)}</span>
+                    <span className="text-admin-faint">·</span>
+                    <span className="text-admin-muted">Created {formatDate(waitlist.created_at)}</span>
                   </div>
                 </div>
 
@@ -295,12 +295,12 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                     </a>
                   </div>
                   <Link href={`/admin/waitlists/${waitlist.id}/edit`}>
-                    <Button size="sm" className="w-full bg-black text-white hover:bg-gray-900">
+                    <Button size="sm" className="w-full bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                       Edit waitlist
                     </Button>
                   </Link>
                   <div>
-                    <label htmlFor="quick-status" className="block text-xs font-medium text-gray-600 mb-1">
+                    <label htmlFor="quick-status" className="block text-xs font-medium text-admin-muted mb-1">
                       Change status
                     </label>
                     <select
@@ -308,7 +308,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                       value={waitlist.status}
                       disabled={statusUpdating}
                       onChange={(e) => handleStatusChange(e.target.value as WaitlistStatus)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-60"
+                      className="w-full px-3 py-2 border border-admin-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-admin-accent disabled:opacity-60"
                     >
                       <option value="draft">Draft</option>
                       <option value="active">Active</option>
@@ -318,15 +318,15 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                 </div>
               </div>
 
-              <div className="mt-12 border-t border-gray-200 pt-8">
-                <div className="mb-6 flex gap-1 border-b border-gray-200">
+              <div className="mt-12 border-t border-admin-border pt-8">
+                <div className="mb-6 flex gap-1 border-b border-admin-border">
                   <button
                     type="button"
                     onClick={() => setActiveTab('entries')}
                     className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 transition-colors ${
                       activeTab === 'entries'
-                        ? 'border-black text-black'
-                        : 'border-transparent text-gray-500 hover:text-black'
+                        ? 'border-admin-accent text-admin-text'
+                        : 'border-transparent text-admin-muted hover:text-admin-text'
                     }`}
                   >
                     Entries
@@ -336,8 +336,8 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                     onClick={() => setActiveTab('analytics')}
                     className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 transition-colors ${
                       activeTab === 'analytics'
-                        ? 'border-black text-black'
-                        : 'border-transparent text-gray-500 hover:text-black'
+                        ? 'border-admin-accent text-admin-text'
+                        : 'border-transparent text-admin-muted hover:text-admin-text'
                     }`}
                   >
                     Analytics
@@ -349,7 +349,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                       <div>
                         <h3 className="text-xl font-bold">Leads</h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-admin-muted">
                           {filteredEntries.length} of {entries.length} shown
                         </p>
                       </div>
@@ -359,7 +359,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                           placeholder="Search email, Instagram, or name"
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black w-64 max-w-full"
+                          className="px-4 py-2 border border-admin-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-admin-accent w-64 max-w-full"
                         />
                         <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={entries.length === 0}>
                           Export CSV
@@ -367,7 +367,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-admin-surface rounded-lg border border-admin-border p-4">
                       <SortableTable
                         columns={columns}
                         rows={filteredEntries}
@@ -383,19 +383,19 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                 )}
               </div>
 
-              <div className="mt-12 border-t border-gray-200 pt-8">
-                <h3 className="text-lg font-bold text-red-700 mb-2">Danger zone</h3>
+              <div className="mt-12 border-t border-admin-border pt-8">
+                <h3 className="text-lg font-bold text-red-400 mb-2">Danger zone</h3>
                 {!showDeleteConfirm ? (
                   <Button
                     variant="outline"
-                    className="border-red-300 text-red-700 hover:border-red-500 hover:bg-red-50"
+                    className="border-red-800 text-red-400 hover:border-red-600 hover:bg-red-950/30"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
                     Delete waitlist
                   </Button>
                 ) : (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-xl">
-                    <p className="text-sm text-red-800">
+                  <div className="bg-red-950/40 border border-red-900 rounded-lg p-6 max-w-xl">
+                    <p className="text-sm text-red-400">
                       This permanently deletes <strong>{waitlist.name}</strong> and all{' '}
                       <strong>{waitlist.entry_count}</strong> lead{waitlist.entry_count === 1 ? '' : 's'} attached to
                       it. This cannot be undone.
@@ -408,7 +408,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="w-full px-4 py-2 border border-red-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
                     <div className="flex gap-3 mt-4">
                       <Button

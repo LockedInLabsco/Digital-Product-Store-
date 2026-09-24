@@ -13,8 +13,8 @@ function formatDate(value: string) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  disabled: 'bg-red-100 text-red-800',
+  active: 'bg-green-950/40 text-green-400',
+  disabled: 'bg-red-950/40 text-red-400',
 }
 
 export default function TeamClient({ canManage }: { canManage: boolean }) {
@@ -150,22 +150,22 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
         <div className="max-w-4xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Team</h2>
-            <p className="text-gray-600">Manage who has access to this admin workspace</p>
+            <p className="text-admin-muted">Manage who has access to this admin workspace</p>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-8">{error}</div>
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 mb-8">{error}</div>
           )}
 
           {canManage && (
             <form
               onSubmit={handleInvite}
-              className="mb-10 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 sm:flex-row sm:items-end"
+              className="mb-10 flex flex-col gap-3 rounded-lg border border-admin-border bg-admin-surface p-5 sm:flex-row sm:items-end"
             >
               <div className="flex-1">
                 <label htmlFor="invite-email" className="block text-sm font-medium mb-2">
@@ -178,7 +178,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="teammate@example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
                 />
               </div>
               <div>
@@ -189,7 +189,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                   id="invite-role"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as AdminRole)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black sm:w-48"
+                  className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent sm:w-48"
                 >
                   {ADMIN_ROLES.map((role) => (
                     <option key={role} value={role}>
@@ -198,7 +198,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                   ))}
                 </select>
               </div>
-              <Button type="submit" disabled={isInviting} className="bg-black text-white hover:bg-gray-900">
+              <Button type="submit" disabled={isInviting} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                 {isInviting ? 'Sending…' : 'Invite member'}
               </Button>
             </form>
@@ -206,14 +206,14 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
 
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Loading team…</p>
+              <p className="text-admin-muted">Loading team…</p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+              <div className="overflow-x-auto rounded-lg border border-admin-border bg-admin-surface">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
+                    <tr className="border-b border-admin-border">
                       <th className="text-left py-3 px-4 font-semibold text-sm">Email</th>
                       <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
                       <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
@@ -225,9 +225,9 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                     {members.map((member) => {
                       const isYou = member.user_id === currentUserId
                       return (
-                        <tr key={member.id} className="border-b border-gray-100">
+                        <tr key={member.id} className="border-b border-admin-border">
                           <td className="py-3 px-4 text-sm">
-                            {member.email} {isYou && <span className="text-gray-400">(you)</span>}
+                            {member.email} {isYou && <span className="text-admin-faint">(you)</span>}
                           </td>
                           <td className="py-3 px-4 text-sm">
                             {canManage ? (
@@ -235,7 +235,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                                 value={member.role}
                                 disabled={busyId === member.id}
                                 onChange={(e) => handleRoleChange(member.id, e.target.value as AdminRole)}
-                                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+                                className="rounded border border-admin-border px-2 py-1 text-sm disabled:opacity-50"
                               >
                                 {ADMIN_ROLES.map((role) => (
                                   <option key={role} value={role}>
@@ -250,27 +250,27 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                           <td className="py-3 px-4">
                             <span
                               className={`inline-block px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                                STATUS_STYLES[member.status] || 'bg-gray-100 text-gray-800'
+                                STATUS_STYLES[member.status] || 'bg-admin-surface2 text-admin-text'
                               }`}
                             >
                               {member.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{formatDate(member.created_at)}</td>
+                          <td className="py-3 px-4 text-sm text-admin-muted">{formatDate(member.created_at)}</td>
                           {canManage && (
                             <td className="py-3 px-4">
                               <div className="flex gap-3">
                                 <button
                                   onClick={() => handleStatusToggle(member.id, member.status)}
                                   disabled={busyId === member.id}
-                                  className="text-sm font-medium text-black hover:text-gray-600 disabled:opacity-50"
+                                  className="text-sm font-medium text-admin-text hover:text-admin-muted disabled:opacity-50"
                                 >
                                   {member.status === 'active' ? 'Disable' : 'Enable'}
                                 </button>
                                 <button
                                   onClick={() => handleRemove(member.id, member.email)}
                                   disabled={busyId === member.id}
-                                  className="text-sm font-medium text-red-600 hover:text-red-900 disabled:opacity-50"
+                                  className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
                                 >
                                   Remove
                                 </button>
@@ -287,10 +287,10 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
               {invites.length > 0 && (
                 <div className="mt-10">
                   <h3 className="text-lg font-bold mb-4">Pending invites</h3>
-                  <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+                  <div className="overflow-x-auto rounded-lg border border-admin-border bg-admin-surface">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-200">
+                        <tr className="border-b border-admin-border">
                           <th className="text-left py-3 px-4 font-semibold text-sm">Email</th>
                           <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
                           <th className="text-left py-3 px-4 font-semibold text-sm">Invited</th>
@@ -300,17 +300,17 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                       </thead>
                       <tbody>
                         {invites.map((invite) => (
-                          <tr key={invite.id} className="border-b border-gray-100">
+                          <tr key={invite.id} className="border-b border-admin-border">
                             <td className="py-3 px-4 text-sm">{invite.email}</td>
                             <td className="py-3 px-4 text-sm">{ADMIN_ROLE_LABELS[invite.role]}</td>
-                            <td className="py-3 px-4 text-sm text-gray-600">{formatDate(invite.created_at)}</td>
-                            <td className="py-3 px-4 text-sm text-gray-600">{formatDate(invite.expires_at)}</td>
+                            <td className="py-3 px-4 text-sm text-admin-muted">{formatDate(invite.created_at)}</td>
+                            <td className="py-3 px-4 text-sm text-admin-muted">{formatDate(invite.expires_at)}</td>
                             {canManage && (
                               <td className="py-3 px-4">
                                 <button
                                   onClick={() => handleRevokeInvite(invite.id)}
                                   disabled={busyId === invite.id}
-                                  className="text-sm font-medium text-red-600 hover:text-red-900 disabled:opacity-50"
+                                  className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
                                 >
                                   Revoke
                                 </button>

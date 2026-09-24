@@ -93,19 +93,19 @@ export default function EditProductClient({
 
   if (isFetching) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading product...</p>
+      <main className="min-h-screen bg-admin-bg flex items-center justify-center">
+        <p className="text-admin-muted">Loading product...</p>
       </main>
     )
   }
 
   if (error) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-admin-bg">
         <Container className="py-12">
           <div className="max-w-2xl">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Link href="/admin/products" className="text-black hover:text-gray-600">
+            <p className="text-red-400 mb-4">{error}</p>
+            <Link href="/admin/products" className="text-admin-text hover:text-admin-muted">
               ← Back to Products
             </Link>
           </div>
@@ -119,10 +119,10 @@ export default function EditProductClient({
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white sticky top-0 z-40">
+    <main className="min-h-screen bg-admin-bg">
+      <div className="border-b border-admin-border bg-admin-surface sticky top-0 z-40">
         <Container className="py-4">
-          <Link href="/admin/products" className="text-gray-600 hover:text-black text-sm">
+          <Link href="/admin/products" className="text-admin-muted hover:text-admin-text text-sm">
             ← Back to Products
           </Link>
         </Container>
@@ -132,16 +132,16 @@ export default function EditProductClient({
         <div className="max-w-2xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Edit Product</h1>
-            <p className="text-gray-600">{product.title}</p>
+            <p className="text-admin-muted">{product.title}</p>
           </div>
 
           {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-8">
+            <div className="p-4 bg-green-950/40 border border-green-900 rounded-lg text-green-400 mb-8">
               {success}
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <div className="bg-admin-surface rounded-lg border border-admin-border p-8">
             <ProductForm
               mode="edit"
               initialData={product}

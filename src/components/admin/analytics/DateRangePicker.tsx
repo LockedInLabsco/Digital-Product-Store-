@@ -43,8 +43,8 @@ export default function DateRangePicker({
             onClick={() => onPresetChange(p.value)}
             className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
               preset === p.value
-                ? 'bg-black text-white'
-                : 'border border-gray-300 text-gray-700 hover:border-black'
+                ? 'bg-admin-accent text-admin-accentText'
+                : 'border border-admin-border text-admin-muted hover:border-admin-text'
             }`}
           >
             {p.label}
@@ -56,15 +56,15 @@ export default function DateRangePicker({
               type="date"
               value={customFrom}
               onChange={(e) => onCustomFromChange(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+              className="rounded border border-admin-border px-2 py-1.5 text-sm"
               aria-label="Custom range start date"
             />
-            <span className="text-sm text-gray-500">to</span>
+            <span className="text-sm text-admin-muted">to</span>
             <input
               type="date"
               value={customTo}
               onChange={(e) => onCustomToChange(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+              className="rounded border border-admin-border px-2 py-1.5 text-sm"
               aria-label="Custom range end date"
             />
           </div>
@@ -73,7 +73,7 @@ export default function DateRangePicker({
 
       <div className="flex items-center gap-3">
         {lastRefreshed && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-admin-muted">
             Last refreshed {new Date(lastRefreshed).toLocaleTimeString()}
           </span>
         )}
@@ -81,7 +81,7 @@ export default function DateRangePicker({
           type="button"
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium hover:border-black disabled:opacity-50"
+          className="rounded border border-admin-border px-3 py-1.5 text-sm font-medium hover:border-admin-text disabled:opacity-50"
         >
           {isRefreshing ? 'Refreshing…' : 'Refresh'}
         </button>

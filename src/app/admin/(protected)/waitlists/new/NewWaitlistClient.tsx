@@ -51,10 +51,10 @@ export default function NewWaitlistClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white">
+    <main className="min-h-screen bg-admin-bg">
+      <div className="border-b border-admin-border bg-admin-surface">
         <Container className="py-4">
-          <Link href="/admin/waitlists" className="text-gray-600 hover:text-black text-sm">
+          <Link href="/admin/waitlists" className="text-admin-muted hover:text-admin-text text-sm">
             ← Back to Waitlists
           </Link>
         </Container>
@@ -64,16 +64,16 @@ export default function NewWaitlistClient() {
         <div className="max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Create waitlist</h1>
-            <p className="text-gray-600">Set up a new waitlist with its own public signup page</p>
+            <p className="text-admin-muted">Set up a new waitlist with its own public signup page</p>
           </div>
 
           {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-8">
+            <div className="p-4 bg-green-950/40 border border-green-900 rounded-lg text-green-400 mb-8">
               {success}
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <div className="bg-admin-surface rounded-lg border border-admin-border p-8">
             <WaitlistForm mode="create" onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
         </div>

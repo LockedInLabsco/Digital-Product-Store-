@@ -130,35 +130,35 @@ export default function AccountClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
         <div className="max-w-xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Account</h2>
-            <p className="text-gray-600">Manage security settings for your own admin account</p>
+            <p className="text-admin-muted">Manage security settings for your own admin account</p>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-6">{error}</div>
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 mb-6">{error}</div>
           )}
           {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-6">{success}</div>
+            <div className="p-4 bg-green-950/40 border border-green-900 rounded-lg text-green-400 mb-6">{success}</div>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-6">
             <h3 className="text-lg font-bold mb-2">Two-factor authentication</h3>
 
             {isLoading ? (
-              <p className="text-gray-600 text-sm">Loading…</p>
+              <p className="text-admin-muted text-sm">Loading…</p>
             ) : pending ? (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-admin-muted">
                   Scan this QR code with an authenticator app (Google Authenticator, Authy, 1Password, etc.), then
                   enter the 6-digit code it shows.
                 </p>
                 {/* eslint-disable-next-line @next/next/no-img-element -- Supabase returns a QR code as an inline SVG data URI, not a static asset */}
                 <img src={pending.qrCode} alt="Two-factor authentication QR code" className="h-48 w-48" />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-admin-muted">
                   Can&apos;t scan it? Enter this code manually:{' '}
                   <span className="font-mono select-all">{pending.secret}</span>
                 </p>
@@ -175,11 +175,11 @@ export default function AccountClient() {
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-black"
+                      className="w-full px-4 py-2.5 border border-admin-border rounded-lg text-center tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-admin-accent"
                       required
                     />
                   </div>
-                  <Button type="submit" disabled={busy || code.length !== 6} className="bg-black text-white hover:bg-gray-900">
+                  <Button type="submit" disabled={busy || code.length !== 6} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                     {busy ? 'Verifying…' : 'Verify and enable'}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancelEnroll} disabled={busy}>
@@ -189,15 +189,15 @@ export default function AccountClient() {
               </div>
             ) : enrolledFactorId ? (
               <div className="flex items-center justify-between">
-                <p className="text-sm text-green-700 font-medium">Enabled — required on every sign-in</p>
+                <p className="text-sm text-green-400 font-medium">Enabled — required on every sign-in</p>
                 <Button variant="outline" onClick={handleDisable} disabled={busy}>
                   {busy ? 'Disabling…' : 'Disable'}
                 </Button>
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">Not enabled. Add an authenticator app for extra protection.</p>
-                <Button onClick={handleStartEnroll} disabled={busy} className="bg-black text-white hover:bg-gray-900">
+                <p className="text-sm text-admin-muted">Not enabled. Add an authenticator app for extra protection.</p>
+                <Button onClick={handleStartEnroll} disabled={busy} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
                   {busy ? 'Starting…' : 'Set up 2FA'}
                 </Button>
               </div>

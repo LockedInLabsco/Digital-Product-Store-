@@ -145,3 +145,33 @@ body {
     transform: none !important;
   }
 }
+
+/*
+ * Admin panel monochrome theme — native form elements only. Every admin
+ * page/component's own container/text/border classes were converted
+ * directly to the admin-* Tailwind tokens (see tailwind.config.ts), but
+ * plain <input>/<textarea>/<select> elements default to a white native
+ * background in every browser regardless of surrounding theme classes,
+ * so they need an explicit rule here rather than per-element classes —
+ * one place instead of editing dozens of form fields individually.
+ * Scoped to .admin-root (set on src/app/admin/layout.tsx) so nothing
+ * outside the admin panel is affected.
+ */
+.admin-root input:not([type='checkbox']):not([type='radio']):not([type='color']),
+.admin-root textarea,
+.admin-root select {
+  background-color: #141414;
+  color: #ffffff;
+  border-color: #333333;
+}
+
+.admin-root input::placeholder,
+.admin-root textarea::placeholder {
+  color: #707070;
+}
+
+.admin-root input:focus,
+.admin-root textarea:focus,
+.admin-root select:focus {
+  outline-color: #ffffff;
+}

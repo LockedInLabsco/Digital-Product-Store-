@@ -30,7 +30,7 @@ export default function MiniChart({
   if (!data || data.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded border border-gray-100 text-sm text-gray-400"
+        className="flex items-center justify-center rounded border border-admin-border text-sm text-admin-faint"
         style={{ height }}
       >
         No data for this period
@@ -79,7 +79,7 @@ export default function MiniChart({
           <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={color} />
         ))}
       </svg>
-      <div className="mt-1 flex justify-between text-xs text-gray-500">
+      <div className="mt-1 flex justify-between text-xs text-admin-muted">
         <span>{first.label}</span>
         <span>
           Peak: {peak.label} ({formatValue(peak.value)})

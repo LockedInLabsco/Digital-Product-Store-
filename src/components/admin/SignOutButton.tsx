@@ -35,7 +35,7 @@ export default function SignOutButton({ className }: SignOutButtonProps) {
       type="button"
       onClick={handleSignOut}
       disabled={isSigningOut}
-      className={className || 'text-gray-600 hover:text-black text-sm disabled:opacity-50'}
+      className={className || 'text-admin-muted hover:text-admin-text text-sm disabled:opacity-50'}
     >
       {isSigningOut ? 'Signing out…' : 'Sign out'}
     </button>

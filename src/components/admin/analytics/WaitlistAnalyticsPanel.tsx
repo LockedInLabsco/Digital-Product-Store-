@@ -149,24 +149,24 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
         lastRefreshed={lastRefreshed}
       />
 
-      {error && <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {error && <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">{error}</div>}
 
       {postHogUnavailable && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="rounded border border-amber-900 bg-amber-950/40 p-4 text-sm text-amber-400">
           PostHog is not configured, so unique visitors, funnel, and traffic/device breakdowns aren&apos;t
           available. Signup counts and source breakdown below come from Supabase and are unaffected.
         </div>
       )}
 
       {data?.postHogConfigured && !data.postHogAvailable && data.postHogError && (
-        <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">
           <p className="font-semibold">PostHog is configured, but the query failed.</p>
           <p className="mt-1">{data.postHogError}</p>
         </div>
       )}
 
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-500">Signups</h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-admin-muted">Signups</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard label="Total signups (all time)" value={formatNumber(data?.supabase.totalSignups)} />
           <StatCard label="Signups today" value={formatNumber(data?.supabase.signupsToday)} />
@@ -176,7 +176,7 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
       </div>
 
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-500">Behavior (PostHog)</h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-admin-muted">Behavior (PostHog)</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
             label="Unique visitors"
@@ -201,14 +201,14 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
           />
         </div>
         {data?.behavior.conversionRate !== null && data?.behavior.conversionRate !== undefined && (
-          <p className="mt-2 text-xs text-gray-400" title={data.behavior.conversionRateDefinition}>
+          <p className="mt-2 text-xs text-admin-faint" title={data.behavior.conversionRateDefinition}>
             Conversion rate = {data.behavior.conversionRateDefinition}
           </p>
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-5">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700">Signups over time</h3>
+      <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+        <h3 className="mb-3 text-sm font-semibold text-admin-muted">Signups over time</h3>
         <MiniChart
           ariaLabel="Signups over time"
           data={(data?.supabase.timeSeries || []).map((p) => ({ label: p.date, value: p.signups }))}
@@ -216,8 +216,8 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">Source breakdown (signups)</h3>
+        <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+          <h3 className="mb-3 text-sm font-semibold text-admin-muted">Source breakdown (signups)</h3>
           <SortableTable
             columns={sourceColumns}
             rows={data?.supabase.sourceBreakdown || []}
@@ -227,8 +227,8 @@ export default function WaitlistAnalyticsPanel({ waitlistId }: { waitlistId: str
             emptyMessage="No signups in this period"
           />
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">Traffic &amp; device (visitors)</h3>
+        <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+          <h3 className="mb-3 text-sm font-semibold text-admin-muted">Traffic &amp; device (visitors)</h3>
           <SortableTable
             columns={attributionColumns}
             rows={data?.behavior.visitorAttribution || []}

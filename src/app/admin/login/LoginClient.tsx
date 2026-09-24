@@ -69,22 +69,22 @@ export default function LoginClient({ initialError }: { initialError?: string })
   }
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center">
+    <main className="min-h-screen bg-admin-surface flex items-center justify-center">
       <Container>
         <div className="max-w-sm w-full mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">NOT4NORMAL Admin</h1>
-            <p className="text-gray-600 text-sm">Sign in to access the admin workspace</p>
+            <p className="text-admin-muted text-sm">Sign in to access the admin workspace</p>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-6">
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 text-sm mb-6">
               {error}
             </div>
           )}
 
           {emailSent ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
+            <div className="p-4 bg-green-950/40 border border-green-900 rounded-lg text-green-400 text-sm text-center">
               Check <strong>{email}</strong> for a sign-in link.
             </div>
           ) : (
@@ -93,16 +93,16 @@ export default function LoginClient({ initialError }: { initialError?: string })
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={isGoogleLoading}
-                className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 text-sm font-semibold hover:border-black transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-3 border border-admin-border rounded-lg py-3 text-sm font-semibold hover:border-admin-text transition-colors disabled:opacity-50"
               >
                 <GoogleIcon />
                 {isGoogleLoading ? 'Redirecting…' : 'Continue with Google'}
               </button>
 
               <div className="flex items-center gap-4 my-6">
-                <div className="h-px flex-1 bg-gray-200" />
-                <span className="text-xs uppercase tracking-wide text-gray-400">or</span>
-                <div className="h-px flex-1 bg-gray-200" />
+                <div className="h-px flex-1 bg-admin-surface3" />
+                <span className="text-xs uppercase tracking-wide text-admin-faint">or</span>
+                <div className="h-px flex-1 bg-admin-surface3" />
               </div>
 
               <form onSubmit={handleEmailSignIn} className="space-y-3">
@@ -116,14 +116,14 @@ export default function LoginClient({ initialError }: { initialError?: string })
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2.5 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={isEmailLoading}
-                  className="w-full bg-black text-white text-sm font-semibold rounded-lg py-3 hover:bg-gray-900 disabled:opacity-50"
+                  className="w-full bg-admin-accent text-admin-accentText text-sm font-semibold rounded-lg py-3 hover:bg-admin-accentHover disabled:opacity-50"
                 >
                   {isEmailLoading ? 'Sending…' : 'Continue with email'}
                 </button>
@@ -131,7 +131,7 @@ export default function LoginClient({ initialError }: { initialError?: string })
             </>
           )}
 
-          <p className="mt-8 text-center text-xs text-gray-400">
+          <p className="mt-8 text-center text-xs text-admin-faint">
             Access is restricted to invited team members.
           </p>
         </div>

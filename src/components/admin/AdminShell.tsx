@@ -36,17 +36,17 @@ export default function AdminShell({ admin, children }: { admin: CurrentAdmin; c
   const visibleNavItems = NAV_ITEMS.filter((item) => hasPermission(admin, item.permission))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-admin-bg">
+      <div className="sticky top-0 z-40 border-b border-admin-border bg-admin-surface">
         <Container className="flex items-center justify-between py-4">
-          <Link href="/admin" className="text-xl font-bold hover:text-gray-600">
+          <Link href="/admin" className="text-xl font-bold hover:text-admin-muted">
             NOT4NORMAL Admin
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <Link href="/admin/account" className="hidden text-gray-600 hover:text-black sm:inline" title="Account settings">
+            <Link href="/admin/account" className="hidden text-admin-muted hover:text-admin-text sm:inline" title="Account settings">
               {admin.user.email}
             </Link>
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium capitalize text-gray-700">
+            <span className="rounded-full bg-admin-surface2 px-3 py-1 text-xs font-medium capitalize text-admin-muted">
               {ADMIN_ROLE_LABELS[admin.role]}
             </span>
             <SignOutButton />
@@ -58,7 +58,7 @@ export default function AdminShell({ admin, children }: { admin: CurrentAdmin; c
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap rounded px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-100 hover:text-black"
+              className="whitespace-nowrap rounded px-3 py-1.5 font-medium text-admin-muted hover:bg-admin-surface2 hover:text-admin-text"
             >
               {item.label}
             </Link>

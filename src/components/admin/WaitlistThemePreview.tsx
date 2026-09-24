@@ -23,7 +23,7 @@ export default function WaitlistThemePreview({
 }: WaitlistThemePreviewProps) {
   return (
     <div
-      className="rounded-lg border border-gray-200 p-6 sm:p-8"
+      className="rounded-lg border border-admin-border p-6 sm:p-8"
       style={{ backgroundColor: theme.background }}
     >
       <p

@@ -90,7 +90,7 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400">
           {error}
         </div>
       )}
@@ -109,7 +109,7 @@ export default function ProductForm({
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Product title"
               required
             />
@@ -125,11 +125,11 @@ export default function ProductForm({
               name="slug"
               value={formData.slug}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="product-url-slug"
               required
             />
-            <p className="text-xs text-gray-600 mt-1">URL-friendly name (lowercase, hyphens only)</p>
+            <p className="text-xs text-admin-muted mt-1">URL-friendly name (lowercase, hyphens only)</p>
           </div>
 
           <div>
@@ -142,7 +142,7 @@ export default function ProductForm({
               name="short_description"
               value={formData.short_description}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Brief description for listings"
             />
           </div>
@@ -157,7 +157,7 @@ export default function ProductForm({
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Full product description"
             />
           </div>
@@ -180,10 +180,10 @@ export default function ProductForm({
               onChange={handleChange}
               step="0.01"
               min="0"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="0"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-admin-muted mt-1">
               {isFree ? '✅ Free product' : isPaid ? `💰 Paid product ($${formData.price.toFixed(2)})` : ''}
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function ProductForm({
               name="currency"
               value={formData.currency}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -221,7 +221,7 @@ export default function ProductForm({
               name="cover_image_url"
               value={formData.cover_image_url}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="https://..."
             />
           </div>
@@ -236,19 +236,19 @@ export default function ProductForm({
               name="file_path"
               value={formData.file_path}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="folder/product-file.pdf"
             />
-            <p className="text-xs text-gray-600 mt-1">Path to the downloadable file in Supabase Storage</p>
+            <p className="text-xs text-admin-muted mt-1">Path to the downloadable file in Supabase Storage</p>
           </div>
         </div>
       </div>
 
       {/* Paddle Configuration (Only for Paid Products) */}
       {isPaid && (
-        <div className="border-t pt-8 bg-blue-50 rounded-lg p-6">
+        <div className="border-t pt-8 bg-blue-950/40 rounded-lg p-6">
           <h3 className="text-lg font-bold mb-6">Paddle Payment Configuration</h3>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-admin-muted mb-4">
             Configure Paddle payment IDs for this paid product
           </p>
           <div className="space-y-4">
@@ -262,10 +262,10 @@ export default function ProductForm({
                 name="paddle_product_id"
                 value={formData.paddle_product_id}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
                 placeholder="pro_..."
               />
-              <p className="text-xs text-gray-600 mt-1">From Paddle Dashboard → Products</p>
+              <p className="text-xs text-admin-muted mt-1">From Paddle Dashboard → Products</p>
             </div>
 
             <div>
@@ -278,19 +278,19 @@ export default function ProductForm({
                 name="paddle_price_id"
                 value={formData.paddle_price_id}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
                 placeholder="pri_..."
               />
-              <p className="text-xs text-gray-600 mt-1">From Paddle Dashboard → Products → Prices</p>
+              <p className="text-xs text-admin-muted mt-1">From Paddle Dashboard → Products → Prices</p>
             </div>
           </div>
         </div>
       )}
 
       {isFree && (
-        <div className="border-t pt-8 bg-green-50 rounded-lg p-6">
+        <div className="border-t pt-8 bg-green-950/40 rounded-lg p-6">
           <h3 className="text-lg font-bold mb-2">Free Product</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-admin-muted">
             This product is free. Customers will receive a download link via email.
           </p>
         </div>
@@ -305,7 +305,7 @@ export default function ProductForm({
             name="is_active"
             checked={formData.is_active}
             onChange={handleChange}
-            className="w-5 h-5 rounded border-gray-300 cursor-pointer"
+            className="w-5 h-5 rounded border-admin-border cursor-pointer"
           />
           <span className="font-medium">Active (visible to customers)</span>
         </label>
@@ -316,7 +316,7 @@ export default function ProductForm({
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-black text-white hover:bg-gray-900"
+          className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover"
         >
           {isLoading ? 'Saving...' : mode === 'create' ? 'Create Product' : 'Save Changes'}
         </Button>

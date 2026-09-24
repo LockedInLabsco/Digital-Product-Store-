@@ -83,13 +83,13 @@ export default function OrdersClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
         <div className="max-w-6xl">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-3xl font-bold mb-2">Orders</h2>
-              <p className="text-gray-600">Track paid product deliveries</p>
+              <p className="text-admin-muted">Track paid product deliveries</p>
             </div>
             <Link href="/admin/products">
               <Button variant="outline">Products</Button>
@@ -97,30 +97,30 @@ export default function OrdersClient() {
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-8">
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 mb-8">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-8">
+            <div className="p-4 bg-green-950/40 border border-green-900 rounded-lg text-green-400 mb-8">
               {success}
             </div>
           )}
 
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Loading orders...</p>
+              <p className="text-admin-muted">Loading orders...</p>
             </div>
           ) : orders.length === 0 ? (
-            <div className="text-center py-12 border border-gray-200 rounded-lg bg-white">
-              <p className="text-gray-600">No orders yet</p>
+            <div className="text-center py-12 border border-admin-border rounded-lg bg-admin-surface">
+              <p className="text-admin-muted">No orders yet</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-white">
+                  <tr className="border-b border-admin-border bg-admin-surface">
                     <th className="text-left py-4 px-4 font-semibold">Customer</th>
                     <th className="text-left py-4 px-4 font-semibold">Product</th>
                     <th className="text-left py-4 px-4 font-semibold">Amount</th>
@@ -134,14 +134,14 @@ export default function OrdersClient() {
                   {orders.map((order) => (
                     <tr
                       key={order.id}
-                      className="border-b border-gray-200 bg-white hover:bg-gray-50"
+                      className="border-b border-admin-border bg-admin-surface hover:bg-admin-surface2"
                     >
                       <td className="py-4 px-4">
                         <p className="text-sm">{order.customer_email}</p>
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-medium">{order.product_title}</p>
-                        <p className="text-gray-600 text-sm">{order.product_slug}</p>
+                        <p className="text-admin-muted text-sm">{order.product_slug}</p>
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-medium">
@@ -149,7 +149,7 @@ export default function OrdersClient() {
                         </p>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-gray-600 text-sm break-all">
+                        <p className="text-admin-muted text-sm break-all">
                           {order.paddle_transaction_id}
                         </p>
                       </td>
@@ -157,22 +157,22 @@ export default function OrdersClient() {
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                             order.delivery_status === 'sent'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-950/40 text-green-400'
                               : order.delivery_status === 'failed'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
+                                ? 'bg-red-950/40 text-red-400'
+                                : 'bg-admin-surface2 text-admin-text'
                           }`}
                         >
                           {order.delivery_status}
                         </span>
                         {order.error_message && (
-                          <p className="text-red-600 text-xs mt-2 max-w-xs">
+                          <p className="text-red-400 text-xs mt-2 max-w-xs">
                             {order.error_message}
                           </p>
                         )}
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-admin-muted text-sm">
                           {formatDate(order.created_at)}
                         </p>
                       </td>
@@ -180,7 +180,7 @@ export default function OrdersClient() {
                         <button
                           onClick={() => handleResend(order.id)}
                           disabled={resendingOrderId === order.id}
-                          className="text-black hover:text-gray-600 text-sm font-medium disabled:text-gray-400"
+                          className="text-admin-text hover:text-admin-muted text-sm font-medium disabled:text-admin-faint"
                         >
                           {resendingOrderId === order.id ? 'Sending...' : 'Resend email'}
                         </button>

@@ -74,10 +74,10 @@ export default function EditWaitlistClient({ params }: { params: { id: string } 
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white">
+    <main className="min-h-screen bg-admin-bg">
+      <div className="border-b border-admin-border bg-admin-surface">
         <Container className="py-4">
-          <Link href={`/admin/waitlists/${params.id}`} className="text-gray-600 hover:text-black text-sm">
+          <Link href={`/admin/waitlists/${params.id}`} className="text-admin-muted hover:text-admin-text text-sm">
             ← Back to Waitlist
           </Link>
         </Container>
@@ -87,16 +87,16 @@ export default function EditWaitlistClient({ params }: { params: { id: string } 
         <div className="max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Edit waitlist</h1>
-            <p className="text-gray-600">Update its content, slug, or status</p>
+            <p className="text-admin-muted">Update its content, slug, or status</p>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-8">{error}</div>
+            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400 mb-8">{error}</div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <div className="bg-admin-surface rounded-lg border border-admin-border p-8">
             {isFetching ? (
-              <p className="text-gray-600">Loading...</p>
+              <p className="text-admin-muted">Loading...</p>
             ) : waitlist ? (
               <WaitlistForm
                 mode="edit"

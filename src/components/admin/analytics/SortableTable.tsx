@@ -60,17 +60,17 @@ export default function SortableTable<T>({
 
   if (error) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">{error}</div>
     )
   }
 
   if (isLoading) {
-    return <div className="py-8 text-center text-sm text-gray-500">Loading…</div>
+    return <div className="py-8 text-center text-sm text-admin-muted">Loading…</div>
   }
 
   if (rows.length === 0) {
     return (
-      <div className="rounded border border-gray-100 py-8 text-center text-sm text-gray-500">
+      <div className="rounded border border-admin-border py-8 text-center text-sm text-admin-muted">
         {emptyMessage}
       </div>
     )
@@ -80,7 +80,7 @@ export default function SortableTable<T>({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-200">
+          <tr className="border-b border-admin-border">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -92,7 +92,7 @@ export default function SortableTable<T>({
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="inline-flex items-center gap-1 hover:text-black"
+                    className="inline-flex items-center gap-1 hover:text-admin-text"
                   >
                     {col.header}
                     {sortKey === col.key && (
@@ -108,7 +108,7 @@ export default function SortableTable<T>({
         </thead>
         <tbody>
           {sortedRows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={rowKey(row)} className="border-b border-admin-border hover:bg-admin-surface2">
               {columns.map((col) => (
                 <td
                   key={col.key}

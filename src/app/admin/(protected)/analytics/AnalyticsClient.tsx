@@ -267,7 +267,7 @@ export default function AnalyticsClient() {
   ]
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-admin-bg">
       <Container className="pt-8">
         <h1 className="text-2xl font-bold">Analytics</h1>
       </Container>
@@ -286,25 +286,25 @@ export default function AnalyticsClient() {
         />
 
         {postHogUnavailable && (
-          <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="rounded border border-amber-900 bg-amber-950/40 p-4 text-sm text-amber-400">
             PostHog is not configured. Business metrics from Supabase are shown below; visitor,
             traffic-source, and engagement metrics will appear once{' '}
-            <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_POSTHOG_KEY</code>,{' '}
-            <code className="rounded bg-amber-100 px-1">POSTHOG_PERSONAL_API_KEY</code>, and{' '}
-            <code className="rounded bg-amber-100 px-1">POSTHOG_PROJECT_ID</code> are set. See
+            <code className="rounded bg-amber-950/40 px-1">NEXT_PUBLIC_POSTHOG_KEY</code>,{' '}
+            <code className="rounded bg-amber-950/40 px-1">POSTHOG_PERSONAL_API_KEY</code>, and{' '}
+            <code className="rounded bg-amber-950/40 px-1">POSTHOG_PROJECT_ID</code> are set. See
             docs/ANALYTICS_SETUP.md.
           </div>
         )}
 
         {overview.data?.postHogConfigured && !overview.data?.postHogAvailable && (
-          <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">
             <p className="font-semibold">PostHog is configured, but the query failed.</p>
             <p className="mt-1">
               {overview.data.postHogError || 'Unknown error — check the server logs for [PostHog] entries.'}
             </p>
-            <p className="mt-1 text-red-700">
+            <p className="mt-1 text-red-400">
               This is usually a missing scope on the Personal API Key (most commonly{' '}
-              <code className="rounded bg-red-100 px-1">query:read</code>) rather than a missing
+              <code className="rounded bg-red-950/40 px-1">query:read</code>) rather than a missing
               environment variable — see docs/ANALYTICS_SETUP.md.
             </p>
           </div>
@@ -314,7 +314,7 @@ export default function AnalyticsClient() {
         <section>
           <h2 className="mb-4 text-lg font-bold">Overview</h2>
           {overview.error ? (
-            <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">
               {overview.error}
             </div>
           ) : (
@@ -362,8 +362,8 @@ export default function AnalyticsClient() {
 
         {/* Charts */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Visitors over time</h3>
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold text-admin-muted">Visitors over time</h3>
             <MiniChart
               ariaLabel="Unique visitors over time"
               data={(overview.data?.timeSeries || [])
@@ -371,8 +371,8 @@ export default function AnalyticsClient() {
                 .map((p: any) => ({ label: p.date, value: p.visitors }))}
             />
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Revenue over time</h3>
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold text-admin-muted">Revenue over time</h3>
             <MiniChart
               color="#16a34a"
               ariaLabel="Revenue over time"
@@ -380,16 +380,16 @@ export default function AnalyticsClient() {
               data={(overview.data?.timeSeries || []).map((p: any) => ({ label: p.date, value: p.revenue }))}
             />
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Downloads over time</h3>
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold text-admin-muted">Downloads over time</h3>
             <MiniChart
               color="#a855f7"
               ariaLabel="Free downloads over time"
               data={(overview.data?.timeSeries || []).map((p: any) => ({ label: p.date, value: p.downloads }))}
             />
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Purchases over time</h3>
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold text-admin-muted">Purchases over time</h3>
             <MiniChart
               color="#f59e0b"
               ariaLabel="Purchases over time"
@@ -407,7 +407,7 @@ export default function AnalyticsClient() {
         {/* Traffic sources */}
         <section>
           <h2 className="mb-4 text-lg font-bold">Traffic sources</h2>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             <SortableTable
               columns={trafficColumns}
               rows={traffic.data?.rows || []}
@@ -427,7 +427,7 @@ export default function AnalyticsClient() {
         {/* Product performance */}
         <section>
           <h2 className="mb-4 text-lg font-bold">Product performance</h2>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             <SortableTable
               columns={productColumns}
               rows={products.data?.rows || []}
@@ -457,8 +457,8 @@ export default function AnalyticsClient() {
             />
           </div>
 
-          <div className="mb-6 rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Recent purchases</h3>
+          <div className="mb-6 rounded-lg border border-admin-border bg-admin-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold text-admin-muted">Recent purchases</h3>
             <SortableTable
               columns={recentPurchaseColumns}
               rows={revenue.data?.recentPurchases?.rows || []}
@@ -474,18 +474,18 @@ export default function AnalyticsClient() {
                   type="button"
                   disabled={revenuePage <= 1}
                   onClick={() => setRevenuePage((p) => Math.max(1, p - 1))}
-                  className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded border border-admin-border px-3 py-1.5 disabled:opacity-40"
                 >
                   Previous
                 </button>
-                <span className="text-gray-500">
+                <span className="text-admin-muted">
                   Page {revenue.data.recentPurchases.page} of {revenue.data.recentPurchases.totalPages}
                 </span>
                 <button
                   type="button"
                   disabled={revenuePage >= revenue.data.recentPurchases.totalPages}
                   onClick={() => setRevenuePage((p) => p + 1)}
-                  className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded border border-admin-border px-3 py-1.5 disabled:opacity-40"
                 >
                   Next
                 </button>
@@ -498,8 +498,8 @@ export default function AnalyticsClient() {
         <section>
           <h2 className="mb-4 text-lg font-bold">Site engagement</h2>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Most-viewed pages</h3>
+            <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+              <h3 className="mb-3 text-sm font-semibold text-admin-muted">Most-viewed pages</h3>
               <SortableTable
                 columns={topPagesColumns}
                 rows={engagement.data?.topPages || []}
@@ -514,8 +514,8 @@ export default function AnalyticsClient() {
                 }
               />
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Exit pages</h3>
+            <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+              <h3 className="mb-3 text-sm font-semibold text-admin-muted">Exit pages</h3>
               <SortableTable
                 columns={exitPagesColumns}
                 rows={engagement.data?.exitPages || []}
@@ -530,8 +530,8 @@ export default function AnalyticsClient() {
                 }
               />
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Most-clicked CTAs</h3>
+            <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+              <h3 className="mb-3 text-sm font-semibold text-admin-muted">Most-clicked CTAs</h3>
               <SortableTable
                 columns={ctaColumns}
                 rows={engagement.data?.topCtaClicks || []}
@@ -546,8 +546,8 @@ export default function AnalyticsClient() {
                 }
               />
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Homepage section engagement</h3>
+            <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+              <h3 className="mb-3 text-sm font-semibold text-admin-muted">Homepage section engagement</h3>
               <SortableTable
                 columns={sectionColumns}
                 rows={engagement.data?.sectionEngagement || []}
@@ -568,9 +568,9 @@ export default function AnalyticsClient() {
         {/* Session replays */}
         <section>
           <h2 className="mb-4 text-lg font-bold">Session replays</h2>
-          <div className="rounded-lg border border-gray-200 bg-white p-5">
+          <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             {!sessionReplays.data?.postHogConfigured ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-admin-muted">
                 Analytics not configured — set POSTHOG_PERSONAL_API_KEY and POSTHOG_PROJECT_ID to
                 enable session replay links.
               </p>
@@ -581,18 +581,18 @@ export default function AnalyticsClient() {
                     href={sessionReplays.data.projectReplayUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mb-4 inline-block rounded bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+                    className="mb-4 inline-block rounded bg-admin-accent px-4 py-2 text-sm font-semibold text-white hover:bg-admin-accentHover"
                   >
                     Open session replays in PostHog ↗
                   </a>
                 )}
                 {!sessionReplays.data.postHogAvailable && sessionReplays.data.postHogError && (
-                  <p className="mb-4 text-sm text-red-700">
+                  <p className="mb-4 text-sm text-red-400">
                     Could not list recent recordings: {sessionReplays.data.postHogError}
                   </p>
                 )}
                 {sessionReplays.data.recordings?.length > 0 ? (
-                  <ul className="divide-y divide-gray-100 text-sm">
+                  <ul className="divide-y divide-admin-border text-sm">
                     {sessionReplays.data.recordings.map((rec: any) => (
                       <li key={rec.id} className="flex items-center justify-between py-2">
                         <span>
@@ -600,14 +600,14 @@ export default function AnalyticsClient() {
                           {rec.startTime ? new Date(rec.startTime).toLocaleString() : 'Unknown time'}
                           {rec.durationSeconds ? ` · ${Math.round(rec.durationSeconds)}s` : ''}
                         </span>
-                        <a href={rec.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        <a href={rec.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                           Open ↗
                         </a>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No recent recordings found.</p>
+                  <p className="text-sm text-admin-muted">No recent recordings found.</p>
                 )}
               </>
             )}
@@ -620,10 +620,10 @@ export default function AnalyticsClient() {
 
 function FunnelCard({ title, stages }: { title: string; stages?: { label: string; count: number | null }[] }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <h3 className="mb-4 text-sm font-semibold text-gray-700">{title}</h3>
+    <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
+      <h3 className="mb-4 text-sm font-semibold text-admin-muted">{title}</h3>
       {!stages ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-admin-faint">Loading…</p>
       ) : (
         <ol className="space-y-3">
           {stages.map((stage, index) => {
@@ -637,16 +637,16 @@ function FunnelCard({ title, stages }: { title: string; stages?: { label: string
                 : null
 
             return (
-              <li key={stage.label} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0">
+              <li key={stage.label} className="flex items-center justify-between border-b border-admin-border pb-3 last:border-0">
                 <div>
                   <p className="text-sm font-medium">{stage.label}</p>
                   {index > 0 && dropOff !== null && (
-                    <p className="text-xs text-gray-400">{dropOff}% drop-off from previous stage</p>
+                    <p className="text-xs text-admin-faint">{dropOff}% drop-off from previous stage</p>
                   )}
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold">{formatNumber(stage.count)}</p>
-                  {conversion !== null && <p className="text-xs text-gray-400">{conversion}% of visitors</p>}
+                  {conversion !== null && <p className="text-xs text-admin-faint">{conversion}% of visitors</p>}
                 </div>
               </li>
             )

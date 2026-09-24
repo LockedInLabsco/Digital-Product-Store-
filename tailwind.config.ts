@@ -26,6 +26,24 @@ const config: Config = {
         'gold-hover': 'rgb(var(--color-accent-bright) / <alpha-value>)', // bright blue hover
         'btn-dark': 'rgb(var(--color-btn-dark-text) / <alpha-value>)', // dark text on light/white buttons
         line: 'rgb(var(--color-border) / <alpha-value>)', // blue-tinted borders/dividers
+        // Admin panel's own monochrome dark theme — deliberately separate
+        // from the public-site tokens above (ink/cream/gold/...), and from
+        // Tailwind's built-in gray/white/black (still used everywhere else
+        // in the app, unaffected). Same palette as the SlowDay waitlist's
+        // "Monochrome" preset (see lib/waitlist/theme.ts's MONOCHROME).
+        admin: {
+          bg: '#000000',
+          surface: '#141414',
+          surface2: '#1F1F1F',
+          surface3: '#2A2A2A',
+          border: '#333333',
+          text: '#FFFFFF',
+          muted: '#A6A6A6',
+          faint: '#707070',
+          accent: '#FFFFFF',
+          accentText: '#000000',
+          accentHover: '#D4D4D4',
+        },
       },
       fontFamily: {
         serif: ['var(--font-serif)', 'Georgia', 'serif'],

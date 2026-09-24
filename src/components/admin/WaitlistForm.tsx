@@ -206,7 +206,7 @@ export default function WaitlistForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-400">
           {error}
         </div>
       )}
@@ -224,7 +224,7 @@ export default function WaitlistForm({
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Phone Control App"
               required
             />
@@ -240,11 +240,11 @@ export default function WaitlistForm({
               name="slug"
               value={formData.slug}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="phone-control-app"
               required
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-admin-muted mt-1">
               Public URL will be <span className="font-mono">/waitlist/{formData.slug || '…'}</span>
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function WaitlistForm({
               value={formData.description}
               onChange={handleChange}
               rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Internal note about what this waitlist is for (shown in the admin list)"
             />
           </div>
@@ -273,7 +273,7 @@ export default function WaitlistForm({
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
             >
               <option value="draft">Draft — not visible to the public</option>
               <option value="active">Active — accepting signups</option>
@@ -285,7 +285,7 @@ export default function WaitlistForm({
 
       <div className="border-t pt-8">
         <h3 className="text-lg font-bold mb-6">Public page content</h3>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-admin-muted mb-4">
           Optional overrides for the public waitlist page. Leave blank to use sensible defaults.
         </p>
         <div className="space-y-4">
@@ -299,7 +299,7 @@ export default function WaitlistForm({
               name="headline"
               value={formData.headline}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="A better way to take back control of your phone."
             />
           </div>
@@ -314,7 +314,7 @@ export default function WaitlistForm({
               value={formData.supporting_text}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Short paragraph shown under the headline."
             />
           </div>
@@ -329,7 +329,7 @@ export default function WaitlistForm({
               name="button_text"
               value={formData.button_text}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
               placeholder="Join the waitlist"
             />
           </div>
@@ -338,11 +338,11 @@ export default function WaitlistForm({
 
       <div className="border-t pt-8">
         <h3 className="text-lg font-bold mb-2">Theme</h3>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-admin-muted mb-6">
           Controls only this waitlist&apos;s public page — the rest of the site is never affected.
         </p>
 
-        <label className="mb-8 flex items-start gap-3 rounded-lg border border-gray-200 p-4 cursor-pointer">
+        <label className="mb-8 flex items-start gap-3 rounded-lg border border-admin-border p-4 cursor-pointer">
           <input
             type="checkbox"
             checked={isStandalone}
@@ -351,7 +351,7 @@ export default function WaitlistForm({
           />
           <span>
             <span className="block text-sm font-medium">Standalone landing page</span>
-            <span className="block text-xs text-gray-600 mt-0.5">
+            <span className="block text-xs text-admin-muted mt-0.5">
               Replaces the generic NOT4NORMAL header/footer with a dedicated, self-contained page — its own
               minimal header, hero, audience/problem sections, screenshot preview, and footer. Used by SlowDay;
               enable for any other waitlist that needs its own standalone identity.
@@ -370,8 +370,8 @@ export default function WaitlistForm({
                   onClick={() => handlePresetChange(option)}
                   className={`rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
                     preset === option
-                      ? 'border-black bg-black text-white'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-admin-accent bg-admin-accent text-admin-accentText'
+                      : 'border-admin-border hover:border-admin-text'
                   }`}
                 >
                   {PRESET_LABELS[option]}
@@ -384,7 +384,7 @@ export default function WaitlistForm({
                 {COLOR_FIELDS.map((field) => (
                   <div key={field.key}>
                     <label htmlFor={`theme-${field.key}`} className="block text-sm font-medium mb-2">
-                      {field.label} {!field.required && <span className="text-gray-400">(optional)</span>}
+                      {field.label} {!field.required && <span className="text-admin-faint">(optional)</span>}
                     </label>
                     <div className="flex items-center gap-3">
                       <input
@@ -392,7 +392,7 @@ export default function WaitlistForm({
                         aria-label={`${field.label} color picker`}
                         value={isValidHexColor(customColors[field.key]) ? customColors[field.key] : '#000000'}
                         onChange={(e) => handleColorChange(field.key, e.target.value)}
-                        className="h-10 w-12 flex-shrink-0 cursor-pointer rounded border border-gray-300 p-1"
+                        className="h-10 w-12 flex-shrink-0 cursor-pointer rounded border border-admin-border p-1"
                       />
                       <input
                         id={`theme-${field.key}`}
@@ -400,14 +400,14 @@ export default function WaitlistForm({
                         value={customColors[field.key] || ''}
                         onChange={(e) => handleColorChange(field.key, e.target.value)}
                         placeholder="#RRGGBB"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                        className="w-full px-4 py-2 border border-admin-border rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-admin-accent"
                       />
                     </div>
                   </div>
                 ))}
 
                 {contrastWarnings.length > 0 && (
-                  <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+                  <div className="rounded-lg border border-yellow-800 bg-yellow-950/40 p-4 text-sm text-yellow-400">
                     {contrastWarnings.map((warning) => (
                       <p key={warning}>⚠ {warning}</p>
                     ))}
@@ -432,7 +432,7 @@ export default function WaitlistForm({
       {isStandalone && (
         <div className="border-t pt-8">
           <h3 className="text-lg font-bold mb-2">Screenshots</h3>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-admin-muted mb-6">
             Shown as phone-frame screenshots on the standalone page (two in the hero, all four in the
             &quot;A look inside&quot; section). Leave any slot empty to keep its placeholder frame.
           </p>
@@ -453,7 +453,7 @@ export default function WaitlistForm({
       )}
 
       <div className="border-t pt-8 flex gap-4">
-        <Button type="submit" disabled={isLoading} className="bg-black text-white hover:bg-gray-900">
+        <Button type="submit" disabled={isLoading} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
           {isLoading ? 'Saving...' : mode === 'create' ? 'Create waitlist' : 'Save changes'}
         </Button>
         <Button variant="outline" type="button" onClick={() => window.history.back()}>

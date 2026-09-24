@@ -61,14 +61,14 @@ export default function MediaClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white">
+    <main className="min-h-screen bg-admin-bg">
+      <div className="border-b border-admin-border bg-admin-surface">
         <Container className="py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Website Media</h1>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-black text-white text-sm font-semibold rounded px-5 py-2.5 disabled:opacity-50"
+            className="bg-admin-accent text-admin-accentText text-sm font-semibold rounded px-5 py-2.5 disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -77,19 +77,19 @@ export default function MediaClient() {
 
       <Container className="py-10">
         <div className="max-w-3xl space-y-10">
-          <p className="text-gray-600 text-sm">
+          <p className="text-admin-muted text-sm">
             Upload or replace the logos and section images used across the live site.
             Changes take effect after you click <strong>Save Changes</strong>. Leaving a
             field empty keeps the site&apos;s default look for that spot.
           </p>
 
           {error && (
-            <div className="border border-red-200 bg-red-50 text-red-700 text-sm rounded p-4">
+            <div className="border border-red-900 bg-red-950/40 text-red-400 text-sm rounded p-4">
               {error}
             </div>
           )}
           {success && (
-            <div className="border border-green-200 bg-green-50 text-green-700 text-sm rounded p-4">
+            <div className="border border-green-900 bg-green-950/40 text-green-400 text-sm rounded p-4">
               Saved successfully. The live site has been updated.
             </div>
           )}
