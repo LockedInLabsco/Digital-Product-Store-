@@ -7,38 +7,34 @@
 }
 
 /*
- * Not4Normal monochrome / physical-object theme palette.
+ * Not4Normal dark navy / electric-blue theme palette.
  * This is the single source of truth for every brand color in the app.
  * tailwind.config.ts reads these variables and wires them to Tailwind
  * utility classes (bg-ink, text-cream, border-gold, etc.) — the class
  * NAMES are kept stable on purpose so component markup never needed to
  * change between theme revisions; only the values below did.
  * Edit hex values ONLY here to re-theme the site later.
- *
- * Deliberately near-monochrome: black/off-black backgrounds, a warm
- * paper-white text/accent, and neutral gray hairlines. No hue, no glow.
  */
 :root {
-  --color-bg: 8 8 8; /* #080808 — main background */
-  --color-bg-secondary: 15 15 14; /* #0F0F0E — secondary/alternate section background */
-  --color-bg-elevated: 22 22 21; /* #161615 — elevated surface */
-  --color-bg-card: 18 18 17; /* #121211 — card/panel surface */
-  --color-bg-deep: 4 4 4; /* #040404 — deepest background */
+  --color-bg: 3 6 21; /* #030615 — main background */
+  --color-bg-secondary: 7 11 32; /* #070B20 — secondary/alternate section background */
+  --color-bg-elevated: 11 18 48; /* #0B1230 — elevated surface (available for future use) */
+  --color-bg-card: 14 23 56; /* #0E1738 — card/panel surface */
+  --color-bg-deep: 5 10 42; /* #050A2A — deep navy (available for future use) */
 
-  --color-text-primary: 244 243 238; /* #F4F3EE — warm paper-white, headings/primary text */
-  --color-text-secondary: 197 195 188; /* #C5C3BC — supporting copy */
-  --color-text-muted: 130 128 122; /* #82807A — tertiary/muted text */
+  --color-text-primary: 255 255 255; /* #FFFFFF — headings, primary text */
+  --color-text-secondary: 200 210 240; /* #C8D2F0 — supporting copy */
+  --color-text-muted: 135 146 181; /* #8792B5 — tertiary/muted text */
 
-  --color-accent: 244 243 238; /* #F4F3EE — monochrome accent: CTAs, active states */
-  --color-accent-bright: 255 255 255; /* #FFFFFF — hover/bright state, used for soft depth shadows */
-  --color-btn-dark-text: 10 10 9; /* #0A0A09 — dark text on light/white button surfaces */
+  --color-accent: 23 76 255; /* #174CFF — electric blue: CTAs, active states */
+  --color-accent-bright: 47 107 255; /* #2F6BFF — bright blue accent / hover */
+  --color-btn-dark-text: 2 6 23; /* #020617 — dark text for light/white button surfaces */
 
-  --color-border: 244 243 238; /* neutral paper-white, used with alpha, e.g. border-line/18 */
+  --color-border: 110 145 255; /* used with alpha, e.g. border-line/18 */
 
-  --hairline-light: rgb(var(--color-border) / 0.12);
-  --hairline-dark: rgb(var(--color-border) / 0.24);
+  --hairline-light: rgb(var(--color-border) / 0.18);
+  --hairline-dark: rgb(var(--color-border) / 0.34);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --duration: 560ms;
 }
 
@@ -58,83 +54,16 @@ body {
 }
 
 /*
- * Subtle monochrome studio illumination — an optional atmospheric layer
- * used sparingly behind key sections (see .glow-top usage in page.tsx).
- * A soft off-white falloff from the top, like a single studio light,
- * rather than a colored glow. Pure background-image; adds no markup,
- * spacing, or layout of its own.
+ * Subtle radial blue illumination — an optional atmospheric layer used
+ * sparingly behind key sections (see .glow-top usage in page.tsx).
+ * Pure background-image; adds no markup, spacing, or layout of its own.
  */
 .glow-top {
   background-image: radial-gradient(
     circle at top center,
-    rgb(var(--color-accent) / 0.07),
-    transparent 55%
+    rgb(var(--color-accent) / 0.18),
+    transparent 45%
   );
-}
-
-/*
- * Fine film-grain texture — gives flat monochrome surfaces a physical,
- * printed/photographed quality instead of reading as flat digital UI.
- * Decorative only; applied as a fixed overlay in RootLayout.
- */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* 3D / depth utilities used by DepthCard, MagneticButton, ProductBook, etc. */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-/* Tactile button press — small physical compression on click. */
-.tactile-press {
-  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
-}
-
-.tactile-press:active {
-  transform: scale(0.97);
-}
-
-/* Mask-reveal for large headline typography entering on scroll. */
-.mask-reveal {
-  overflow: hidden;
-}
-
-.mask-reveal > * {
-  display: block;
-  transform: translate3d(0, 105%, 0);
-  transition: transform 900ms var(--ease-out-expo);
-}
-
-.mask-reveal.is-visible > * {
-  transform: translate3d(0, 0, 0);
-}
-
-/* Canvas / WebGL scenes fade in once mounted, and never block layout if
- * the library fails to load — see WebGLFallback.tsx. */
-.scene-fade-in {
-  opacity: 0;
-  animation: scene-fade-in 900ms var(--ease) 60ms forwards;
-}
-
-@keyframes scene-fade-in {
-  to {
-    opacity: 1;
-  }
 }
 
 .eyebrow {
@@ -213,21 +142,6 @@ body {
 
   [data-reveal] {
     opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .mask-reveal > * {
-    transform: none !important;
-    transition: none !important;
-  }
-
-  .scene-fade-in {
-    animation: none !important;
-    opacity: 1 !important;
-  }
-
-  [data-parallax],
-  [data-tilt] {
     transform: none !important;
   }
 }

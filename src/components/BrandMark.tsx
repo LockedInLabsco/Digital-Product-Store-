@@ -20,7 +20,7 @@ export default function BrandMark({
   if (imageUrl) {
     return (
       <span
-        className={`relative inline-block transition-transform duration-300 ease-out hover:scale-[1.03] ${compact ? 'h-8 w-8' : 'h-8 w-32'} ${className}`}
+        className={`relative inline-block ${compact ? 'h-8 w-8' : 'h-8 w-32'} ${className}`}
       >
         <Image
           src={imageUrl}
@@ -36,7 +36,7 @@ export default function BrandMark({
 
   return (
     <span
-      className={`inline-block font-serif font-semibold tracking-tight transition-[letter-spacing,transform] duration-300 ease-out hover:scale-[1.03] hover:tracking-wide ${
+      className={`inline-block font-serif font-semibold tracking-tight ${
         compact ? 'text-xl' : 'text-2xl'
       } ${className}`}
       aria-label="Not4Normal"

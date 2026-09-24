@@ -96,7 +96,7 @@ export default async function WaitlistPage({ params, searchParams }: WaitlistPag
             </p>
             <Link
               href="/"
-              className="tactile-press mt-8 inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-btn-dark transition-colors hover:bg-gold-hover"
+              className="mt-8 inline-flex items-center justify-center rounded-sm bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
             >
               Back home
             </Link>

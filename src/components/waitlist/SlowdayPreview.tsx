@@ -1,6 +1,5 @@
 import SlowdaySection from './SlowdaySection'
 import SlowdayPhoneFrame from './SlowdayPhoneFrame'
-import DepthCard from '@/src/components/motion/DepthCard'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { ResolvedSlowdayScreen } from '@/src/lib/waitlist/slowdayContent'
 
@@ -32,10 +31,8 @@ export default function SlowdayPreview({ theme, screens }: SlowdayPreviewProps) 
         data-reveal="up"
       >
         {screens.map((screen) => (
-          <div key={screen.key} className="perspective-1000 flex flex-col items-center gap-3">
-            <DepthCard maxTilt={5} className="w-full">
-              <SlowdayPhoneFrame label={screen.label} src={screen.src} theme={theme} />
-            </DepthCard>
+          <div key={screen.key} className="flex flex-col items-center gap-3">
+            <SlowdayPhoneFrame label={screen.label} src={screen.src} theme={theme} />
             <p
               className="text-xs font-medium uppercase tracking-[0.08em]"
               style={{ color: theme.secondaryText }}

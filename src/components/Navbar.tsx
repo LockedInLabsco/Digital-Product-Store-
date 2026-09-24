@@ -48,13 +48,9 @@ export default function Navbar({ media }: NavbarProps) {
                   label: link.label,
                 })
               }
-              className="group relative text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-gold"
+              className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-cream/70 transition-colors hover:text-gold"
             >
               {link.label}
-              <span
-                aria-hidden="true"
-                className="absolute -bottom-1 left-0 h-px w-0 bg-gold transition-all duration-300 ease-out group-hover:w-full"
-              />
             </Link>
           ))}
           <Link
@@ -66,7 +62,7 @@ export default function Navbar({ media }: NavbarProps) {
                 label: 'Explore Products',
               })
             }
-            className="tactile-press inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-btn-dark transition-colors hover:bg-gold-hover"
+            className="inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream transition-colors hover:bg-gold-hover"
           >
             Explore Products
           </Link>
@@ -127,7 +123,7 @@ export default function Navbar({ media }: NavbarProps) {
               })
               closeMenu()
             }}
-            className="tactile-press mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-btn-dark"
+            className="mt-3 inline-flex items-center justify-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-cream"
           >
             Explore Products
           </Link>

@@ -213,7 +213,7 @@ export default function FreeProductClaimProvider({
               aria-labelledby="free-claim-title"
               aria-describedby="free-claim-description"
               onKeyDown={handleDialogKeyDown}
-              className="relative w-full max-w-lg rounded-sm border border-line/25 bg-offwhite p-6 text-cream shadow-[0_28px_90px_-24px_rgba(0,0,0,0.8)] sm:p-9"
+              className="relative w-full max-w-lg rounded-sm border border-line/25 bg-offwhite p-6 text-cream shadow-[0_28px_90px_-24px_rgb(var(--color-accent-bright)/0.45)] sm:p-9"
             >
               <button
                 type="button"
