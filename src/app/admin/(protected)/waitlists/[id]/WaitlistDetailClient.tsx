@@ -57,6 +57,8 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<DetailTab>('entries')
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
+  const [entryError, setEntryError] = useState('')
 
   const fetchAll = useCallback(async () => {
     try {
@@ -166,6 +168,32 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
     }
   }
 
+  const handleDeleteEntry = async (entry: WaitlistEntry) => {
+    if (!waitlist) return
+    const confirmed = window.confirm(
+      `Delete the lead for ${entry.email}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setDeletingEntryId(entry.id)
+    setEntryError('')
+    try {
+      const response = await fetch(`/api/admin/waitlists/${waitlist.id}/entries/${entry.id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to delete lead')
+      }
+      setEntries((current) => current.filter((row) => row.id !== entry.id))
+      setWaitlist((current) => (current ? { ...current, entry_count: current.entry_count - 1 } : current))
+    } catch (err) {
+      setEntryError(err instanceof Error ? err.message : 'Failed to delete lead')
+    } finally {
+      setDeletingEntryId(null)
+    }
+  }
+
   const handleExportCsv = () => {
     if (!waitlist) return
     const rows: string[][] = [
@@ -231,6 +259,21 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
       header: 'Joined',
       accessor: (row) => formatDate(row.created_at),
       sortValue: (row) => new Date(row.created_at).getTime(),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      accessor: (row) => (
+        <button
+          type="button"
+          onClick={() => handleDeleteEntry(row)}
+          disabled={deletingEntryId === row.id}
+          className="text-xs font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
+        >
+          {deletingEntryId === row.id ? 'Deleting...' : 'Delete'}
+        </button>
+      ),
     },
   ]
 
@@ -346,6 +389,11 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
 
                 {activeTab === 'entries' ? (
                   <>
+                    {entryError && (
+                      <div className="p-3 bg-red-950/40 border border-red-900 rounded-lg text-red-400 text-sm mb-4">
+                        {entryError}
+                      </div>
+                    )}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                       <div>
                         <h3 className="text-xl font-bold">Leads</h3>
