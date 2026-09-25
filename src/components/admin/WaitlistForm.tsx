@@ -424,6 +424,7 @@ export default function WaitlistForm({
               headline={formData.headline}
               supportingText={formData.supporting_text}
               buttonText={formData.button_text}
+              isStandalone={isStandalone}
             />
           </div>
         </div>
@@ -433,8 +434,8 @@ export default function WaitlistForm({
         <div className="border-t pt-8">
           <h3 className="text-lg font-bold mb-2">Screenshots</h3>
           <p className="text-sm text-admin-muted mb-6">
-            Shown as phone-frame screenshots on the standalone page (two in the hero, all four in the
-            &quot;A look inside&quot; section). Leave any slot empty to keep its placeholder frame.
+            Uploaded here for future use — the standalone page&apos;s current layout (a simple
+            waitlist-form + description pairing) does not display these screenshots anywhere.
           </p>
           <div className="space-y-4">
             {SCREENSHOT_FIELDS.map((field) => (

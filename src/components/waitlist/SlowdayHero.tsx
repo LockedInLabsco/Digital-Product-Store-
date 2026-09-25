@@ -41,8 +41,14 @@ export default function SlowdayHero({
           {/* Description card — first in source order so it also comes
               first on mobile; reordered to sit on the right on desktop. */}
           <div
-            className="order-1 rounded-2xl border px-7 py-10 backdrop-blur-xl sm:px-9 sm:py-12 lg:order-2"
-            style={{ backgroundColor: hexToRgba(theme.surface, 0.72), borderColor: theme.border }}
+            className="order-1 rounded-2xl border px-7 py-10 backdrop-blur-2xl sm:px-9 sm:py-12 lg:order-2"
+            style={{
+              backgroundColor: hexToRgba(theme.surface, 0.55),
+              backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 45%)',
+              borderColor: theme.border,
+              boxShadow:
+                'inset 0 1px 0 rgba(255,255,255,0.09), 0 1px 1px rgba(0,0,0,0.03), 0 24px 60px -28px rgba(0,0,0,0.55)',
+            }}
             data-reveal="up"
           >
             <p className="eyebrow" style={{ color: theme.secondaryText }}>
