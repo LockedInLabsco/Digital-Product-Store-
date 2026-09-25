@@ -1,4 +1,4 @@
-import { hexToRgba, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
+import { liquidGlassStyle, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 
 interface WaitlistThemePreviewProps {
   theme: WaitlistThemeColors
@@ -27,12 +27,7 @@ export default function WaitlistThemePreview({
   buttonText,
   isStandalone = false,
 }: WaitlistThemePreviewProps) {
-  const glassStyle = {
-    backgroundColor: hexToRgba(theme.surface, 0.55),
-    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 45%)',
-    borderColor: theme.border,
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.09), 0 1px 1px rgba(0,0,0,0.03)',
-  }
+  const glassStyle = liquidGlassStyle(theme)
 
   if (isStandalone) {
     return (
@@ -45,7 +40,7 @@ export default function WaitlistThemePreview({
         </p>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div
-            className="flex flex-col gap-2.5 rounded-xl border p-4 backdrop-blur-xl"
+            className="flex flex-col gap-2.5 rounded-xl border p-4 backdrop-blur-3xl"
             style={glassStyle}
           >
             <div
@@ -70,7 +65,7 @@ export default function WaitlistThemePreview({
             </button>
           </div>
 
-          <div className="rounded-xl border p-4 backdrop-blur-xl" style={glassStyle}>
+          <div className="rounded-xl border p-4 backdrop-blur-3xl" style={glassStyle}>
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.18em]" style={{ color: theme.secondaryText }}>
               Eyebrow
             </p>

@@ -287,6 +287,34 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+export interface LiquidGlassStyle {
+  backgroundColor: string
+  backgroundImage: string
+  borderColor: string
+  boxShadow: string
+}
+
+/**
+ * Shared "liquid glass" material recipe — a very transparent surface (so
+ * whatever is behind it genuinely shows through), a soft corner-sourced
+ * light bloom, a bright top/left rim catching that light, and a deep
+ * floating shadow for real separation. Pair with the `backdrop-blur-3xl`
+ * Tailwind class on the element for the actual blur. Used by the
+ * SlowDay waitlist form panel + description card (and their admin
+ * preview mockup) so all of them read as the same physical material.
+ * `surfaceAlpha` controls how see-through it is — lower is more glass.
+ */
+export function liquidGlassStyle(theme: WaitlistThemeColors, surfaceAlpha = 0.22): LiquidGlassStyle {
+  return {
+    backgroundColor: hexToRgba(theme.surface, surfaceAlpha),
+    backgroundImage:
+      'radial-gradient(130% 130% at 10% -10%, rgba(255,255,255,0.24), rgba(255,255,255,0) 55%), linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 45%)',
+    borderColor: theme.border,
+    boxShadow:
+      'inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(255,255,255,0.05), inset 1px 0 0 rgba(255,255,255,0.14), 0 30px 80px -24px rgba(0,0,0,0.65), 0 10px 26px -14px rgba(0,0,0,0.5)',
+  }
+}
+
 /** WCAG contrast ratio between two hex colors, from 1 (none) to 21 (max). */
 export function getContrastRatio(hexA: string, hexB: string): number {
   if (!isValidHexColor(hexA) || !isValidHexColor(hexB)) return 21

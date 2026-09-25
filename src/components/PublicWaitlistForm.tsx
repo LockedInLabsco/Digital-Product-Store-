@@ -4,7 +4,7 @@ import { useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import Container from './Container'
 import { track } from '@/src/lib/analytics/events'
 import { validateWaitlistInput } from '@/src/lib/waitlist/validate'
-import { hexToRgba, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
+import { liquidGlassStyle, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 
 type FieldErrors = Partial<Record<'email' | 'instagramUsername' | 'firstName', string>>
 
@@ -138,21 +138,9 @@ export default function PublicWaitlistForm({
   const headlineClass = headlineFont === 'sans' ? 'font-sans font-semibold' : 'font-serif'
   const radiusClass = panel ? 'rounded-xl' : 'rounded-sm'
   const fieldGapClass = panel ? 'gap-5' : 'gap-4'
-  // "Liquid glass": lower-opacity surface + a soft diagonal sheen +
-  // an inset top highlight (the hairline of light a real glass edge
-  // catches), layered under the normal drop shadow — all monochrome,
-  // no tint, so it reads as a physical material rather than a color.
-  const formStyle: CSSProperties | undefined = panel
-    ? {
-        backgroundColor: hexToRgba(theme.surface, 0.55),
-        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 45%)',
-        borderColor: theme.border,
-        boxShadow:
-          'inset 0 1px 0 rgba(255,255,255,0.09), 0 1px 1px rgba(0,0,0,0.03), 0 24px 60px -28px rgba(0,0,0,0.55)',
-      }
-    : undefined
+  const formStyle: CSSProperties | undefined = panel ? liquidGlassStyle(theme) : undefined
   const formClassName = `${embedded ? 'mt-0 w-full' : 'mx-auto mt-8 max-w-md'} flex flex-col ${fieldGapClass} text-left${
-    panel ? ' rounded-2xl border backdrop-blur-2xl p-6 sm:p-8' : ''
+    panel ? ' rounded-2xl border backdrop-blur-3xl p-6 sm:p-8' : ''
   }`
   const Wrapper = embedded ? 'div' : Container
   const wrapperClassName = embedded ? 'w-full text-left' : 'mx-auto max-w-2xl text-center'
