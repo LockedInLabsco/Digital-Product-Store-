@@ -1,13 +1,8 @@
 import Container from '@/src/components/Container'
 import PublicWaitlistForm from '@/src/components/PublicWaitlistForm'
-import SlowdayPhoneFrame from './SlowdayPhoneFrame'
-import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
+import { hexToRgba, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { WaitlistStatus } from '@/src/types/waitlist'
-import {
-  SLOWDAY_HERO_SUPPORTING_NOTE,
-  SLOWDAY_TRUST_TEXT,
-  type ResolvedSlowdayScreen,
-} from '@/src/lib/waitlist/slowdayContent'
+import { SLOWDAY_HERO_SUPPORTING_NOTE, SLOWDAY_TRUST_TEXT } from '@/src/lib/waitlist/slowdayContent'
 
 interface SlowdayHeroProps {
   waitlistSlug: string
@@ -18,20 +13,16 @@ interface SlowdayHeroProps {
   buttonText: string
   source: string
   theme: WaitlistThemeColors
-  /** Resolved via resolveSlowdayScreens() so admin-uploaded screenshots
-   * (if any) are already merged in — see StandaloneWaitlistPage. */
-  screens: ResolvedSlowdayScreen[]
 }
 
 /**
- * The hero doubles as the join section (id="join", scroll target for the
- * header's and final CTA's "Join Waitlist" links) — problem-identity
- * copy on top, then the actual signup form on the left and two product
- * screenshots on the right, so signing up never requires scrolling past
- * the rest of the page. Reuses PublicWaitlistForm's real state machine
- * (same /api/waitlist/[slug] contract, same loading/error/duplicate/
- * success states) via its `embedded` layout mode, just placed here
- * instead of in its own centered section.
+ * The entire page, in effect — a simple two-card pairing: the waitlist
+ * form on one side, an editorial description of SlowDay on the other.
+ * id="join" is kept as the scroll target for the header's "Join
+ * Waitlist" link. Reuses PublicWaitlistForm's real state machine (same
+ * /api/waitlist/[slug] contract, same loading/error/duplicate/success
+ * states) via its `embedded` + `panel` modes exactly as before — only
+ * the surrounding layout changed.
  */
 export default function SlowdayHero({
   waitlistSlug,
@@ -42,30 +33,35 @@ export default function SlowdayHero({
   buttonText,
   source,
   theme,
-  screens,
 }: SlowdayHeroProps) {
-  const heroScreens = screens.slice(0, 2)
-
   return (
     <div id="join" className="scroll-mt-20 sm:scroll-mt-24">
-      <Container className="py-16 sm:py-24 lg:py-28">
-        <div className="mx-auto max-w-2xl text-center" data-reveal="up">
-          <p className="eyebrow" style={{ color: theme.secondaryText }}>
-            {eyebrow}
-          </p>
-          <h1
-            className="mt-5 font-sans text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl"
-            style={{ color: theme.text }}
+      <Container className="flex min-h-[calc(100vh-68px)] items-center py-16 sm:py-20">
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-center gap-6 lg:grid-cols-[45fr_55fr] lg:gap-8">
+          {/* Description card — first in source order so it also comes
+              first on mobile; reordered to sit on the right on desktop. */}
+          <div
+            className="order-1 rounded-2xl border px-7 py-10 backdrop-blur-xl sm:px-9 sm:py-12 lg:order-2"
+            style={{ backgroundColor: hexToRgba(theme.surface, 0.72), borderColor: theme.border }}
+            data-reveal="up"
           >
-            {headline}
-          </h1>
-          <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed sm:text-lg" style={{ color: theme.secondaryText }}>
-            {supportingText}
-          </p>
-        </div>
+            <p className="eyebrow" style={{ color: theme.secondaryText }}>
+              {eyebrow}
+            </p>
+            <h1
+              className="mt-5 font-sans text-3xl font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]"
+              style={{ color: theme.text }}
+            >
+              {headline}
+            </h1>
+            <p className="mt-6 text-base leading-relaxed sm:text-lg" style={{ color: theme.secondaryText }}>
+              {supportingText}
+            </p>
+          </div>
 
-        <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 items-start gap-10 sm:mt-16 lg:grid-cols-2 lg:gap-16">
-          <div data-reveal="up" data-reveal-delay="1">
+          {/* Waitlist form card — second in source order (second on
+              mobile), reordered to sit on the left on desktop. */}
+          <div className="order-2 lg:order-1" data-reveal="up" data-reveal-delay="1">
             {status === 'closed' ? (
               <div
                 className="rounded-2xl border px-5 py-6 text-left"
@@ -79,37 +75,22 @@ export default function SlowdayHero({
                 </p>
               </div>
             ) : (
-              <PublicWaitlistForm
-                waitlistSlug={waitlistSlug}
-                buttonText={buttonText}
-                source={source}
-                theme={theme}
-                headlineFont="sans"
-                panel
-                trustText={SLOWDAY_TRUST_TEXT}
-                embedded
-              />
+              <>
+                <PublicWaitlistForm
+                  waitlistSlug={waitlistSlug}
+                  buttonText={buttonText}
+                  source={source}
+                  theme={theme}
+                  headlineFont="sans"
+                  panel
+                  trustText={SLOWDAY_TRUST_TEXT}
+                  embedded
+                />
+                <p className="mt-4 text-xs" style={{ color: theme.secondaryText, opacity: 0.75 }}>
+                  {SLOWDAY_HERO_SUPPORTING_NOTE}
+                </p>
+              </>
             )}
-            <p className="mt-4 text-xs" style={{ color: theme.secondaryText, opacity: 0.75 }}>
-              {SLOWDAY_HERO_SUPPORTING_NOTE}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 sm:gap-5" data-reveal="up" data-reveal-delay="2">
-            <SlowdayPhoneFrame
-              label={heroScreens[0]?.label || 'Home'}
-              src={heroScreens[0]?.src}
-              theme={theme}
-              className="translate-y-4"
-              priority
-            />
-            <SlowdayPhoneFrame
-              label={heroScreens[1]?.label || 'Focus'}
-              src={heroScreens[1]?.src}
-              theme={theme}
-              className="-translate-y-4"
-              priority
-            />
           </div>
         </div>
       </Container>
