@@ -19,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/orders', label: 'Orders', permission: 'orders:read' },
   { href: '/admin/media', label: 'Media', permission: 'media:read' },
   { href: '/admin/hero-slider', label: 'Hero Slider', permission: 'hero_slider:read' },
+  { href: '/admin/personal-brand', label: 'Personal Brand', permission: 'personal_brand:read' },
   { href: '/admin/team', label: 'Team', permission: 'team:read' },
   { href: '/admin/account', label: 'Account', permission: 'dashboard:read' },
 ]

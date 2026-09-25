@@ -42,4 +42,28 @@ describe('roleHasPermission', () => {
       expect(roleHasPermission(role, 'dashboard:read')).toBe(true)
     }
   })
+
+  it('scopes personal_brand to only its own permissions plus dashboard read', () => {
+    expect(roleHasPermission('personal_brand', 'personal_brand:read')).toBe(true)
+    expect(roleHasPermission('personal_brand', 'personal_brand:write')).toBe(true)
+    expect(roleHasPermission('personal_brand', 'personal_brand:ai')).toBe(true)
+    expect(roleHasPermission('personal_brand', 'dashboard:read')).toBe(true)
+
+    expect(roleHasPermission('personal_brand', 'analytics:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'waitlists:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'products:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'orders:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'media:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'team:read')).toBe(false)
+    expect(roleHasPermission('personal_brand', 'team:manage')).toBe(false)
+  })
+
+  it('no non-owner role has any personal_brand permission', () => {
+    const nonOwnerRoles = ADMIN_ROLES.filter((role) => role !== 'owner' && role !== 'personal_brand')
+    for (const role of nonOwnerRoles) {
+      expect(roleHasPermission(role, 'personal_brand:read')).toBe(false)
+      expect(roleHasPermission(role, 'personal_brand:write')).toBe(false)
+      expect(roleHasPermission(role, 'personal_brand:ai')).toBe(false)
+    }
+  })
 })

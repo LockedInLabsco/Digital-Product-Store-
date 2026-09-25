@@ -5,7 +5,7 @@
  * lib/admin/auth.ts for how a request's permissions are resolved.
  */
 
-export type AdminRole = 'owner' | 'developer' | 'social_media' | 'analyst'
+export type AdminRole = 'owner' | 'developer' | 'social_media' | 'analyst' | 'personal_brand'
 
 export type AdminStatus = 'active' | 'disabled'
 
@@ -26,6 +26,9 @@ export type AdminPermission =
   | 'team:manage'
   | 'settings:read'
   | 'settings:write'
+  | 'personal_brand:read'
+  | 'personal_brand:write'
+  | 'personal_brand:ai'
 
 /** Row shape of public.admin_users (email is denormalized onto the row
  * at invite-accept/bootstrap time — see getCurrentAdmin — so the team

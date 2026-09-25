@@ -23,6 +23,9 @@ export const ALL_PERMISSIONS: AdminPermission[] = [
   'team:manage',
   'settings:read',
   'settings:write',
+  'personal_brand:read',
+  'personal_brand:write',
+  'personal_brand:ai',
 ]
 
 /**
@@ -52,6 +55,12 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   social_media: ['dashboard:read', 'analytics:read', 'waitlists:read', 'media:read'],
 
   analyst: ['dashboard:read', 'analytics:read'],
+
+  // Scoped to just the Personal Brand workspace — dashboard:read is the
+  // one addition beyond personal_brand:* itself, needed only so this
+  // role can render the shared AdminShell top bar/Account page like
+  // every other role, not as access to the store dashboard's content.
+  personal_brand: ['dashboard:read', 'personal_brand:read', 'personal_brand:write', 'personal_brand:ai'],
 }
 
 export function permissionsForRole(role: AdminRole): AdminPermission[] {
@@ -62,11 +71,12 @@ export function roleHasPermission(role: AdminRole, permission: AdminPermission):
   return permissionsForRole(role).includes(permission)
 }
 
-export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst']
+export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst', 'personal_brand']
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   owner: 'Owner',
   developer: 'Developer',
   social_media: 'Social Media',
   analyst: 'Analyst',
+  personal_brand: 'Personal Brand',
 }
