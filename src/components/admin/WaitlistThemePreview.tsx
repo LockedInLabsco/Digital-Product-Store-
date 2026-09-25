@@ -1,15 +1,10 @@
-import { liquidGlassStyle, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
+import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 
 interface WaitlistThemePreviewProps {
   theme: WaitlistThemeColors
   headline: string
   supportingText: string
   buttonText: string
-  /** The standalone layout (currently SlowDay) renders as a two-card
-   * pairing — form + description — instead of the generic single
-   * centered column every other waitlist uses. Mirror whichever one is
-   * actually live so this preview never lies about the real page. */
-  isStandalone?: boolean
 }
 
 /**
@@ -25,62 +20,7 @@ export default function WaitlistThemePreview({
   headline,
   supportingText,
   buttonText,
-  isStandalone = false,
 }: WaitlistThemePreviewProps) {
-  const glassStyle = liquidGlassStyle(theme)
-
-  if (isStandalone) {
-    return (
-      <div
-        className="rounded-lg border border-admin-border p-6 sm:p-8"
-        style={{ backgroundColor: theme.background }}
-      >
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em]" style={{ color: theme.accent }}>
-          Preview — standalone layout
-        </p>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div
-            className="flex flex-col gap-2.5 rounded-xl border p-4 backdrop-blur-3xl"
-            style={glassStyle}
-          >
-            <div
-              className="rounded-sm border px-2.5 py-2 text-xs"
-              style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.secondaryText }}
-            >
-              you@example.com
-            </div>
-            <div
-              className="rounded-sm border px-2.5 py-2 text-xs"
-              style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.secondaryText }}
-            >
-              @yourusername
-            </div>
-            <button
-              type="button"
-              disabled
-              className="rounded-sm px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em]"
-              style={{ backgroundColor: theme.accent, color: theme.accentText }}
-            >
-              {buttonText || 'Join the waitlist'}
-            </button>
-          </div>
-
-          <div className="rounded-xl border p-4 backdrop-blur-3xl" style={glassStyle}>
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.18em]" style={{ color: theme.secondaryText }}>
-              Eyebrow
-            </p>
-            <h3 className="mt-2 text-lg font-semibold leading-snug" style={{ color: theme.text }}>
-              {headline || 'Your headline here.'}
-            </h3>
-            <p className="mt-1.5 text-xs leading-relaxed" style={{ color: theme.secondaryText }}>
-              {supportingText || 'Supporting text goes here.'}
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div
       className="rounded-lg border border-admin-border p-6 sm:p-8"

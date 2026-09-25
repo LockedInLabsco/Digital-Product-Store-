@@ -36,12 +36,13 @@ export interface WaitlistThemeConfig {
 }
 
 /**
- * Admin-uploaded screenshot URLs for the standalone SlowDay waitlist.
- * Not currently rendered on the public page (the standalone layout is a
- * simple two-card form/description pairing — see
- * components/waitlist/SlowdayHero.tsx) but the admin upload UI and this
- * data still exist for any future use. Any key can be absent. Unused
- * (but harmless) for a waitlist not on the standalone layout.
+ * Admin-uploaded screenshot URLs for the standalone layout's phone
+ * frames (see components/waitlist/Slowday{Hero,Preview}.tsx and
+ * lib/waitlist/slowdayContent.ts's SLOWDAY_SCREENS for the fixed
+ * home/focus/slowday/progress slots — resolveSlowdayScreens() merges
+ * these over the static placeholders). Any key can be absent, which just
+ * keeps that slot's placeholder frame. Unused (but harmless) for a
+ * waitlist not on the standalone layout.
  */
 export interface WaitlistScreenshots {
   home?: string

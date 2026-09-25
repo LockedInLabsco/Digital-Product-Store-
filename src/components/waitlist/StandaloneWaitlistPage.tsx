@@ -1,10 +1,15 @@
 import Container from '@/src/components/Container'
 import SlowdayHeader from './SlowdayHeader'
 import SlowdayHero from './SlowdayHero'
+import SlowdayAudience from './SlowdayAudience'
+import SlowdayProblemSection from './SlowdayProblemSection'
+import SlowdayPreview from './SlowdayPreview'
+import SlowdayHowItHelps from './SlowdayHowItHelps'
+import SlowdayFinalCta from './SlowdayFinalCta'
 import SlowdayFooter from './SlowdayFooter'
 import type { WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 import type { Waitlist } from '@/src/types/waitlist'
-import { SLOWDAY_DEFAULT_SUPPORTING_TEXT, SLOWDAY_EYEBROW } from '@/src/lib/waitlist/slowdayContent'
+import { SLOWDAY_DEFAULT_SUPPORTING_TEXT, SLOWDAY_EYEBROW, resolveSlowdayScreens } from '@/src/lib/waitlist/slowdayContent'
 
 const DEFAULT_BUTTON_TEXT = 'Join the waitlist'
 
@@ -22,10 +27,14 @@ interface StandaloneWaitlistPageProps {
  * keeps going through the existing generic Navbar/Footer/PublicWaitlistForm
  * layout in that same file, untouched.
  *
- * Deliberately minimal: a header, the two-card hero (waitlist form +
- * SlowDay description — see SlowdayHero), and a footer. No further
- * marketing sections below the fold. Headline/supporting text/button
- * text stay admin-editable (same waitlist row, same WaitlistForm).
+ * The hero doubles as the join section — signup form front and center at
+ * the top, screenshots beside it — so converting never requires
+ * scrolling. Problem-identity/who-it's-for/emotional-relevance/product/
+ * benefits content follows below for anyone who scrolls to learn more,
+ * closing with a final CTA that scrolls back up to the same form.
+ * Headline/supporting text/button text stay admin-editable (same
+ * waitlist row, same WaitlistForm); everything else is SlowDay-specific
+ * static copy (see lib/waitlist/slowdayContent.ts).
  */
 export default function StandaloneWaitlistPage({
   waitlist,
@@ -37,6 +46,7 @@ export default function StandaloneWaitlistPage({
   const supportingText = waitlist.supporting_text || waitlist.description || SLOWDAY_DEFAULT_SUPPORTING_TEXT
   const buttonText = waitlist.button_text || DEFAULT_BUTTON_TEXT
   const status = waitlist.status
+  const screens = resolveSlowdayScreens(waitlist.screenshots)
 
   if (status === 'draft') {
     return (
@@ -82,7 +92,13 @@ export default function StandaloneWaitlistPage({
           buttonText={buttonText}
           source={source}
           theme={theme}
+          screens={screens}
         />
+        <SlowdayAudience theme={theme} />
+        <SlowdayProblemSection theme={theme} />
+        <SlowdayPreview theme={theme} screens={screens} />
+        <SlowdayHowItHelps theme={theme} />
+        <SlowdayFinalCta theme={theme} />
       </main>
       <SlowdayFooter theme={theme} />
     </div>

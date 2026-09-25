@@ -287,33 +287,6 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export interface LiquidGlassStyle {
-  backgroundColor: string
-  backgroundImage: string
-  borderColor: string
-  boxShadow: string
-}
-
-/**
- * Shared "liquid glass" material recipe — dark, smoked glass (not a
- * white/frosted look): a mostly-black translucent surface with only a
- * faint corner glint and a barely-there top rim, just enough to read
- * as reflective glass without tinting the whole card white. Pair with
- * the `backdrop-blur-3xl` Tailwind class on the element for the actual
- * blur. Used by the SlowDay waitlist form panel + description card
- * (and their admin preview mockup) so all of them read as the same
- * physical material. `surfaceAlpha` controls how see-through it is.
- */
-export function liquidGlassStyle(theme: WaitlistThemeColors, surfaceAlpha = 0.42): LiquidGlassStyle {
-  return {
-    backgroundColor: `rgba(0, 0, 0, ${surfaceAlpha})`,
-    backgroundImage: 'radial-gradient(120% 120% at 15% -10%, rgba(255,255,255,0.06), rgba(255,255,255,0) 50%)',
-    borderColor: hexToRgba(theme.text, 0.16),
-    boxShadow:
-      'inset 0 1px 0 rgba(255,255,255,0.1), 0 30px 80px -24px rgba(0,0,0,0.8), 0 10px 26px -14px rgba(0,0,0,0.65)',
-  }
-}
-
 /** WCAG contrast ratio between two hex colors, from 1 (none) to 21 (max). */
 export function getContrastRatio(hexA: string, hexB: string): number {
   if (!isValidHexColor(hexA) || !isValidHexColor(hexB)) return 21

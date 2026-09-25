@@ -4,7 +4,7 @@ import { useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import Container from './Container'
 import { track } from '@/src/lib/analytics/events'
 import { validateWaitlistInput } from '@/src/lib/waitlist/validate'
-import { liquidGlassStyle, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
+import { hexToRgba, type WaitlistThemeColors } from '@/src/lib/waitlist/theme'
 
 type FieldErrors = Partial<Record<'email' | 'instagramUsername' | 'firstName', string>>
 
@@ -138,9 +138,13 @@ export default function PublicWaitlistForm({
   const headlineClass = headlineFont === 'sans' ? 'font-sans font-semibold' : 'font-serif'
   const radiusClass = panel ? 'rounded-xl' : 'rounded-sm'
   const fieldGapClass = panel ? 'gap-5' : 'gap-4'
-  const formStyle: CSSProperties | undefined = panel ? liquidGlassStyle(theme) : undefined
+  const formStyle: CSSProperties | undefined = panel
+    ? { backgroundColor: hexToRgba(theme.surface, 0.72), borderColor: theme.border }
+    : undefined
   const formClassName = `${embedded ? 'mt-0 w-full' : 'mx-auto mt-8 max-w-md'} flex flex-col ${fieldGapClass} text-left${
-    panel ? ' rounded-2xl border backdrop-blur-3xl p-6 sm:p-8' : ''
+    panel
+      ? ' rounded-2xl border p-6 backdrop-blur-xl shadow-[0_1px_1px_rgba(0,0,0,0.03),0_20px_45px_-24px_rgba(0,0,0,0.22)] sm:p-8'
+      : ''
   }`
   const Wrapper = embedded ? 'div' : Container
   const wrapperClassName = embedded ? 'w-full text-left' : 'mx-auto max-w-2xl text-center'
