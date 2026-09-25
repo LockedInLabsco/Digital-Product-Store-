@@ -57,8 +57,9 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<DetailTab>('entries')
-  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
   const [entryError, setEntryError] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const fetchAll = useCallback(async () => {
     try {
@@ -168,32 +169,6 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
     }
   }
 
-  const handleDeleteEntry = async (entry: WaitlistEntry) => {
-    if (!waitlist) return
-    const confirmed = window.confirm(
-      `Delete the lead for ${entry.email}? This cannot be undone.`
-    )
-    if (!confirmed) return
-
-    setDeletingEntryId(entry.id)
-    setEntryError('')
-    try {
-      const response = await fetch(`/api/admin/waitlists/${waitlist.id}/entries/${entry.id}`, {
-        method: 'DELETE',
-      })
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || 'Failed to delete lead')
-      }
-      setEntries((current) => current.filter((row) => row.id !== entry.id))
-      setWaitlist((current) => (current ? { ...current, entry_count: current.entry_count - 1 } : current))
-    } catch (err) {
-      setEntryError(err instanceof Error ? err.message : 'Failed to delete lead')
-    } finally {
-      setDeletingEntryId(null)
-    }
-  }
-
   const handleExportCsv = () => {
     if (!waitlist) return
     const rows: string[][] = [
@@ -220,7 +195,76 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
     )
   }, [entries, search])
 
+  const toggleSelectEntry = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allVisibleSelected =
+    filteredEntries.length > 0 && filteredEntries.every((entry) => selectedIds.has(entry.id))
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (allVisibleSelected) {
+        filteredEntries.forEach((entry) => next.delete(entry.id))
+      } else {
+        filteredEntries.forEach((entry) => next.add(entry.id))
+      }
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    if (!waitlist || selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+    const confirmed = window.confirm(
+      `Delete ${ids.length} lead${ids.length === 1 ? '' : 's'}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setIsBulkDeleting(true)
+    setEntryError('')
+    try {
+      const response = await fetch(`/api/admin/waitlists/${waitlist.id}/entries`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Failed to delete leads')
+
+      const deletedIds = new Set<string>(ids)
+      setEntries((current) => current.filter((row) => !deletedIds.has(row.id)))
+      setWaitlist((current) =>
+        current ? { ...current, entry_count: Math.max(0, current.entry_count - ids.length) } : current
+      )
+      setSelectedIds(new Set())
+    } catch (err) {
+      setEntryError(err instanceof Error ? err.message : 'Failed to delete leads')
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
+
   const columns: ColumnDef<WaitlistEntry>[] = [
+    {
+      key: 'select',
+      header: '',
+      accessor: (row) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(row.id)}
+          onChange={() => toggleSelectEntry(row.id)}
+          aria-label={`Select lead ${row.email}`}
+          className="h-4 w-4 rounded border-admin-border accent-admin-accent"
+        />
+      ),
+    },
     {
       key: 'first_name',
       header: 'First name',
@@ -259,21 +303,6 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
       header: 'Joined',
       accessor: (row) => formatDate(row.created_at),
       sortValue: (row) => new Date(row.created_at).getTime(),
-    },
-    {
-      key: 'actions',
-      header: '',
-      align: 'right',
-      accessor: (row) => (
-        <button
-          type="button"
-          onClick={() => handleDeleteEntry(row)}
-          disabled={deletingEntryId === row.id}
-          className="text-xs font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
-        >
-          {deletingEntryId === row.id ? 'Deleting...' : 'Delete'}
-        </button>
-      ),
     },
   ]
 
@@ -399,6 +428,7 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                         <h3 className="text-xl font-bold">Leads</h3>
                         <p className="text-sm text-admin-muted">
                           {filteredEntries.length} of {entries.length} shown
+                          {selectedIds.size > 0 && ` · ${selectedIds.size} selected`}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-3">
@@ -409,6 +439,17 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                           placeholder="Search email, Instagram, or name"
                           className="px-4 py-2 border border-admin-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-admin-accent w-64 max-w-full"
                         />
+                        {selectedIds.size > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleBulkDelete}
+                            disabled={isBulkDeleting}
+                            className="border-red-800 text-red-400 hover:border-red-600 hover:bg-red-950/30"
+                          >
+                            {isBulkDeleting ? 'Deleting...' : `Delete selected (${selectedIds.size})`}
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={entries.length === 0}>
                           Export CSV
                         </Button>
@@ -416,6 +457,17 @@ export default function WaitlistDetailClient({ params }: { params: { id: string 
                     </div>
 
                     <div className="bg-admin-surface rounded-lg border border-admin-border p-4">
+                      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-admin-border">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={toggleSelectAllVisible}
+                          disabled={filteredEntries.length === 0}
+                          aria-label="Select all shown leads"
+                          className="h-4 w-4 rounded border-admin-border accent-admin-accent"
+                        />
+                        <label className="text-sm text-admin-muted">Select all shown</label>
+                      </div>
                       <SortableTable
                         columns={columns}
                         rows={filteredEntries}
