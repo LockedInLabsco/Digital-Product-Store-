@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ADMIN_ROLES, ALL_PERMISSIONS, roleHasPermission } from './permissions'
+import { ADMIN_ROLES, ALL_PERMISSIONS, permissionsForRoles, roleHasPermission } from './permissions'
 
 describe('roleHasPermission', () => {
   it('grants owner every permission that exists', () => {
@@ -71,5 +71,37 @@ describe('roleHasPermission', () => {
       expect(roleHasPermission(role, 'personal_brand:write')).toBe(false)
       expect(roleHasPermission(role, 'personal_brand:ai')).toBe(false)
     }
+  })
+})
+
+describe('permissionsForRoles', () => {
+  it('unions permissions across every held role', () => {
+    const combined = permissionsForRoles(['social_media', 'analyst'])
+    // personal_brand:write comes only from social_media; analytics:read is shared by both.
+    expect(combined).toEqual(expect.arrayContaining(['personal_brand:write', 'analytics:read']))
+    expect(roleHasPermission('analyst', 'personal_brand:write')).toBe(false)
+  })
+
+  it('a single role in the array behaves the same as roleHasPermission', () => {
+    const combined = permissionsForRoles(['developer'])
+    expect(combined).toEqual(expect.arrayContaining(['waitlists:write', 'products:write', 'media:write']))
+    expect(combined).not.toContain('team:manage')
+  })
+
+  it('owner combined with anything still has every permission', () => {
+    const combined = permissionsForRoles(['owner', 'analyst'])
+    for (const permission of ALL_PERMISSIONS) {
+      expect(combined).toContain(permission)
+    }
+  })
+
+  it('returns no duplicate permissions when roles overlap', () => {
+    const combined = permissionsForRoles(['social_media', 'personal_brand'])
+    const unique = new Set(combined)
+    expect(combined.length).toBe(unique.size)
+  })
+
+  it('returns an empty list for an empty roles array', () => {
+    expect(permissionsForRoles([])).toEqual([])
   })
 })

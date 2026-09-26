@@ -84,6 +84,22 @@ export function roleHasPermission(role: AdminRole, permission: AdminPermission):
   return permissionsForRole(role).includes(permission)
 }
 
+/**
+ * The union of every permission across all roles an admin holds — an
+ * admin with ['social_media', 'analyst'] gets everything either role
+ * grants, not just one of them. This is the only permission resolution
+ * used for a real admin (see toCurrentAdmin in lib/admin/auth.ts); the
+ * single-role helpers above stay for testing one role's own grants in
+ * isolation.
+ */
+export function permissionsForRoles(roles: AdminRole[]): AdminPermission[] {
+  const combined = new Set<AdminPermission>()
+  for (const role of roles) {
+    for (const permission of permissionsForRole(role)) combined.add(permission)
+  }
+  return Array.from(combined)
+}
+
 export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst', 'personal_brand']
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {

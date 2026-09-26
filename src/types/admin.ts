@@ -32,12 +32,15 @@ export type AdminPermission =
 
 /** Row shape of public.admin_users (email is denormalized onto the row
  * at invite-accept/bootstrap time — see getCurrentAdmin — so the team
- * page never needs a separate privileged auth.users lookup to list it). */
+ * page never needs a separate privileged auth.users lookup to list it).
+ * `roles` holds one or more roles (e.g. ['owner', 'social_media']) —
+ * permissions are the union of every role held, see
+ * lib/admin/permissions.ts's permissionsForRoles(). Always non-empty. */
 export interface AdminUser {
   id: string
   user_id: string
   email: string
-  role: AdminRole
+  roles: AdminRole[]
   status: AdminStatus
   invited_by: string | null
   created_at: string
@@ -50,7 +53,7 @@ export type AdminInviteStatus = 'pending' | 'accepted' | 'revoked'
 export interface AdminInvite {
   id: string
   email: string
-  role: AdminRole
+  roles: AdminRole[]
   status: AdminInviteStatus
   invited_by: string | null
   created_at: string
@@ -67,6 +70,6 @@ export interface CurrentAdmin {
     id: string
     email: string
   }
-  role: AdminRole
+  roles: AdminRole[]
   permissions: AdminPermission[]
 }

@@ -6,6 +6,15 @@ import type { AdminRole } from '@/src/types/admin'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** Validates a roles payload: must be an array, every entry a known
+ * AdminRole, at least one, no duplicates. */
+function parseRoles(value: unknown): AdminRole[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null
+  const unique = Array.from(new Set(value))
+  if (unique.some((r) => !ADMIN_ROLES.includes(r as AdminRole))) return null
+  return unique as AdminRole[]
+}
+
 // GET: list active/disabled members + pending invites
 export async function GET() {
   const auth = await requirePermission('team:read')
@@ -49,13 +58,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-    const role = body.role as AdminRole
+    const roles = parseRoles(body.roles)
 
     if (!email || !EMAIL_PATTERN.test(email)) {
       return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
     }
-    if (!ADMIN_ROLES.includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (!roles) {
+      return NextResponse.json({ error: 'Select at least one valid role' }, { status: 400 })
     }
 
     const { data: existingMember } = await supabaseServer
@@ -79,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     const { data: invite, error: insertError } = await supabaseServer
       .from('admin_invites')
-      .insert({ email, role, status: 'pending', invited_by: inviterRow?.id ?? null })
+      .insert({ email, roles, status: 'pending', invited_by: inviterRow?.id ?? null })
       .select()
       .maybeSingle()
 

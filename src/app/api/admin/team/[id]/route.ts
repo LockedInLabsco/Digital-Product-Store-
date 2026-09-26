@@ -7,6 +7,15 @@ import type { AdminRole, AdminStatus } from '@/src/types/admin'
 
 const STATUS_VALUES: AdminStatus[] = ['active', 'disabled']
 
+/** Validates a roles payload: must be an array, every entry a known
+ * AdminRole, at least one, no duplicates. */
+function parseRoles(value: unknown): AdminRole[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null
+  const unique = Array.from(new Set(value))
+  if (unique.some((r) => !ADMIN_ROLES.includes(r as AdminRole))) return null
+  return unique as AdminRole[]
+}
+
 // PATCH: change role and/or status. Only team:manage. Guards against
 // ever leaving zero active owners.
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
@@ -17,13 +26,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
   try {
     const body = await request.json().catch(() => ({}))
-    const updates: { role?: AdminRole; status?: AdminStatus } = {}
+    const updates: { roles?: AdminRole[]; status?: AdminStatus } = {}
 
-    if (body.role !== undefined) {
-      if (!ADMIN_ROLES.includes(body.role)) {
-        return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (body.roles !== undefined) {
+      const roles = parseRoles(body.roles)
+      if (!roles) {
+        return NextResponse.json({ error: 'Select at least one valid role' }, { status: 400 })
       }
-      updates.role = body.role
+      updates.roles = roles
     }
 
     if (body.status !== undefined) {
@@ -38,7 +48,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     // Would this leave the team with zero active owners?
-    const demotesFromOwner = updates.role !== undefined && updates.role !== 'owner'
+    const demotesFromOwner = updates.roles !== undefined && !updates.roles.includes('owner')
     const disables = updates.status === 'disabled'
     if ((demotesFromOwner || disables) && (await isLastActiveOwner(params.id))) {
       return NextResponse.json(

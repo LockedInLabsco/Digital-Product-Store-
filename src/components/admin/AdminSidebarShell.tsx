@@ -54,7 +54,7 @@ export interface AdminNavItem {
 interface AdminSidebarShellProps {
   navItems: AdminNavItem[]
   email: string
-  roleLabel: string
+  roleLabels: string[]
   children: React.ReactNode
 }
 
@@ -67,7 +67,7 @@ interface AdminSidebarShellProps {
  * filtering of `navItems` happens server-side in AdminShell before this
  * ever renders, since hasPermission() lives in a server-only module.
  */
-export default function AdminSidebarShell({ navItems, email, roleLabel, children }: AdminSidebarShellProps) {
+export default function AdminSidebarShell({ navItems, email, roleLabels, children }: AdminSidebarShellProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -153,8 +153,14 @@ export default function AdminSidebarShell({ navItems, email, roleLabel, children
           <Link href="/admin/account" className="block truncate text-sm text-admin-muted hover:text-admin-text" title={email}>
             {email}
           </Link>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-admin-muted">{roleLabel}</span>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-1">
+              {roleLabels.map((label) => (
+                <span key={label} className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-admin-muted">
+                  {label}
+                </span>
+              ))}
+            </div>
             <SignOutButton />
           </div>
         </div>

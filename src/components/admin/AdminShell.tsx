@@ -34,9 +34,10 @@ const NAV_ITEMS: NavItem[] = [
  */
 export default function AdminShell({ admin, children }: { admin: CurrentAdmin; children: React.ReactNode }) {
   const visibleNavItems = NAV_ITEMS.filter((item) => hasPermission(admin, item.permission))
+  const roleLabels = admin.roles.map((role) => ADMIN_ROLE_LABELS[role])
 
   return (
-    <AdminSidebarShell navItems={visibleNavItems} email={admin.user.email} roleLabel={ADMIN_ROLE_LABELS[admin.role]}>
+    <AdminSidebarShell navItems={visibleNavItems} email={admin.user.email} roleLabels={roleLabels}>
       {children}
     </AdminSidebarShell>
   )

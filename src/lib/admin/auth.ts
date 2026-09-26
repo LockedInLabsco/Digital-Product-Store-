@@ -2,14 +2,14 @@ import 'server-only'
 import { cache } from 'react'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { getSupabaseUser } from '@/src/lib/supabase/auth'
-import { permissionsForRole } from './permissions'
+import { permissionsForRoles } from './permissions'
 import type { AdminPermission, AdminRole, AdminStatus, CurrentAdmin } from '@/src/types/admin'
 
 interface AdminUserRow {
   id: string
   user_id: string
   email: string
-  role: AdminRole
+  roles: AdminRole[]
   status: AdminStatus
   invited_by: string | null
 }
@@ -17,8 +17,8 @@ interface AdminUserRow {
 function toCurrentAdmin(row: AdminUserRow): CurrentAdmin {
   return {
     user: { id: row.user_id, email: row.email },
-    role: row.role,
-    permissions: permissionsForRole(row.role),
+    roles: row.roles,
+    permissions: permissionsForRoles(row.roles),
   }
 }
 
@@ -43,7 +43,7 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
 
   const { data: existing, error: lookupError } = await supabaseServer
     .from('admin_users')
-    .select('id, user_id, email, role, status, invited_by')
+    .select('id, user_id, email, roles, status, invited_by')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -70,8 +70,8 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
   if (bootstrapEmail && bootstrapEmail === email) {
     const { data: created, error: insertError } = await supabaseServer
       .from('admin_users')
-      .insert({ user_id: user.id, email, role: 'owner', status: 'active', invited_by: null })
-      .select('id, user_id, email, role, status, invited_by')
+      .insert({ user_id: user.id, email, roles: ['owner'], status: 'active', invited_by: null })
+      .select('id, user_id, email, roles, status, invited_by')
       .maybeSingle()
 
     if (created) return toCurrentAdmin(created as AdminUserRow)
@@ -82,7 +82,7 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
     if (insertError) {
       const { data: retry } = await supabaseServer
         .from('admin_users')
-        .select('id, user_id, email, role, status, invited_by')
+        .select('id, user_id, email, roles, status, invited_by')
         .eq('user_id', user.id)
         .maybeSingle()
       if (retry) return retry.status === 'active' ? toCurrentAdmin(retry as AdminUserRow) : null
@@ -97,7 +97,7 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
   // the match.
   const { data: invite } = await supabaseServer
     .from('admin_invites')
-    .select('id, email, role, invited_by')
+    .select('id, email, roles, invited_by')
     .eq('status', 'pending')
     .eq('email', email)
     .gt('expires_at', new Date().toISOString())
@@ -106,8 +106,8 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
   if (invite) {
     const { data: created } = await supabaseServer
       .from('admin_users')
-      .insert({ user_id: user.id, email, role: invite.role, status: 'active', invited_by: invite.invited_by })
-      .select('id, user_id, email, role, status, invited_by')
+      .insert({ user_id: user.id, email, roles: invite.roles, status: 'active', invited_by: invite.invited_by })
+      .select('id, user_id, email, roles, status, invited_by')
       .maybeSingle()
 
     if (created) {

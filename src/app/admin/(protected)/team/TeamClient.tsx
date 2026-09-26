@@ -17,6 +17,42 @@ const STATUS_STYLES: Record<string, string> = {
   disabled: 'bg-red-950/40 text-red-400',
 }
 
+/** Toggleable role chips — a person can hold more than one role at once
+ * (e.g. Founder + Social Media), so this is a multi-select, never a
+ * dropdown that can only hold one value. */
+function RoleChips({
+  selected,
+  onToggle,
+  disabled,
+}: {
+  selected: AdminRole[]
+  onToggle: (role: AdminRole) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {ADMIN_ROLES.map((role) => {
+        const isSelected = selected.includes(role)
+        return (
+          <button
+            key={role}
+            type="button"
+            disabled={disabled}
+            onClick={() => onToggle(role)}
+            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+              isSelected
+                ? 'border-admin-accent bg-admin-accent text-admin-accentText'
+                : 'border-admin-border text-admin-muted hover:border-admin-faint hover:text-admin-text'
+            }`}
+          >
+            {ADMIN_ROLE_LABELS[role]}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function TeamClient({ canManage }: { canManage: boolean }) {
   const router = useRouter()
   const [members, setMembers] = useState<AdminUser[]>([])
@@ -25,7 +61,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<AdminRole>('analyst')
+  const [inviteRoles, setInviteRoles] = useState<AdminRole[]>(['analyst'])
   const [isInviting, setIsInviting] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -58,20 +94,28 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
     load()
   }, [load])
 
+  const toggleInviteRole = (role: AdminRole) => {
+    setInviteRoles((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]))
+  }
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (inviteRoles.length === 0) {
+      setError('Select at least one role')
+      return
+    }
     setIsInviting(true)
     setError('')
     try {
       const response = await fetch('/api/admin/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        body: JSON.stringify({ email: inviteEmail, roles: inviteRoles }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to send invite')
       setInviteEmail('')
-      setInviteRole('analyst')
+      setInviteRoles(['analyst'])
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send invite')
@@ -80,20 +124,25 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
     }
   }
 
-  const handleRoleChange = async (id: string, role: AdminRole) => {
-    setBusyId(id)
+  const handleToggleMemberRole = async (member: AdminUser, role: AdminRole) => {
+    const nextRoles = member.roles.includes(role) ? member.roles.filter((r) => r !== role) : [...member.roles, role]
+    if (nextRoles.length === 0) {
+      setError('A team member needs at least one role')
+      return
+    }
+    setBusyId(member.id)
     setError('')
     try {
-      const response = await fetch(`/api/admin/team/${id}`, {
+      const response = await fetch(`/api/admin/team/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ roles: nextRoles }),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Failed to change role')
+      if (!response.ok) throw new Error(data.error || 'Failed to change roles')
       await load()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change role')
+      setError(err instanceof Error ? err.message : 'Failed to change roles')
     } finally {
       setBusyId(null)
     }
@@ -155,7 +204,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
         <div className="max-w-4xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Team</h2>
-            <p className="text-admin-muted">Manage who has access to this admin workspace</p>
+            <p className="text-admin-muted">Manage who has access to this admin workspace — a person can hold more than one role.</p>
           </div>
 
           {error && (
@@ -165,9 +214,9 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
           {canManage && (
             <form
               onSubmit={handleInvite}
-              className="mb-10 flex flex-col gap-3 rounded-lg border border-admin-border bg-admin-surface p-5 sm:flex-row sm:items-end"
+              className="mb-10 flex flex-col gap-4 rounded-lg border border-admin-border bg-admin-surface p-5"
             >
-              <div className="flex-1">
+              <div>
                 <label htmlFor="invite-email" className="block text-sm font-medium mb-2">
                   Invite by email
                 </label>
@@ -178,29 +227,18 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="teammate@example.com"
-                  className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
+                  className="w-full max-w-sm px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent"
                 />
               </div>
               <div>
-                <label htmlFor="invite-role" className="block text-sm font-medium mb-2">
-                  Role
-                </label>
-                <select
-                  id="invite-role"
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as AdminRole)}
-                  className="w-full px-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-accent sm:w-48"
-                >
-                  {ADMIN_ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {ADMIN_ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
+                <p className="mb-2 text-sm font-medium">Roles</p>
+                <RoleChips selected={inviteRoles} onToggle={toggleInviteRole} />
               </div>
-              <Button type="submit" disabled={isInviting} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
-                {isInviting ? 'Sending…' : 'Invite member'}
-              </Button>
+              <div>
+                <Button type="submit" disabled={isInviting} className="bg-admin-accent text-admin-accentText hover:bg-admin-accentHover">
+                  {isInviting ? 'Sending…' : 'Invite member'}
+                </Button>
+              </div>
             </form>
           )}
 
@@ -215,7 +253,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                   <thead>
                     <tr className="border-b border-admin-border">
                       <th className="text-left py-3 px-4 font-semibold text-sm">Email</th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Roles</th>
                       <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
                       <th className="text-left py-3 px-4 font-semibold text-sm">Joined</th>
                       {canManage && <th className="text-left py-3 px-4 font-semibold text-sm">Actions</th>}
@@ -231,20 +269,13 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                           </td>
                           <td className="py-3 px-4 text-sm">
                             {canManage ? (
-                              <select
-                                value={member.role}
+                              <RoleChips
+                                selected={member.roles}
+                                onToggle={(role) => handleToggleMemberRole(member, role)}
                                 disabled={busyId === member.id}
-                                onChange={(e) => handleRoleChange(member.id, e.target.value as AdminRole)}
-                                className="rounded border border-admin-border px-2 py-1 text-sm disabled:opacity-50"
-                              >
-                                {ADMIN_ROLES.map((role) => (
-                                  <option key={role} value={role}>
-                                    {ADMIN_ROLE_LABELS[role]}
-                                  </option>
-                                ))}
-                              </select>
+                              />
                             ) : (
-                              ADMIN_ROLE_LABELS[member.role]
+                              member.roles.map((r) => ADMIN_ROLE_LABELS[r]).join(', ')
                             )}
                           </td>
                           <td className="py-3 px-4">
@@ -292,7 +323,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                       <thead>
                         <tr className="border-b border-admin-border">
                           <th className="text-left py-3 px-4 font-semibold text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Roles</th>
                           <th className="text-left py-3 px-4 font-semibold text-sm">Invited</th>
                           <th className="text-left py-3 px-4 font-semibold text-sm">Expires</th>
                           {canManage && <th className="text-left py-3 px-4 font-semibold text-sm">Actions</th>}
@@ -302,7 +333,7 @@ export default function TeamClient({ canManage }: { canManage: boolean }) {
                         {invites.map((invite) => (
                           <tr key={invite.id} className="border-b border-admin-border">
                             <td className="py-3 px-4 text-sm">{invite.email}</td>
-                            <td className="py-3 px-4 text-sm">{ADMIN_ROLE_LABELS[invite.role]}</td>
+                            <td className="py-3 px-4 text-sm">{invite.roles.map((r) => ADMIN_ROLE_LABELS[r]).join(', ')}</td>
                             <td className="py-3 px-4 text-sm text-admin-muted">{formatDate(invite.created_at)}</td>
                             <td className="py-3 px-4 text-sm text-admin-muted">{formatDate(invite.expires_at)}</td>
                             {canManage && (
