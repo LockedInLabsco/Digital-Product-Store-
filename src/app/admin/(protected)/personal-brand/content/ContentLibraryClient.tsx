@@ -103,6 +103,12 @@ export default function ContentLibraryClient() {
       sortValue: (row) => (row.posted_at ? new Date(row.posted_at).getTime() : 0),
     },
     {
+      key: 'audio_used',
+      header: 'Audio',
+      accessor: (row) => row.audio_used || '—',
+      sortValue: (row) => row.audio_used || '',
+    },
+    {
       key: 'views',
       header: 'Views',
       accessor: (row) => row.latest_metric?.views?.toLocaleString() ?? '—',
@@ -110,10 +116,31 @@ export default function ContentLibraryClient() {
       align: 'right',
     },
     {
+      key: 'likes',
+      header: 'Likes',
+      accessor: (row) => row.latest_metric?.likes?.toLocaleString() ?? '—',
+      sortValue: (row) => row.latest_metric?.likes ?? -1,
+      align: 'right',
+    },
+    {
       key: 'engagement_rate',
       header: 'Engagement',
       accessor: (row) => (row.latest_metric ? formatRate(calculateRates(row.latest_metric).engagementRate) : '—'),
       sortValue: (row) => (row.latest_metric ? calculateRates(row.latest_metric).engagementRate ?? -1 : -1),
+      align: 'right',
+    },
+    {
+      key: 'comment_rate',
+      header: 'Comment rate',
+      accessor: (row) => (row.latest_metric ? formatRate(calculateRates(row.latest_metric).commentRate) : '—'),
+      sortValue: (row) => (row.latest_metric ? calculateRates(row.latest_metric).commentRate ?? -1 : -1),
+      align: 'right',
+    },
+    {
+      key: 'follow_conversion',
+      header: 'Follow rate',
+      accessor: (row) => (row.latest_metric ? formatRate(calculateRates(row.latest_metric).followConversion) : '—'),
+      sortValue: (row) => (row.latest_metric ? calculateRates(row.latest_metric).followConversion ?? -1 : -1),
       align: 'right',
     },
   ]

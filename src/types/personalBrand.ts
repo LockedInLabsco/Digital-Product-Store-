@@ -50,6 +50,7 @@ export interface PbContentItem {
   content_pillar: string | null
   goal: string | null
   format_id: string | null
+  audio_used: string | null
   duration_seconds: number | null
   posted_at: string | null
   platform_url: string | null

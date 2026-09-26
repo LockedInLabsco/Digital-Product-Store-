@@ -197,9 +197,11 @@ export default function ContentDetailClient({ contentId }: { contentId: string }
               </div>
             ) : (
               <>
-                <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                   <StatCard label="Views" value={latest.views?.toLocaleString() ?? '—'} unavailable={latest.views === null} />
+                  <StatCard label="Likes" value={latest.likes?.toLocaleString() ?? '—'} unavailable={latest.likes === null} />
                   <StatCard label="Engagement rate" value={formatRate(rates?.engagementRate ?? null)} unavailable={rates?.engagementRate === null} />
+                  <StatCard label="Comment rate" value={formatRate(rates?.commentRate ?? null)} unavailable={rates?.commentRate === null} />
                   <StatCard label="Save rate" value={formatRate(rates?.saveRate ?? null)} unavailable={rates?.saveRate === null} />
                   <StatCard label="Follow conversion" value={formatRate(rates?.followConversion ?? null)} unavailable={rates?.followConversion === null} />
                 </div>
@@ -230,6 +232,7 @@ export default function ContentDetailClient({ contentId }: { contentId: string }
                         <th className="px-3 py-2 text-left font-semibold">Recorded</th>
                         <th className="px-3 py-2 text-right font-semibold">Views</th>
                         <th className="px-3 py-2 text-right font-semibold">Likes</th>
+                        <th className="px-3 py-2 text-right font-semibold">Comments</th>
                         <th className="px-3 py-2 text-right font-semibold">Saves</th>
                         <th className="px-3 py-2 text-right font-semibold">Followers</th>
                         <th className="px-3 py-2 text-right font-semibold">Engagement</th>
@@ -244,6 +247,7 @@ export default function ContentDetailClient({ contentId }: { contentId: string }
                             <td className="px-3 py-2">{new Date(m.recorded_at).toLocaleString()}</td>
                             <td className="px-3 py-2 text-right">{m.views?.toLocaleString() ?? '—'}</td>
                             <td className="px-3 py-2 text-right">{m.likes?.toLocaleString() ?? '—'}</td>
+                            <td className="px-3 py-2 text-right">{m.comments?.toLocaleString() ?? '—'}</td>
                             <td className="px-3 py-2 text-right">{m.saves?.toLocaleString() ?? '—'}</td>
                             <td className="px-3 py-2 text-right">{m.followers_gained?.toLocaleString() ?? '—'}</td>
                             <td className="px-3 py-2 text-right">{formatRate(r.engagementRate)}</td>
@@ -290,6 +294,7 @@ export default function ContentDetailClient({ contentId }: { contentId: string }
                 content_pillar: content.content_pillar || '',
                 goal: content.goal || '',
                 format_id: content.format_id || '',
+                audio_used: content.audio_used || '',
                 duration_seconds: content.duration_seconds?.toString() || '',
                 posted_at: toDatetimeLocal(content.posted_at),
                 platform_url: content.platform_url || '',

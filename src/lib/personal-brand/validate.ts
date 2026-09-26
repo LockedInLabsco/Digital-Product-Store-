@@ -33,6 +33,7 @@ export interface ContentItemInput {
   content_pillar: string | null
   goal: string | null
   format_id: string | null
+  audio_used: string | null
   duration_seconds: number | null
   posted_at: string | null
   platform_url: string | null
@@ -147,6 +148,8 @@ export function validateContentItemInput(body: Record<string, unknown>): Validat
   if (contentPillar.error) return { error: contentPillar.error }
   const goal = optionalShortText(body.goal, 'Goal')
   if (goal.error) return { error: goal.error }
+  const audioUsed = optionalShortText(body.audio_used, 'Audio used')
+  if (audioUsed.error) return { error: audioUsed.error }
   const notes = optionalLongText(body.notes, 'Notes')
   if (notes.error) return { error: notes.error }
   const formatId = optionalId(body.format_id, 'Format')
@@ -177,6 +180,7 @@ export function validateContentItemInput(body: Record<string, unknown>): Validat
       content_pillar: contentPillar.value ?? null,
       goal: goal.value ?? null,
       format_id: formatId.value ?? null,
+      audio_used: audioUsed.value ?? null,
       duration_seconds: duration.value ?? null,
       posted_at: postedAt.value ?? null,
       platform_url: platformUrl.value ?? null,

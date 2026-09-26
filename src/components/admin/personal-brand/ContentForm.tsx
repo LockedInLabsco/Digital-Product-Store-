@@ -26,6 +26,7 @@ export interface ContentFormData {
   content_pillar: string
   goal: string
   format_id: string
+  audio_used: string
   duration_seconds: string
   posted_at: string
   platform_url: string
@@ -61,6 +62,7 @@ export default function ContentForm({ initialData, formats, onSubmit, isLoading,
     content_pillar: initialData?.content_pillar || '',
     goal: initialData?.goal || '',
     format_id: initialData?.format_id || '',
+    audio_used: initialData?.audio_used || '',
     duration_seconds: initialData?.duration_seconds || '',
     posted_at: initialData?.posted_at || '',
     platform_url: initialData?.platform_url || '',
@@ -160,6 +162,19 @@ export default function ContentForm({ initialData, formats, onSubmit, isLoading,
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label htmlFor="audio_used" className={labelClass}>
+              Audio / sound used
+            </label>
+            <input
+              id="audio_used"
+              name="audio_used"
+              value={formData.audio_used}
+              onChange={handleChange}
+              className={inputClass}
+              placeholder="e.g. original audio, or the trending sound's name"
+            />
           </div>
           <div>
             <label htmlFor="duration_seconds" className={labelClass}>
