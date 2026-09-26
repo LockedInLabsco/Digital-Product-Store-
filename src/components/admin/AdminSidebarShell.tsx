@@ -80,33 +80,39 @@ export default function AdminSidebarShell({ navItems, email, roleLabel, children
 
   return (
     <div className="min-h-screen bg-admin-bg lg:flex">
-      {/* Mobile top bar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-admin-border bg-admin-surface px-4 py-3 lg:hidden">
-        <Link href="/admin" className="text-lg font-bold">
-          NOT4NORMAL
-        </Link>
+      {/* Mobile top bar — menu button on the left, opening a left-side
+          drawer, so the gesture direction matches where the panel appears
+          (the old layout had the button on the right, which opened left —
+          Notion/Gmail-style mobile nav puts the trigger on the same side). */}
+      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-admin-border/60 bg-admin-surface/80 px-4 py-3 backdrop-blur-xl lg:hidden">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="rounded p-1.5 text-admin-text hover:bg-admin-surface2"
+          className="rounded-lg p-1.5 text-admin-text hover:bg-admin-surface2"
           aria-label="Open navigation"
         >
           <Menu size={22} />
         </button>
+        <Link href="/admin" className="text-lg font-bold">
+          NOT4NORMAL
+        </Link>
       </div>
 
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — a frosted dark panel (translucent surface + blur +
+          soft shadow), the same "liquid glass" language used elsewhere in
+          the app, kept in the admin's black/white palette rather than
+          Apple's usual light-glass look. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-admin-border bg-admin-surface transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-admin-border/60 bg-admin-surface/80 backdrop-blur-xl shadow-[1px_0_0_rgba(255,255,255,0.03),20px_0_45px_-24px_rgba(0,0,0,0.6)] transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -133,7 +139,7 @@ export default function AdminSidebarShell({ navItems, email, roleLabel, children
                 key={item.href}
                 href={item.href}
                 className={`mb-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active ? 'bg-admin-surface2 text-admin-text' : 'text-admin-muted hover:bg-admin-surface2 hover:text-admin-text'
+                  active ? 'bg-white/10 text-admin-text' : 'text-admin-muted hover:bg-white/5 hover:text-admin-text'
                 }`}
               >
                 <Icon size={18} className={active ? 'text-admin-text' : 'text-admin-faint'} />
@@ -143,12 +149,12 @@ export default function AdminSidebarShell({ navItems, email, roleLabel, children
           })}
         </nav>
 
-        <div className="border-t border-admin-border px-5 py-4">
+        <div className="border-t border-admin-border/60 px-5 py-4">
           <Link href="/admin/account" className="block truncate text-sm text-admin-muted hover:text-admin-text" title={email}>
             {email}
           </Link>
           <div className="mt-2 flex items-center justify-between">
-            <span className="rounded-full bg-admin-surface2 px-3 py-1 text-xs font-medium text-admin-muted">{roleLabel}</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-admin-muted">{roleLabel}</span>
             <SignOutButton />
           </div>
         </div>
