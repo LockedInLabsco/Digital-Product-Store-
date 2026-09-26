@@ -23,6 +23,9 @@ export default function ContentLibraryClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | PbContentStatus>('all')
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState('')
+  const [syncError, setSyncError] = useState('')
 
   useEffect(() => {
     load()
@@ -54,6 +57,34 @@ export default function ContentLibraryClient() {
       setError(err instanceof Error ? err.message : 'Failed to load content')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleInstagramSync = async () => {
+    setIsSyncing(true)
+    setSyncMessage('')
+    setSyncError('')
+    try {
+      const response = await fetch('/api/admin/personal-brand/content/instagram-sync', { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to sync from Instagram')
+
+      if (data.message) {
+        setSyncMessage(data.message)
+      } else {
+        const results: { matched: boolean; inserted: boolean }[] = data.results || []
+        const inserted = results.filter((r) => r.inserted).length
+        const unmatched = results.filter((r) => !r.matched).length
+        setSyncMessage(
+          `Synced ${inserted} post${inserted === 1 ? '' : 's'}` +
+            (unmatched > 0 ? ` — ${unmatched} post${unmatched === 1 ? '' : 's'} couldn't be matched to Instagram` : '')
+        )
+      }
+      await load()
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : 'Failed to sync from Instagram')
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -156,10 +187,24 @@ export default function ContentLibraryClient() {
               <h2 className="mb-2 text-3xl font-bold">Content Library</h2>
               <p className="text-admin-muted">Everything you&apos;ve posted or planned, in one place.</p>
             </div>
-            <Link href="/admin/personal-brand/content/new">
-              <Button>+ Add Content</Button>
-            </Link>
+            <div className="flex gap-3">
+              <Button onClick={handleInstagramSync} disabled={isSyncing} variant="secondary">
+                {isSyncing ? 'Syncing…' : 'Sync from Instagram'}
+              </Button>
+              <Link href="/admin/personal-brand/content/new">
+                <Button>+ Add Content</Button>
+              </Link>
+            </div>
           </div>
+
+          {syncMessage && (
+            <div className="mb-6 rounded-lg border border-admin-border bg-admin-surface2 p-4 text-sm text-admin-muted">
+              {syncMessage}
+            </div>
+          )}
+          {syncError && (
+            <div className="mb-6 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">{syncError}</div>
+          )}
 
           <div className="mb-6 flex gap-1 text-sm">
             {STATUS_FILTERS.map((s) => (

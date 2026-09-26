@@ -52,14 +52,27 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'hero_slider:write',
   ],
 
-  social_media: ['dashboard:read', 'analytics:read', 'waitlists:read', 'media:read'],
+  // Owns the Personal Brand Content OS day-to-day, alongside its
+  // existing store-side scope (waitlists/media read, analytics) — this
+  // is the role that actually logs content and runs the Instagram sync,
+  // not the owner account.
+  social_media: [
+    'dashboard:read',
+    'analytics:read',
+    'waitlists:read',
+    'media:read',
+    'personal_brand:read',
+    'personal_brand:write',
+    'personal_brand:ai',
+  ],
 
   analyst: ['dashboard:read', 'analytics:read'],
 
-  // Scoped to just the Personal Brand workspace — dashboard:read is the
-  // one addition beyond personal_brand:* itself, needed only so this
-  // role can render the shared AdminShell top bar/Account page like
-  // every other role, not as access to the store dashboard's content.
+  // Scoped to just the Personal Brand workspace — for a person who
+  // should see nothing else in the admin. dashboard:read is the one
+  // addition beyond personal_brand:* itself, needed only so this role
+  // can render the shared AdminShell top bar/Account page like every
+  // other role, not as access to the store dashboard's content.
   personal_brand: ['dashboard:read', 'personal_brand:read', 'personal_brand:write', 'personal_brand:ai'],
 }
 
@@ -74,7 +87,7 @@ export function roleHasPermission(role: AdminRole, permission: AdminPermission):
 export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst', 'personal_brand']
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
-  owner: 'Owner',
+  owner: 'Founder',
   developer: 'Developer',
   social_media: 'Social Media',
   analyst: 'Analyst',

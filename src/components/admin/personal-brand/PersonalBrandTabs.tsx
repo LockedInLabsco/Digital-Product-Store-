@@ -10,6 +10,7 @@ const TABS = [
   { href: '/admin/personal-brand/ideas', label: 'Ideas' },
   { href: '/admin/personal-brand/experiments', label: 'Experiments' },
   { href: '/admin/personal-brand/planner', label: 'AI Planner' },
+  { href: '/admin/personal-brand/automations', label: 'DM Automations' },
 ]
 
 /**
