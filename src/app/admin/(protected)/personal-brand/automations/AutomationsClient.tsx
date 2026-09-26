@@ -22,9 +22,18 @@ const TRIGGER_LABELS: Record<string, string> = {
   story_reply: 'Story reply',
 }
 
-function FollowupForm({ nextStep, onAdd }: { nextStep: number; onAdd: (delayHours: number, message: string) => Promise<void> }) {
+interface FollowupFormValues {
+  delayHours: number
+  message: string
+  buttonUrl: string | null
+  buttonLabel: string | null
+}
+
+function FollowupForm({ nextStep, onAdd }: { nextStep: number; onAdd: (values: FollowupFormValues) => Promise<void> }) {
   const [delayHours, setDelayHours] = useState('24')
   const [message, setMessage] = useState('')
+  const [buttonUrl, setButtonUrl] = useState('')
+  const [buttonLabel, setButtonLabel] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,11 +43,19 @@ function FollowupForm({ nextStep, onAdd }: { nextStep: number; onAdd: (delayHour
     const hours = Number(delayHours)
     if (!Number.isFinite(hours) || hours <= 0) return setError('Delay hours must be a positive number')
     if (!message.trim()) return setError('Message is required')
+    if (Boolean(buttonUrl.trim()) !== Boolean(buttonLabel.trim())) return setError('A button needs both a URL and a label')
     setIsSaving(true)
     try {
-      await onAdd(hours, message.trim())
+      await onAdd({
+        delayHours: hours,
+        message: message.trim(),
+        buttonUrl: buttonUrl.trim() || null,
+        buttonLabel: buttonLabel.trim() || null,
+      })
       setMessage('')
       setDelayHours('24')
+      setButtonUrl('')
+      setButtonLabel('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add follow-up')
     } finally {
@@ -47,31 +64,53 @@ function FollowupForm({ nextStep, onAdd }: { nextStep: number; onAdd: (delayHour
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-2 rounded border border-admin-border bg-admin-bg p-3 sm:flex-row sm:items-start">
-      {error && <p className="text-xs text-red-400 sm:hidden">{error}</p>}
-      <div className="w-24 shrink-0">
-        <label className="mb-1 block text-xs text-admin-muted">Step {nextStep} · hours after</label>
-        <input
-          type="number"
-          min={1}
-          value={delayHours}
-          onChange={(e) => setDelayHours(e.target.value)}
-          className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
-        />
+    <form onSubmit={handleSubmit} className="mt-2 space-y-2 rounded border border-admin-border bg-admin-bg p-3">
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+        <div className="w-24 shrink-0">
+          <label className="mb-1 block text-xs text-admin-muted">Step {nextStep} · hours after</label>
+          <input
+            type="number"
+            min={1}
+            value={delayHours}
+            onChange={(e) => setDelayHours(e.target.value)}
+            className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1 block text-xs text-admin-muted">Follow-up message</label>
+          <input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
+            placeholder="Just checking you saw this — any questions?"
+          />
+        </div>
       </div>
-      <div className="flex-1">
-        <label className="mb-1 block text-xs text-admin-muted">Follow-up message</label>
-        <input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
-          placeholder="Just checking you saw this — any questions?"
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1 block text-xs text-admin-muted">Button URL (optional)</label>
+          <input
+            value={buttonUrl}
+            onChange={(e) => setButtonUrl(e.target.value)}
+            className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
+            placeholder="https://..."
+          />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1 block text-xs text-admin-muted">Button label (max 20 chars)</label>
+          <input
+            value={buttonLabel}
+            onChange={(e) => setButtonLabel(e.target.value)}
+            maxLength={20}
+            className="w-full rounded border border-admin-border bg-transparent px-2 py-1 text-sm"
+            placeholder="Click me"
+          />
+        </div>
+        <Button type="submit" size="sm" variant="secondary" disabled={isSaving}>
+          {isSaving ? 'Adding…' : '+ Add step'}
+        </Button>
       </div>
-      <Button type="submit" size="sm" variant="secondary" disabled={isSaving} className="sm:mt-5">
-        {isSaving ? 'Adding…' : '+ Add step'}
-      </Button>
-      {error && <p className="hidden text-xs text-red-400 sm:block">{error}</p>}
     </form>
   )
 }
@@ -125,7 +164,12 @@ export default function AutomationsClient() {
       const response = await fetch('/api/admin/personal-brand/automations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, keyword: data.keyword || null }),
+        body: JSON.stringify({
+          ...data,
+          keyword: data.keyword || null,
+          button_url: data.button_url || null,
+          button_label: data.button_label || null,
+        }),
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to create automation rule')
@@ -148,6 +192,8 @@ export default function AutomationsClient() {
           keyword: rule.keyword,
           match_type: rule.match_type,
           reply_message: rule.reply_message,
+          button_url: rule.button_url,
+          button_label: rule.button_label,
           is_active: !rule.is_active,
         }),
       })
@@ -174,12 +220,18 @@ export default function AutomationsClient() {
     }
   }
 
-  const handleAddFollowup = async (rule: RuleRow, delayHours: number, message: string) => {
+  const handleAddFollowup = async (rule: RuleRow, values: FollowupFormValues) => {
     const nextStep = rule.followups.length + 1
     const response = await fetch(`/api/admin/personal-brand/automations/${rule.id}/followups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ step_order: nextStep, delay_hours: delayHours, message }),
+      body: JSON.stringify({
+        step_order: nextStep,
+        delay_hours: values.delayHours,
+        message: values.message,
+        button_url: values.buttonUrl,
+        button_label: values.buttonLabel,
+      }),
     })
     const result = await response.json()
     if (!response.ok) throw new Error(result.error || 'Failed to add follow-up')
@@ -257,6 +309,11 @@ export default function AutomationsClient() {
                       )}
                     </p>
                     <p className="mt-2 text-sm">{rule.reply_message}</p>
+                    {rule.button_url && (
+                      <p className="mt-1 text-xs text-admin-muted">
+                        Button: <strong className="text-admin-text">{rule.button_label}</strong> → {rule.button_url}
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 gap-3">
                     <button
@@ -286,6 +343,12 @@ export default function AutomationsClient() {
                         <li key={f.id} className="flex items-center justify-between gap-4 rounded border border-admin-border bg-admin-bg px-3 py-2 text-sm">
                           <span>
                             <strong>Step {f.step_order}</strong> · {f.delay_hours}h after previous · {f.message}
+                            {f.button_url && (
+                              <>
+                                {' '}
+                                · button <strong>{f.button_label}</strong>
+                              </>
+                            )}
                           </span>
                           <button
                             onClick={() => handleDeleteFollowup(rule, f.id)}
@@ -298,10 +361,7 @@ export default function AutomationsClient() {
                       ))}
                     </ul>
                   )}
-                  <FollowupForm
-                    nextStep={rule.followups.length + 1}
-                    onAdd={(delayHours, message) => handleAddFollowup(rule, delayHours, message)}
-                  />
+                  <FollowupForm nextStep={rule.followups.length + 1} onAdd={(values) => handleAddFollowup(rule, values)} />
                 </div>
               </div>
             ))}

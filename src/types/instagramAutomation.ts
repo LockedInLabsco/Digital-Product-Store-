@@ -19,6 +19,10 @@ export interface IgAutomationRule {
   keyword: string | null
   match_type: IgMatchType
   reply_message: string
+  /** Optional call-to-action button (Instagram's Button Template) shown
+   * under `reply_message`. Both null together means a plain text reply. */
+  button_url: string | null
+  button_label: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -30,6 +34,8 @@ export interface IgAutomationFollowup {
   step_order: number
   delay_hours: number
   message: string
+  button_url: string | null
+  button_label: string | null
   created_at: string
 }
 

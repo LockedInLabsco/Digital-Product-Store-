@@ -10,6 +10,8 @@ export interface AutomationRuleFormData {
   keyword: string
   match_type: IgMatchType
   reply_message: string
+  button_url: string
+  button_label: string
   is_active: boolean
 }
 
@@ -19,6 +21,8 @@ const EMPTY: AutomationRuleFormData = {
   keyword: '',
   match_type: 'contains',
   reply_message: '',
+  button_url: '',
+  button_label: '',
   is_active: true,
 }
 
@@ -57,6 +61,9 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
     if (!formData.reply_message.trim()) return setError('Reply message is required')
     if (formData.trigger_type !== 'story_reply' && !formData.keyword.trim()) {
       return setError('Keyword is required for this trigger type')
+    }
+    if (Boolean(formData.button_url.trim()) !== Boolean(formData.button_label.trim())) {
+      return setError('A button needs both a URL and a label')
     }
     try {
       await onSubmit(formData)
@@ -141,6 +148,40 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
           placeholder="Thanks for commenting! Here's the link: ..."
           required
         />
+      </div>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor="button_url" className={labelClass}>
+            Button URL (optional)
+          </label>
+          <input
+            id="button_url"
+            name="button_url"
+            value={formData.button_url}
+            onChange={handleChange}
+            className={inputClass}
+            placeholder="https://..."
+          />
+        </div>
+        <div>
+          <label htmlFor="button_label" className={labelClass}>
+            Button label (max 20 characters)
+          </label>
+          <input
+            id="button_label"
+            name="button_label"
+            value={formData.button_label}
+            onChange={handleChange}
+            maxLength={20}
+            className={inputClass}
+            placeholder="Click me"
+          />
+        </div>
+        <p className="text-xs text-admin-muted sm:col-span-2">
+          Leave both blank to send plain text. Fill both in to show a tappable button under the message instead of a
+          raw link.
+        </p>
       </div>
 
       <div className="mb-4 flex items-center gap-2">

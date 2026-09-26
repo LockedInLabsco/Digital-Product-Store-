@@ -8,7 +8,13 @@
 - **Story reply** — someone replies to your Story → auto-reply.
 
 Each rule can also have an ordered **follow-up sequence** (e.g. "24
-hours later, send this reminder"). This replaces the free tier of a
+hours later, send this reminder"), and either the initial reply or any
+follow-up step can attach a tappable **button** (e.g. "Click me") that
+opens a link, instead of pasting a raw URL into the message text — set
+both a Button URL and Button label to enable it (max 20 characters for
+the label, and the message must be 640 characters or fewer once a
+button is attached — both are Meta's own hard limits on this message
+type, not house rules). This replaces the free tier of a
 third-party tool (Superprofile, ManyChat, etc.) with the same official
 mechanism those tools themselves sit on top of — Meta's Instagram
 Messaging API and Private Replies.

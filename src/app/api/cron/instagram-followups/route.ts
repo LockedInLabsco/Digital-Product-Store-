@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
       continue
     }
 
-    const result = await sendDirectMessage(run.recipient_ig_id, step.message)
+    const button = step.button_url && step.button_label ? { url: step.button_url, label: step.button_label } : null
+    const result = await sendDirectMessage(run.recipient_ig_id, step.message, button)
 
     if (!result.ok) {
       failed++

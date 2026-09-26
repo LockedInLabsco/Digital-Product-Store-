@@ -60,10 +60,12 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     return
   }
 
+  const button = rule.button_url && rule.button_label ? { url: rule.button_url, label: rule.button_label } : null
+
   const sendResult =
     event.sourceType === 'comment'
-      ? await sendPrivateReplyToComment(event.sourceId, rule.reply_message)
-      : await sendDirectMessage(event.recipientIgId, rule.reply_message)
+      ? await sendPrivateReplyToComment(event.sourceId, rule.reply_message, button)
+      : await sendDirectMessage(event.recipientIgId, rule.reply_message, button)
 
   if (!sendResult.ok) {
     await supabaseServer

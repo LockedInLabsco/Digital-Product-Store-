@@ -2,10 +2,53 @@ import { IG_MATCH_TYPES, IG_TRIGGER_TYPES, type IgMatchType, type IgTriggerType 
 
 const MAX_SHORT_TEXT = 300
 const MAX_MESSAGE_LENGTH = 1000
+// Instagram's Button Template caps the text shown above the button at
+// 640 characters and the button's own label at 20 — both hard limits
+// Meta enforces, not house rules, so a message that would fit as plain
+// text can still be rejected once a button is attached.
+const MAX_BUTTON_TEMPLATE_TEXT = 640
+const MAX_BUTTON_LABEL = 20
 
 export interface ValidationResult<T> {
   value?: T
   error?: string
+}
+
+interface ButtonFields {
+  button_url: string | null
+  button_label: string | null
+}
+
+/**
+ * Validates the optional call-to-action button. Both fields must be
+ * present together or both absent — a button with no URL, or a URL with
+ * no label, is never a valid message to send. Returns the tightened
+ * message-length limit to apply when a button is present, since Meta's
+ * Button Template caps the text differently than a plain-text message.
+ */
+function validateButtonFields(body: Record<string, unknown>, messageLength: number): ValidationResult<ButtonFields> {
+  const hasUrl = typeof body.button_url === 'string' && body.button_url.trim() !== ''
+  const hasLabel = typeof body.button_label === 'string' && body.button_label.trim() !== ''
+
+  if (!hasUrl && !hasLabel) return { value: { button_url: null, button_label: null } }
+  if (!hasUrl || !hasLabel) return { error: 'A button needs both a URL and a label' }
+
+  const url = (body.button_url as string).trim()
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return { error: 'Button URL must start with https://' }
+  } catch {
+    return { error: 'Button URL is not a valid URL' }
+  }
+
+  const label = (body.button_label as string).trim()
+  if (label.length > MAX_BUTTON_LABEL) return { error: `Button label must be ${MAX_BUTTON_LABEL} characters or fewer` }
+
+  if (messageLength > MAX_BUTTON_TEMPLATE_TEXT) {
+    return { error: `Message must be ${MAX_BUTTON_TEMPLATE_TEXT} characters or fewer when a button is attached` }
+  }
+
+  return { value: { button_url: url, button_label: label } }
 }
 
 export interface AutomationRuleInput {
@@ -14,6 +57,8 @@ export interface AutomationRuleInput {
   keyword: string | null
   match_type: IgMatchType
   reply_message: string
+  button_url: string | null
+  button_label: string | null
   is_active: boolean
 }
 
@@ -51,6 +96,9 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
     return { error: `Reply message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }
   }
 
+  const button = validateButtonFields(body, replyMessage.length)
+  if (button.error || !button.value) return { error: button.error }
+
   const isActive = body.is_active !== false
 
   return {
@@ -60,6 +108,8 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
       keyword,
       match_type: matchType as IgMatchType,
       reply_message: replyMessage,
+      button_url: button.value.button_url,
+      button_label: button.value.button_label,
       is_active: isActive,
     },
   }
@@ -69,6 +119,8 @@ export interface AutomationFollowupInput {
   step_order: number
   delay_hours: number
   message: string
+  button_url: string | null
+  button_label: string | null
 }
 
 export function validateAutomationFollowupInput(body: Record<string, unknown>): ValidationResult<AutomationFollowupInput> {
@@ -86,5 +138,16 @@ export function validateAutomationFollowupInput(body: Record<string, unknown>): 
   if (!message) return { error: 'Message is required' }
   if (message.length > MAX_MESSAGE_LENGTH) return { error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }
 
-  return { value: { step_order: stepOrder, delay_hours: delayHours, message } }
+  const button = validateButtonFields(body, message.length)
+  if (button.error || !button.value) return { error: button.error }
+
+  return {
+    value: {
+      step_order: stepOrder,
+      delay_hours: delayHours,
+      message,
+      button_url: button.value.button_url,
+      button_label: button.value.button_label,
+    },
+  }
 }

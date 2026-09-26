@@ -150,6 +150,33 @@ export async function fetchMediaInsights(mediaId: string): Promise<InstagramMedi
   }
 }
 
+export interface MessageButton {
+  url: string
+  label: string
+}
+
+/**
+ * Builds the message payload: plain `{ text }` with no button, or
+ * Instagram's Button Template (a text body plus one tappable "web_url"
+ * button) when one is attached. Callers pass `button` as `null` rather
+ * than omitting it, so it's always explicit whether a button was meant
+ * to be there.
+ */
+function buildMessagePayload(text: string, button: MessageButton | null) {
+  if (!button) return { text }
+
+  return {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'button',
+        text,
+        buttons: [{ type: 'web_url', url: button.url, title: button.label }],
+      },
+    },
+  }
+}
+
 /**
  * Sends a Private Reply in response to a public comment — the one
  * mechanism Meta allows for turning a comment into a DM. Must be sent
@@ -158,7 +185,11 @@ export async function fetchMediaInsights(mediaId: string): Promise<InstagramMedi
  * since src/lib/instagram/automations.ts de-dupes by comment id before
  * this is ever called).
  */
-export async function sendPrivateReplyToComment(commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {
+export async function sendPrivateReplyToComment(
+  commentId: string,
+  message: string,
+  button: MessageButton | null = null
+): Promise<InstagramResult<{ id: string }>> {
   const accountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
   if (!accountId) {
     return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
@@ -166,7 +197,7 @@ export async function sendPrivateReplyToComment(commentId: string, message: stri
 
   return graphPost(`${accountId}/messages`, {
     recipient: { comment_id: commentId },
-    message: { text: message },
+    message: buildMessagePayload(message, button),
   })
 }
 
@@ -180,7 +211,11 @@ export async function sendPrivateReplyToComment(commentId: string, message: stri
  * an ordinary `{ ok: false }` result rather than throwing, so the
  * follow-up cron can record it on the run and move on.
  */
-export async function sendDirectMessage(recipientIgId: string, message: string): Promise<InstagramResult<{ id: string }>> {
+export async function sendDirectMessage(
+  recipientIgId: string,
+  message: string,
+  button: MessageButton | null = null
+): Promise<InstagramResult<{ id: string }>> {
   const accountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
   if (!accountId) {
     return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
@@ -188,6 +223,6 @@ export async function sendDirectMessage(recipientIgId: string, message: string):
 
   return graphPost(`${accountId}/messages`, {
     recipient: { id: recipientIgId },
-    message: { text: message },
+    message: buildMessagePayload(message, button),
   })
 }
