@@ -5,7 +5,7 @@
  * lib/admin/auth.ts for how a request's permissions are resolved.
  */
 
-export type AdminRole = 'owner' | 'developer' | 'social_media' | 'analyst' | 'personal_brand'
+export type AdminRole = 'owner' | 'developer' | 'social_media' | 'analyst'
 
 export type AdminStatus = 'active' | 'disabled'
 

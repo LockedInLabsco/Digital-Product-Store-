@@ -49,23 +49,8 @@ describe('roleHasPermission', () => {
     }
   })
 
-  it('scopes personal_brand to only its own permissions plus dashboard read', () => {
-    expect(roleHasPermission('personal_brand', 'personal_brand:read')).toBe(true)
-    expect(roleHasPermission('personal_brand', 'personal_brand:write')).toBe(true)
-    expect(roleHasPermission('personal_brand', 'personal_brand:ai')).toBe(true)
-    expect(roleHasPermission('personal_brand', 'dashboard:read')).toBe(true)
-
-    expect(roleHasPermission('personal_brand', 'analytics:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'waitlists:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'products:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'orders:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'media:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'team:read')).toBe(false)
-    expect(roleHasPermission('personal_brand', 'team:manage')).toBe(false)
-  })
-
   it('no other role has any personal_brand permission', () => {
-    const otherRoles = ADMIN_ROLES.filter((role) => !['owner', 'personal_brand', 'social_media'].includes(role))
+    const otherRoles = ADMIN_ROLES.filter((role) => !['owner', 'social_media'].includes(role))
     for (const role of otherRoles) {
       expect(roleHasPermission(role, 'personal_brand:read')).toBe(false)
       expect(roleHasPermission(role, 'personal_brand:write')).toBe(false)
@@ -96,7 +81,7 @@ describe('permissionsForRoles', () => {
   })
 
   it('returns no duplicate permissions when roles overlap', () => {
-    const combined = permissionsForRoles(['social_media', 'personal_brand'])
+    const combined = permissionsForRoles(['social_media', 'analyst'])
     const unique = new Set(combined)
     expect(combined.length).toBe(unique.size)
   })

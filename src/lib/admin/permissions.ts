@@ -67,13 +67,6 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   ],
 
   analyst: ['dashboard:read', 'analytics:read'],
-
-  // Scoped to just the Personal Brand workspace — for a person who
-  // should see nothing else in the admin. dashboard:read is the one
-  // addition beyond personal_brand:* itself, needed only so this role
-  // can render the shared AdminShell top bar/Account page like every
-  // other role, not as access to the store dashboard's content.
-  personal_brand: ['dashboard:read', 'personal_brand:read', 'personal_brand:write', 'personal_brand:ai'],
 }
 
 export function permissionsForRole(role: AdminRole): AdminPermission[] {
@@ -100,12 +93,11 @@ export function permissionsForRoles(roles: AdminRole[]): AdminPermission[] {
   return Array.from(combined)
 }
 
-export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst', 'personal_brand']
+export const ADMIN_ROLES: AdminRole[] = ['owner', 'developer', 'social_media', 'analyst']
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   owner: 'Founder',
   developer: 'Developer',
   social_media: 'Social Media',
   analyst: 'Analyst',
-  personal_brand: 'Personal Brand',
 }
