@@ -374,7 +374,7 @@ export default function AnalyticsClient() {
           <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             <h3 className="mb-3 text-sm font-semibold text-admin-muted">Revenue over time</h3>
             <MiniChart
-              color="#16a34a"
+              color="#008300"
               ariaLabel="Revenue over time"
               formatValue={(v) => formatCurrency(v)}
               data={(overview.data?.timeSeries || []).map((p: any) => ({ label: p.date, value: p.revenue }))}
@@ -383,7 +383,7 @@ export default function AnalyticsClient() {
           <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             <h3 className="mb-3 text-sm font-semibold text-admin-muted">Downloads over time</h3>
             <MiniChart
-              color="#a855f7"
+              color="#9085e9"
               ariaLabel="Free downloads over time"
               data={(overview.data?.timeSeries || []).map((p: any) => ({ label: p.date, value: p.downloads }))}
             />
@@ -391,7 +391,7 @@ export default function AnalyticsClient() {
           <div className="rounded-lg border border-admin-border bg-admin-surface p-5">
             <h3 className="mb-3 text-sm font-semibold text-admin-muted">Purchases over time</h3>
             <MiniChart
-              color="#f59e0b"
+              color="#c98500"
               ariaLabel="Purchases over time"
               data={(overview.data?.timeSeries || []).map((p: any) => ({ label: p.date, value: p.purchases }))}
             />

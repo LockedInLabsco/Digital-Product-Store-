@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode, useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 
 export interface ColumnDef<T> {
   key: string
@@ -19,6 +20,20 @@ interface SortableTableProps<T> {
   emptyMessage?: string
   defaultSortKey?: string
   defaultSortDirection?: 'asc' | 'desc'
+}
+
+function LoadingSkeleton({ columnCount }: { columnCount: number }) {
+  return (
+    <div className="animate-pulse space-y-2 py-1">
+      {Array.from({ length: 5 }).map((_, row) => (
+        <div key={row} className="flex gap-4 border-b border-admin-border px-3 py-3 last:border-0">
+          {Array.from({ length: columnCount }).map((_, col) => (
+            <div key={col} className="h-4 flex-1 rounded bg-admin-surface2" style={{ maxWidth: col === 0 ? '40%' : undefined }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function SortableTable<T>({
@@ -60,17 +75,17 @@ export default function SortableTable<T>({
 
   if (error) {
     return (
-      <div className="rounded border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">{error}</div>
+      <div className="rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-400">{error}</div>
     )
   }
 
   if (isLoading) {
-    return <div className="py-8 text-center text-sm text-admin-muted">Loading…</div>
+    return <LoadingSkeleton columnCount={columns.length} />
   }
 
   if (rows.length === 0) {
     return (
-      <div className="rounded border border-admin-border py-8 text-center text-sm text-admin-muted">
+      <div className="rounded-lg border border-admin-border py-10 text-center text-sm text-admin-muted">
         {emptyMessage}
       </div>
     )
@@ -80,11 +95,11 @@ export default function SortableTable<T>({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-admin-border">
+          <tr className="border-b border-admin-border bg-admin-surface2/60">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={`whitespace-nowrap px-3 py-2 font-semibold ${
+                className={`whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-muted ${
                   col.align === 'right' ? 'text-right' : 'text-left'
                 }`}
               >
@@ -92,11 +107,17 @@ export default function SortableTable<T>({
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="inline-flex items-center gap-1 hover:text-admin-text"
+                    className={`inline-flex items-center gap-1 hover:text-admin-text ${col.align === 'right' ? 'flex-row-reverse' : ''}`}
                   >
                     {col.header}
-                    {sortKey === col.key && (
-                      <span aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    {sortKey === col.key ? (
+                      sortDirection === 'asc' ? (
+                        <ChevronUp size={13} aria-hidden="true" />
+                      ) : (
+                        <ChevronDown size={13} aria-hidden="true" />
+                      )
+                    ) : (
+                      <ChevronsUpDown size={13} className="text-admin-faint" aria-hidden="true" />
                     )}
                   </button>
                 ) : (
@@ -108,11 +129,11 @@ export default function SortableTable<T>({
         </thead>
         <tbody>
           {sortedRows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-admin-border hover:bg-admin-surface2">
+            <tr key={rowKey(row)} className="border-b border-admin-border transition-colors last:border-0 hover:bg-admin-surface2">
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={`whitespace-nowrap px-3 py-2 ${col.align === 'right' ? 'text-right' : ''}`}
+                  className={`whitespace-nowrap px-4 py-3 ${col.align === 'right' ? 'text-right tabular-nums' : ''}`}
                 >
                   {col.accessor(row)}
                 </td>
