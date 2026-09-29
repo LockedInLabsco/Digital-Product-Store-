@@ -71,6 +71,17 @@ export default function InstagramMediaPicker({ value, onChange }: InstagramMedia
                 <p className="text-xs capitalize text-admin-muted">
                   {selected.content_type} · {selected.posted_at ? new Date(selected.posted_at).toLocaleDateString() : 'unknown date'}
                 </p>
+                <p className="mt-0.5 truncate text-[11px] text-admin-muted">
+                  <span className="font-mono">{selected.id}</span>
+                  {selected.permalink && (
+                    <>
+                      {' · '}
+                      <a href={selected.permalink} target="_blank" rel="noopener noreferrer" className="text-admin-accent hover:underline">
+                        View on Instagram ↗
+                      </a>
+                    </>
+                  )}
+                </p>
               </div>
               <button type="button" onClick={() => setIsPicking(true)} className="shrink-0 text-xs font-medium text-admin-accent">
                 Change
@@ -80,7 +91,10 @@ export default function InstagramMediaPicker({ value, onChange }: InstagramMedia
 
           {value && !selected && !isPicking && !isLoading && (
             <div className="flex items-center justify-between gap-3 text-sm text-admin-muted">
-              <span>Selected post not found in your synced Instagram media (it may have been deleted).</span>
+              <span>
+                Selected post not found in your synced Instagram media (it may have been deleted). Stored id:{' '}
+                <span className="font-mono">{value}</span>
+              </span>
               <button type="button" onClick={() => setIsPicking(true)} className="shrink-0 text-xs font-medium text-admin-accent">
                 Change
               </button>

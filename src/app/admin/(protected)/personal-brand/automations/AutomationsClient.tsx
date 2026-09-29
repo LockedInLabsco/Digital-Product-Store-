@@ -122,6 +122,7 @@ export default function AutomationsClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -175,6 +176,44 @@ export default function AutomationsClient() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to create automation rule')
       setShowForm(false)
+      await load()
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const toFormData = (rule: RuleRow): AutomationRuleFormData => ({
+    name: rule.name,
+    trigger_type: rule.trigger_type,
+    keyword: rule.keyword || '',
+    match_type: rule.match_type,
+    reply_message: rule.reply_message,
+    button_url: rule.button_url || '',
+    button_label: rule.button_label || '',
+    instagram_media_id: rule.instagram_media_id,
+    is_active: rule.is_active,
+  })
+
+  // PUT to the existing rule id — always an in-place update, never a
+  // delete+recreate, so the rule's id, created_at, follow-up sequence,
+  // and run history all stay attached to the same row.
+  const handleUpdate = async (ruleId: string, data: AutomationRuleFormData) => {
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/admin/personal-brand/automations/${ruleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          keyword: data.keyword || null,
+          button_url: data.button_url || null,
+          button_label: data.button_label || null,
+          instagram_media_id: data.instagram_media_id || null,
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to update automation rule')
+      setEditingRuleId(null)
       await load()
     } finally {
       setIsSaving(false)
@@ -301,42 +340,78 @@ export default function AutomationsClient() {
                         {rule.is_active ? 'Active' : 'Paused'}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-admin-muted">
-                      {rule.keyword ? (
-                        <>
-                          Keyword: <strong className="text-admin-text">{rule.keyword}</strong> ({rule.match_type})
-                        </>
-                      ) : (
-                        'Matches any text'
-                      )}
-                      {rule.trigger_type === 'comment_keyword' && (
-                        <> · {rule.instagram_media_id ? 'One specific post/reel' : 'Any post'}</>
-                      )}
-                    </p>
-                    <p className="mt-2 text-sm">{rule.reply_message}</p>
-                    {rule.button_url && (
-                      <p className="mt-1 text-xs text-admin-muted">
-                        Button: <strong className="text-admin-text">{rule.button_label}</strong> → {rule.button_url}
-                      </p>
+                    {editingRuleId !== rule.id && (
+                      <>
+                        <p className="mt-1 text-sm text-admin-muted">
+                          {rule.keyword ? (
+                            <>
+                              Keyword: <strong className="text-admin-text">{rule.keyword}</strong> ({rule.match_type})
+                            </>
+                          ) : (
+                            'Matches any text'
+                          )}
+                          {rule.trigger_type === 'comment_keyword' && (
+                            <>
+                              {' '}
+                              ·{' '}
+                              {rule.instagram_media_id ? (
+                                <>
+                                  one specific post/reel (<span className="font-mono">{rule.instagram_media_id}</span>)
+                                </>
+                              ) : (
+                                'any post'
+                              )}
+                            </>
+                          )}
+                        </p>
+                        <p className="mt-2 text-sm">{rule.reply_message}</p>
+                        {rule.button_url && (
+                          <p className="mt-1 text-xs text-admin-muted">
+                            Button: <strong className="text-admin-text">{rule.button_label}</strong> → {rule.button_url}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                   <div className="flex shrink-0 gap-3">
-                    <button
-                      onClick={() => handleToggleActive(rule)}
-                      disabled={busyId === rule.id}
-                      className="text-sm font-medium text-admin-text hover:text-admin-muted disabled:opacity-50"
-                    >
-                      {rule.is_active ? 'Pause' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteRule(rule)}
-                      disabled={busyId === rule.id}
-                      className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
-                    >
-                      Delete
-                    </button>
+                    {editingRuleId !== rule.id && (
+                      <>
+                        <button
+                          onClick={() => setEditingRuleId(rule.id)}
+                          className="text-sm font-medium text-admin-text hover:text-admin-muted"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(rule)}
+                          disabled={busyId === rule.id}
+                          className="text-sm font-medium text-admin-text hover:text-admin-muted disabled:opacity-50"
+                        >
+                          {rule.is_active ? 'Pause' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRule(rule)}
+                          disabled={busyId === rule.id}
+                          className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
+
+                {editingRuleId === rule.id && (
+                  <div className="mb-4">
+                    <AutomationRuleForm
+                      initialData={toFormData(rule)}
+                      onSubmit={(data) => handleUpdate(rule.id, data)}
+                      onCancel={() => setEditingRuleId(null)}
+                      isLoading={isSaving}
+                      submitLabel="Save changes"
+                    />
+                  </div>
+                )}
 
                 <div className="mt-4 border-t border-admin-border pt-4">
                   <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-admin-muted">Follow-up sequence</h4>
