@@ -16,6 +16,12 @@ import {
   Settings,
   Menu,
   X,
+  FileText,
+  Trophy,
+  Lightbulb,
+  FlaskConical,
+  CalendarClock,
+  Send,
   type LucideIcon,
 } from 'lucide-react'
 import SignOutButton from './SignOutButton'
@@ -31,6 +37,12 @@ export type AdminNavIconKey =
   | 'personal_brand'
   | 'team'
   | 'account'
+  | 'content'
+  | 'formats'
+  | 'ideas'
+  | 'experiments'
+  | 'planner'
+  | 'automations'
 
 const ICONS: Record<AdminNavIconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -43,6 +55,12 @@ const ICONS: Record<AdminNavIconKey, LucideIcon> = {
   personal_brand: Sparkles,
   team: Users,
   account: Settings,
+  content: FileText,
+  formats: Trophy,
+  ideas: Lightbulb,
+  experiments: FlaskConical,
+  planner: CalendarClock,
+  automations: Send,
 }
 
 export interface AdminNavItem {

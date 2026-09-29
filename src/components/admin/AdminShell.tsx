@@ -1,6 +1,7 @@
 import { hasPermission } from '@/src/lib/admin/auth'
 import { ADMIN_ROLE_LABELS } from '@/src/lib/admin/permissions'
 import AdminSidebarShell, { type AdminNavItem } from './AdminSidebarShell'
+import { PersonalBrandNavProvider } from './PersonalBrandNavContext'
 import type { AdminPermission, CurrentAdmin } from '@/src/types/admin'
 
 interface NavItem extends AdminNavItem {
@@ -20,6 +21,23 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/account', label: 'Account', permission: 'dashboard:read', icon: 'account' },
 ]
 
+// The focused workspace for an admin whose ONLY role is social_media —
+// the same Personal Brand pages the "Personal Brand" section above links
+// to, just surfaced directly instead of behind one general-admin entry.
+// An admin holding social_media alongside another role (e.g. owner)
+// still gets the regular NAV_ITEMS above, since that other role's own
+// nav items must stay reachable too.
+const PERSONAL_BRAND_NAV_ITEMS: NavItem[] = [
+  { href: '/admin/personal-brand', label: 'Dashboard', permission: 'personal_brand:read', icon: 'dashboard' },
+  { href: '/admin/personal-brand/content', label: 'Content', permission: 'personal_brand:read', icon: 'content' },
+  { href: '/admin/personal-brand/formats', label: 'Winning Formats', permission: 'personal_brand:read', icon: 'formats' },
+  { href: '/admin/personal-brand/ideas', label: 'Ideas', permission: 'personal_brand:read', icon: 'ideas' },
+  { href: '/admin/personal-brand/experiments', label: 'Experiments', permission: 'personal_brand:read', icon: 'experiments' },
+  { href: '/admin/personal-brand/planner', label: 'AI Planner', permission: 'personal_brand:read', icon: 'planner' },
+  { href: '/admin/personal-brand/automations', label: 'DM Automations', permission: 'personal_brand:read', icon: 'automations' },
+  { href: '/admin/account', label: 'Account', permission: 'dashboard:read', icon: 'account' },
+]
+
 /**
  * The one shared admin shell — permission-filtered navigation, current
  * account, sign-out, content area, rendered as a persistent sidebar (see
@@ -33,12 +51,14 @@ const NAV_ITEMS: NavItem[] = [
  * relied on as the actual access control.
  */
 export default function AdminShell({ admin, children }: { admin: CurrentAdmin; children: React.ReactNode }) {
-  const visibleNavItems = NAV_ITEMS.filter((item) => hasPermission(admin, item.permission))
+  const isSocialMediaOnly = admin.roles.length === 1 && admin.roles[0] === 'social_media'
+  const navSource = isSocialMediaOnly ? PERSONAL_BRAND_NAV_ITEMS : NAV_ITEMS
+  const visibleNavItems = navSource.filter((item) => hasPermission(admin, item.permission))
   const roleLabels = admin.roles.map((role) => ADMIN_ROLE_LABELS[role])
 
   return (
     <AdminSidebarShell navItems={visibleNavItems} email={admin.user.email} roleLabels={roleLabels}>
-      {children}
+      <PersonalBrandNavProvider sidebarCoversPersonalBrand={isSocialMediaOnly}>{children}</PersonalBrandNavProvider>
     </AdminSidebarShell>
   )
 }

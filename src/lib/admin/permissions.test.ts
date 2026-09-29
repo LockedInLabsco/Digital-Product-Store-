@@ -15,8 +15,10 @@ describe('roleHasPermission', () => {
     expect(roleHasPermission('analyst', 'team:manage')).toBe(false)
   })
 
-  it('lets social_media read waitlists but not manage the team or write products', () => {
-    expect(roleHasPermission('social_media', 'waitlists:read')).toBe(true)
+  it('scopes social_media to Personal Brand only, with no store-side access', () => {
+    expect(roleHasPermission('social_media', 'waitlists:read')).toBe(false)
+    expect(roleHasPermission('social_media', 'analytics:read')).toBe(false)
+    expect(roleHasPermission('social_media', 'media:read')).toBe(false)
     expect(roleHasPermission('social_media', 'team:read')).toBe(false)
     expect(roleHasPermission('social_media', 'team:manage')).toBe(false)
     expect(roleHasPermission('social_media', 'products:write')).toBe(false)
@@ -62,7 +64,7 @@ describe('roleHasPermission', () => {
 describe('permissionsForRoles', () => {
   it('unions permissions across every held role', () => {
     const combined = permissionsForRoles(['social_media', 'analyst'])
-    // personal_brand:write comes only from social_media; analytics:read is shared by both.
+    // personal_brand:write comes only from social_media; analytics:read comes only from analyst.
     expect(combined).toEqual(expect.arrayContaining(['personal_brand:write', 'analytics:read']))
     expect(roleHasPermission('analyst', 'personal_brand:write')).toBe(false)
   })

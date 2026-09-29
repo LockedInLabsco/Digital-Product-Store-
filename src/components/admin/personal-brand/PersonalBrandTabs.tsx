@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSidebarCoversPersonalBrand } from '@/src/components/admin/PersonalBrandNavContext'
 
 const TABS = [
   { href: '/admin/personal-brand', label: 'Dashboard' },
@@ -23,6 +24,12 @@ const TABS = [
  */
 export default function PersonalBrandTabs() {
   const pathname = usePathname()
+  const sidebarCoversPersonalBrand = useSidebarCoversPersonalBrand()
+
+  // The sidebar already lists every one of these sections directly for a
+  // social-media-only admin — showing the same links again as top tabs
+  // would just be the same navigation twice.
+  if (sidebarCoversPersonalBrand) return null
 
   return (
     <div className="mb-8 flex gap-1 overflow-x-auto border-b border-admin-border pb-3 text-sm">

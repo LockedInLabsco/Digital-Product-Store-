@@ -52,15 +52,14 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'hero_slider:write',
   ],
 
-  // Owns the Personal Brand Content OS day-to-day, alongside its
-  // existing store-side scope (waitlists/media read, analytics) — this
-  // is the role that actually logs content and runs the Instagram sync,
-  // not the owner account.
+  // Owns the Personal Brand Content OS day-to-day — this is the role
+  // that actually logs content and runs the Instagram sync, not the
+  // owner account. Scoped to Personal Brand only: no store-side read
+  // access (waitlists/media/analytics), since this role's admin UI is
+  // its own focused workspace, not a restricted view of the full admin
+  // panel — see AdminShell's social-media-only nav branch.
   social_media: [
     'dashboard:read',
-    'analytics:read',
-    'waitlists:read',
-    'media:read',
     'personal_brand:read',
     'personal_brand:write',
     'personal_brand:ai',
