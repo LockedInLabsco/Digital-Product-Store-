@@ -16,6 +16,11 @@ export interface AutomationRuleFormData {
   /** comment_keyword only — null means "any post." See
    * InstagramMediaPicker for the selector UI. */
   instagram_media_id: string | null
+  /** comment_keyword only. public_reply_variations is always a
+   * fixed-length-3 array in form state (unused slots are ''), one input
+   * per slot — trimmed and filtered down before being sent to the API. */
+  public_reply_enabled: boolean
+  public_reply_variations: [string, string, string]
   is_active: boolean
 }
 
@@ -28,6 +33,8 @@ const EMPTY: AutomationRuleFormData = {
   button_url: '',
   button_label: '',
   instagram_media_id: null,
+  public_reply_enabled: false,
+  public_reply_variations: ['', '', ''],
   is_active: true,
 }
 
@@ -59,11 +66,22 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
-      // A post scope only makes sense for comment_keyword — drop it the
-      // moment the trigger type changes to anything else, so a stale
-      // selection from before can never be submitted for the wrong type.
-      ...(name === 'trigger_type' && value !== 'comment_keyword' ? { instagram_media_id: null } : {}),
+      // A post scope and public reply only make sense for comment_keyword
+      // — drop them the moment the trigger type changes to anything else,
+      // so a stale selection from before can never be submitted for the
+      // wrong type.
+      ...(name === 'trigger_type' && value !== 'comment_keyword'
+        ? { instagram_media_id: null, public_reply_enabled: false, public_reply_variations: ['', '', ''] as [string, string, string] }
+        : {}),
     }))
+  }
+
+  const handlePublicReplyVariationChange = (index: 0 | 1 | 2, value: string) => {
+    setFormData((prev) => {
+      const next = [...prev.public_reply_variations] as [string, string, string]
+      next[index] = value
+      return { ...prev, public_reply_variations: next }
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +94,9 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
     }
     if (Boolean(formData.button_url.trim()) !== Boolean(formData.button_label.trim())) {
       return setError('A button needs both a URL and a label')
+    }
+    if (formData.public_reply_enabled && !formData.public_reply_variations.some((v) => v.trim())) {
+      return setError('At least one public reply variation is required when public reply is enabled')
     }
     try {
       await onSubmit(formData)
@@ -152,6 +173,45 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
             value={formData.instagram_media_id}
             onChange={(mediaId) => setFormData((prev) => ({ ...prev, instagram_media_id: mediaId }))}
           />
+        </div>
+      )}
+
+      {formData.trigger_type === 'comment_keyword' && (
+        <div className="mb-4 rounded border border-admin-border p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <input
+              id="public_reply_enabled"
+              name="public_reply_enabled"
+              type="checkbox"
+              checked={formData.public_reply_enabled}
+              onChange={handleChange}
+            />
+            <label htmlFor="public_reply_enabled" className="text-sm font-medium">
+              Public Comment Reply
+            </label>
+          </div>
+          <p className="mb-3 text-xs text-admin-muted">
+            Also post a public reply on the triggering comment (e.g. &quot;Check your DMs 👀&quot;), alongside the
+            private DM above. Add 2-3 variations to rotate between instead of always posting the same line.
+          </p>
+          {formData.public_reply_enabled && (
+            <div className="space-y-2">
+              {([0, 1, 2] as const).map((index) => (
+                <div key={index}>
+                  <label className={labelClass}>
+                    Reply variation {index + 1} {index === 0 ? '*' : '(optional)'}
+                  </label>
+                  <input
+                    value={formData.public_reply_variations[index]}
+                    onChange={(e) => handlePublicReplyVariationChange(index, e.target.value)}
+                    maxLength={300}
+                    className={inputClass}
+                    placeholder={index === 0 ? 'Check your DMs 👀' : index === 1 ? 'Sent it to you ✅' : 'Just messaged you'}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

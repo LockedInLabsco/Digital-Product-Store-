@@ -8,6 +8,8 @@ const MAX_MESSAGE_LENGTH = 1000
 // text can still be rejected once a button is attached.
 const MAX_BUTTON_TEMPLATE_TEXT = 640
 const MAX_BUTTON_LABEL = 20
+const MAX_PUBLIC_REPLY_VARIATIONS = 3
+const MAX_PUBLIC_REPLY_LENGTH = 300
 
 export interface ValidationResult<T> {
   value?: T
@@ -60,7 +62,47 @@ export interface AutomationRuleInput {
   button_url: string | null
   button_label: string | null
   instagram_media_id: string | null
+  public_reply_enabled: boolean
+  public_reply_variations: string[]
   is_active: boolean
+}
+
+/**
+ * Validates the optional public-comment-reply variations. Only
+ * meaningful for comment_keyword — silently emptied for every other
+ * trigger type, same as instagram_media_id above. Blank entries are
+ * dropped rather than rejected, so a form that always renders 3 input
+ * boxes doesn't force the admin to fill all of them.
+ */
+function validatePublicReplyFields(
+  body: Record<string, unknown>,
+  triggerType: string
+): ValidationResult<{ public_reply_enabled: boolean; public_reply_variations: string[] }> {
+  if (triggerType !== 'comment_keyword') {
+    return { value: { public_reply_enabled: false, public_reply_variations: [] } }
+  }
+
+  const rawVariations = Array.isArray(body.public_reply_variations) ? body.public_reply_variations : []
+  const variations: string[] = []
+  for (const item of rawVariations) {
+    if (typeof item !== 'string') continue
+    const trimmed = item.trim()
+    if (!trimmed) continue
+    if (trimmed.length > MAX_PUBLIC_REPLY_LENGTH) {
+      return { error: `Each public reply variation must be ${MAX_PUBLIC_REPLY_LENGTH} characters or fewer` }
+    }
+    variations.push(trimmed)
+  }
+  if (variations.length > MAX_PUBLIC_REPLY_VARIATIONS) {
+    return { error: `At most ${MAX_PUBLIC_REPLY_VARIATIONS} public reply variations are allowed` }
+  }
+
+  const enabled = body.public_reply_enabled === true
+  if (enabled && variations.length === 0) {
+    return { error: 'At least one public reply variation is required when public reply is enabled' }
+  }
+
+  return { value: { public_reply_enabled: enabled, public_reply_variations: variations } }
 }
 
 /**
@@ -109,6 +151,9 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
     instagramMediaId = body.instagram_media_id.trim()
   }
 
+  const publicReply = validatePublicReplyFields(body, triggerType)
+  if (publicReply.error || !publicReply.value) return { error: publicReply.error }
+
   const isActive = body.is_active !== false
 
   return {
@@ -121,6 +166,8 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
       button_url: button.value.button_url,
       button_label: button.value.button_label,
       instagram_media_id: instagramMediaId,
+      public_reply_enabled: publicReply.value.public_reply_enabled,
+      public_reply_variations: publicReply.value.public_reply_variations,
       is_active: isActive,
     },
   }

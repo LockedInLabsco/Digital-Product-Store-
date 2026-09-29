@@ -13,6 +13,8 @@ function makeRule(overrides: Partial<IgAutomationRule>): IgAutomationRule {
     button_url: null,
     button_label: null,
     instagram_media_id: null,
+    public_reply_enabled: false,
+    public_reply_variations: [],
     is_active: true,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',

@@ -1,7 +1,8 @@
 import 'server-only'
 import { supabaseServer } from '@/src/lib/supabase/server'
-import { sendDirectMessage, sendPrivateReplyToComment } from './client'
+import { sendDirectMessage, sendPrivateReplyToComment, replyToComment } from './client'
 import { findMatchingRule } from './automations'
+import { pickPublicReplyVariationIndex } from './publicReply'
 import type { IgAutomationRule, IgRunSourceType, IgTriggerType } from '@/src/types/instagramAutomation'
 
 export interface TriggerEvent {
@@ -63,6 +64,35 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     return
   }
 
+  // Public comment reply (e.g. "Check your DMs 👀") — entirely separate
+  // from the private-reply DM below, and never allowed to block it: a
+  // failed or skipped public reply just leaves publicReplyError set, the
+  // private DM is still attempted either way.
+  let publicReplyVariationIndex: number | null = null
+  let publicReplyError: string | null = null
+
+  if (event.sourceType === 'comment' && rule.public_reply_enabled && rule.public_reply_variations.length > 0) {
+    let lastUsedIndex: number | null = null
+    if (rule.public_reply_variations.length > 1) {
+      const { data: lastPublicReplyRun } = await supabaseServer
+        .from('ig_automation_runs')
+        .select('public_reply_variation_index')
+        .eq('rule_id', rule.id)
+        .not('public_reply_variation_index', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      lastUsedIndex = lastPublicReplyRun?.public_reply_variation_index ?? null
+    }
+
+    publicReplyVariationIndex = pickPublicReplyVariationIndex(rule.public_reply_variations.length, lastUsedIndex)
+    const publicReplyResult = await replyToComment(event.sourceId, rule.public_reply_variations[publicReplyVariationIndex])
+    if (!publicReplyResult.ok) {
+      publicReplyError = publicReplyResult.error
+      console.error('[Instagram Webhook] Public comment reply failed — private DM still proceeds', publicReplyResult.error)
+    }
+  }
+
   const button = rule.button_url && rule.button_label ? { url: rule.button_url, label: rule.button_label } : null
 
   const sendResult =
@@ -73,7 +103,13 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
   if (!sendResult.ok) {
     await supabaseServer
       .from('ig_automation_runs')
-      .update({ completed: true, last_error: sendResult.error, updated_at: new Date().toISOString() })
+      .update({
+        completed: true,
+        last_error: sendResult.error,
+        public_reply_variation_index: publicReplyVariationIndex,
+        public_reply_error: publicReplyError,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', run.id)
     return
   }
@@ -100,6 +136,11 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
 
   await supabaseServer
     .from('ig_automation_runs')
-    .update({ ...update, updated_at: new Date().toISOString() })
+    .update({
+      ...update,
+      public_reply_variation_index: publicReplyVariationIndex,
+      public_reply_error: publicReplyError,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', run.id)
 }

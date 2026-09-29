@@ -144,6 +144,81 @@ describe('validateAutomationRuleInput', () => {
     expect(result.error).toBeUndefined()
     expect(result.value?.instagram_media_id).toBeNull()
   })
+
+  it('defaults public reply to disabled with no variations', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+    })
+    expect(result.error).toBeUndefined()
+    expect(result.value?.public_reply_enabled).toBe(false)
+    expect(result.value?.public_reply_variations).toEqual([])
+  })
+
+  it('accepts public reply enabled with 1-3 variations, dropping blanks', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+      public_reply_enabled: true,
+      public_reply_variations: ['Check your DMs 👀', '', 'Sent it to you ✅'],
+    })
+    expect(result.error).toBeUndefined()
+    expect(result.value?.public_reply_enabled).toBe(true)
+    expect(result.value?.public_reply_variations).toEqual(['Check your DMs 👀', 'Sent it to you ✅'])
+  })
+
+  it('rejects public reply enabled with no non-blank variations', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+      public_reply_enabled: true,
+      public_reply_variations: ['', '  '],
+    })
+    expect(result.error).toMatch(/at least one public reply variation/i)
+  })
+
+  it('rejects more than 3 public reply variations', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+      public_reply_enabled: true,
+      public_reply_variations: ['a', 'b', 'c', 'd'],
+    })
+    expect(result.error).toMatch(/at most 3/i)
+  })
+
+  it('rejects a public reply variation longer than 300 characters', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+      public_reply_enabled: true,
+      public_reply_variations: ['x'.repeat(301)],
+    })
+    expect(result.error).toMatch(/300 characters/i)
+  })
+
+  it('drops public reply fields for a trigger type other than comment_keyword', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'dm_keyword',
+      reply_message: 'hi',
+      public_reply_enabled: true,
+      public_reply_variations: ['Check your DMs 👀'],
+    })
+    expect(result.error).toBeUndefined()
+    expect(result.value?.public_reply_enabled).toBe(false)
+    expect(result.value?.public_reply_variations).toEqual([])
+  })
 })
 
 describe('validateAutomationFollowupInput', () => {

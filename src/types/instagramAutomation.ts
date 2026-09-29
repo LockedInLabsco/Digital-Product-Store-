@@ -27,6 +27,14 @@ export interface IgAutomationRule {
    * Instagram media id. null means "any post" — the only meaningful
    * value for dm_keyword/story_reply, which have no post to scope to. */
   instagram_media_id: string | null
+  /** comment_keyword only: when true, also posts a public reply on the
+   * triggering comment (e.g. "Check your DMs 👀") alongside the private
+   * DM. See public_reply_variations for the text(s) used. */
+  public_reply_enabled: boolean
+  /** 0-3 public reply variations, rotated between — see
+   * src/lib/instagram/publicReply.ts. Empty when public_reply_enabled is
+   * false. */
+  public_reply_variations: string[]
   is_active: boolean
   created_at: string
   updated_at: string
@@ -54,6 +62,14 @@ export interface IgAutomationRun {
   next_due_at: string | null
   completed: boolean
   last_error: string | null
+  /** 0-based index into the rule's public_reply_variations at the time
+   * this run's public reply was sent — null if public reply wasn't
+   * enabled/attempted for this run. */
+  public_reply_variation_index: number | null
+  /** Error from the public-reply send, independent of last_error (the
+   * private DM's own failure) — a public reply failing never blocks or
+   * overwrites the DM's own status. */
+  public_reply_error: string | null
   created_at: string
   updated_at: string
 }

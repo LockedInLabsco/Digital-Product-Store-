@@ -5,7 +5,13 @@
 - **Comment keyword** — someone comments "LINK" on a post → they get an
   automatic Private Reply DM. Optionally scoped to one specific post/reel
   (pick it from your synced Instagram media in the rule form) instead of
-  firing on that keyword anywhere on the account.
+  firing on that keyword anywhere on the account. Can also optionally
+  post a **public reply on the comment itself** (e.g. "Check your DMs
+  👀") alongside the private DM — up to 3 variations, rotated between so
+  the same line isn't always used. A public-reply failure never blocks
+  the private DM; the two are sent and recorded independently (see
+  "Recent activity" on the Automations page for which variation was used
+  and whether it failed).
 - **DM keyword** — someone DMs you a keyword directly → auto-reply.
 - **Story reply** — someone replies to your Story → auto-reply.
 
@@ -43,11 +49,15 @@ token (or vice versa) fails with Graph API error
 
 `src/lib/instagram/client.ts` keeps the two hard-separated: content sync
 uses `INSTAGRAM_ACCESS_TOKEN` against `graph.facebook.com`; every
-outbound send (`sendPrivateReplyToComment`, `sendDirectMessage`) uses
-`INSTAGRAM_MESSAGING_ACCESS_TOKEN` against `graph.instagram.com`,
-addressing the literal id `me` rather than
+outbound send (`sendPrivateReplyToComment`, `sendDirectMessage`,
+`replyToComment`) uses `INSTAGRAM_MESSAGING_ACCESS_TOKEN` against
+`graph.instagram.com`, addressing the literal id `me` rather than
 `INSTAGRAM_BUSINESS_ACCOUNT_ID` (that id is specific to the Facebook
 Login flow and isn't guaranteed to match under Instagram Login).
+`replyToComment` (public comment replies) uses a different endpoint from
+`sendPrivateReplyToComment` (`/{comment_id}/replies` vs `/me/messages`)
+but the same token — `instagram_business_manage_comments`, already in
+step 1's permission list, covers both.
 
 ## 1. Generate the Instagram Login messaging token
 

@@ -171,6 +171,7 @@ export default function AutomationsClient() {
           button_url: data.button_url || null,
           button_label: data.button_label || null,
           instagram_media_id: data.instagram_media_id || null,
+          public_reply_variations: data.public_reply_variations.map((v) => v.trim()).filter(Boolean),
         }),
       })
       const result = await response.json()
@@ -191,6 +192,12 @@ export default function AutomationsClient() {
     button_url: rule.button_url || '',
     button_label: rule.button_label || '',
     instagram_media_id: rule.instagram_media_id,
+    public_reply_enabled: rule.public_reply_enabled,
+    public_reply_variations: [
+      rule.public_reply_variations[0] || '',
+      rule.public_reply_variations[1] || '',
+      rule.public_reply_variations[2] || '',
+    ],
     is_active: rule.is_active,
   })
 
@@ -209,6 +216,7 @@ export default function AutomationsClient() {
           button_url: data.button_url || null,
           button_label: data.button_label || null,
           instagram_media_id: data.instagram_media_id || null,
+          public_reply_variations: data.public_reply_variations.map((v) => v.trim()).filter(Boolean),
         }),
       })
       const result = await response.json()
@@ -235,6 +243,8 @@ export default function AutomationsClient() {
           button_url: rule.button_url,
           button_label: rule.button_label,
           instagram_media_id: rule.instagram_media_id,
+          public_reply_enabled: rule.public_reply_enabled,
+          public_reply_variations: rule.public_reply_variations,
           is_active: !rule.is_active,
         }),
       })
@@ -363,6 +373,9 @@ export default function AutomationsClient() {
                               )}
                             </>
                           )}
+                          {rule.trigger_type === 'comment_keyword' && rule.public_reply_enabled && (
+                            <> · public reply on ({rule.public_reply_variations.length} variation{rule.public_reply_variations.length === 1 ? '' : 's'})</>
+                          )}
                         </p>
                         <p className="mt-2 text-sm">{rule.reply_message}</p>
                         {rule.button_url && (
@@ -479,6 +492,15 @@ export default function AutomationsClient() {
                             <span className="text-admin-muted">Completed</span>
                           ) : (
                             <span className="text-green-400">In sequence (step {run.next_step} due)</span>
+                          )}
+                          {run.public_reply_variation_index !== null && (
+                            <span
+                              className={run.public_reply_error ? 'ml-2 text-red-400' : 'ml-2 text-admin-muted'}
+                              title={run.public_reply_error || undefined}
+                            >
+                              · public reply #{run.public_reply_variation_index + 1}
+                              {run.public_reply_error ? ' failed' : ''}
+                            </span>
                           )}
                         </td>
                       </tr>

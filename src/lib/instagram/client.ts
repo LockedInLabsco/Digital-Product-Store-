@@ -257,6 +257,22 @@ export async function sendPrivateReplyToComment(
 }
 
 /**
+ * Posts a public reply on a comment — a normal, publicly-visible comment
+ * reply (e.g. "Check your DMs 👀"), NOT the Private Reply DM mechanism
+ * above. Deliberately a different endpoint (`/{comment_id}/replies`, not
+ * `/me/messages`): Private Reply and public comment reply are two
+ * distinct Instagram capabilities, and Meta only allows one Private
+ * Reply per comment — this call is unaffected by whether a private
+ * reply was already sent (or fails) for the same comment. Same
+ * Instagram Login messaging path (graph.instagram.com +
+ * INSTAGRAM_MESSAGING_ACCESS_TOKEN) as the rest of this section, since
+ * `instagram_business_manage_comments` is part of that token's scope.
+ */
+export async function replyToComment(commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {
+  return messagingPost(`${commentId}/replies`, { message })
+}
+
+/**
  * Sends a direct message to an Instagram-scoped user id — used for
  * inbound-DM-keyword replies, story-reply replies, and every follow-up
  * step in a drip sequence. Only deliverable within Meta's standard
