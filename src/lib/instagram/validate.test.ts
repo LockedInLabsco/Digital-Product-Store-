@@ -111,6 +111,39 @@ describe('validateAutomationRuleInput', () => {
     expect(result.value?.button_url).toBeNull()
     expect(result.value?.button_label).toBeNull()
   })
+
+  it('accepts an instagram_media_id on a comment_keyword rule', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+      instagram_media_id: '17888498072083520',
+    })
+    expect(result.error).toBeUndefined()
+    expect(result.value?.instagram_media_id).toBe('17888498072083520')
+  })
+
+  it('defaults instagram_media_id to null when omitted', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'comment_keyword',
+      keyword: 'link',
+      reply_message: 'hi',
+    })
+    expect(result.value?.instagram_media_id).toBeNull()
+  })
+
+  it('drops instagram_media_id for a trigger type other than comment_keyword', () => {
+    const result = validateAutomationRuleInput({
+      name: 'x',
+      trigger_type: 'dm_keyword',
+      reply_message: 'hi',
+      instagram_media_id: '17888498072083520',
+    })
+    expect(result.error).toBeUndefined()
+    expect(result.value?.instagram_media_id).toBeNull()
+  })
 })
 
 describe('validateAutomationFollowupInput', () => {

@@ -13,6 +13,9 @@ export interface TriggerEvent {
   sourceId: string
   recipientIgId: string
   text: string | null
+  /** The Instagram media id the comment was made on — only present for
+   * comment_keyword events — used to filter rules scoped to one post. */
+  mediaId?: string | null
 }
 
 /**
@@ -36,7 +39,7 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     return
   }
 
-  const rule = findMatchingRule((rules || []) as IgAutomationRule[], event.triggerType, event.text)
+  const rule = findMatchingRule((rules || []) as IgAutomationRule[], event.triggerType, event.text, event.mediaId)
   if (!rule) return
 
   const { data: run, error: insertError } = await supabaseServer

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Button from '@/src/components/admin/AdminButton'
+import InstagramMediaPicker from '@/src/components/admin/personal-brand/InstagramMediaPicker'
 import { IG_MATCH_TYPES, IG_TRIGGER_TYPES, type IgMatchType, type IgTriggerType } from '@/src/types/instagramAutomation'
 
 export interface AutomationRuleFormData {
@@ -12,6 +13,9 @@ export interface AutomationRuleFormData {
   reply_message: string
   button_url: string
   button_label: string
+  /** comment_keyword only — null means "any post." See
+   * InstagramMediaPicker for the selector UI. */
+  instagram_media_id: string | null
   is_active: boolean
 }
 
@@ -23,6 +27,7 @@ const EMPTY: AutomationRuleFormData = {
   reply_message: '',
   button_url: '',
   button_label: '',
+  instagram_media_id: null,
   is_active: true,
 }
 
@@ -51,7 +56,14 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
-    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+      // A post scope only makes sense for comment_keyword — drop it the
+      // moment the trigger type changes to anything else, so a stale
+      // selection from before can never be submitted for the wrong type.
+      ...(name === 'trigger_type' && value !== 'comment_keyword' ? { instagram_media_id: null } : {}),
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +145,15 @@ export default function AutomationRuleForm({ initialData, onSubmit, onCancel, is
           </select>
         </div>
       </div>
+
+      {formData.trigger_type === 'comment_keyword' && (
+        <div className="mb-3">
+          <InstagramMediaPicker
+            value={formData.instagram_media_id}
+            onChange={(mediaId) => setFormData((prev) => ({ ...prev, instagram_media_id: mediaId }))}
+          />
+        </div>
+      )}
 
       <div className="mb-4">
         <label htmlFor="reply_message" className={labelClass}>

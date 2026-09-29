@@ -59,6 +59,7 @@ export interface AutomationRuleInput {
   reply_message: string
   button_url: string | null
   button_label: string | null
+  instagram_media_id: string | null
   is_active: boolean
 }
 
@@ -99,6 +100,15 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
   const button = validateButtonFields(body, replyMessage.length)
   if (button.error || !button.value) return { error: button.error }
 
+  // Only comment_keyword rules can be scoped to one post — silently
+  // dropped for every other trigger type rather than erroring, so a
+  // leftover value from switching the trigger type in the form can never
+  // get saved against a dm_keyword/story_reply rule.
+  let instagramMediaId: string | null = null
+  if (triggerType === 'comment_keyword' && typeof body.instagram_media_id === 'string' && body.instagram_media_id.trim()) {
+    instagramMediaId = body.instagram_media_id.trim()
+  }
+
   const isActive = body.is_active !== false
 
   return {
@@ -110,6 +120,7 @@ export function validateAutomationRuleInput(body: Record<string, unknown>): Vali
       reply_message: replyMessage,
       button_url: button.value.button_url,
       button_label: button.value.button_label,
+      instagram_media_id: instagramMediaId,
       is_active: isActive,
     },
   }

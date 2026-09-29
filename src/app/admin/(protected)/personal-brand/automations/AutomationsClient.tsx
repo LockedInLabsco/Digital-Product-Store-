@@ -169,6 +169,7 @@ export default function AutomationsClient() {
           keyword: data.keyword || null,
           button_url: data.button_url || null,
           button_label: data.button_label || null,
+          instagram_media_id: data.instagram_media_id || null,
         }),
       })
       const result = await response.json()
@@ -194,6 +195,7 @@ export default function AutomationsClient() {
           reply_message: rule.reply_message,
           button_url: rule.button_url,
           button_label: rule.button_label,
+          instagram_media_id: rule.instagram_media_id,
           is_active: !rule.is_active,
         }),
       })
@@ -306,6 +308,9 @@ export default function AutomationsClient() {
                         </>
                       ) : (
                         'Matches any text'
+                      )}
+                      {rule.trigger_type === 'comment_keyword' && (
+                        <> · {rule.instagram_media_id ? 'One specific post/reel' : 'Any post'}</>
                       )}
                     </p>
                     <p className="mt-2 text-sm">{rule.reply_message}</p>

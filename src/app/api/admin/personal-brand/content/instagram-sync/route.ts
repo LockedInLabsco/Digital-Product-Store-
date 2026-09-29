@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
 import { validateContentItemInput, validateContentMetricInput } from '@/src/lib/personal-brand/validate'
-import { fetchAllAccountMedia, fetchMediaInsights, isInstagramConfigured, type InstagramMedia } from '@/src/lib/instagram/client'
+import { fetchAllAccountMedia, fetchMediaInsights, isInstagramConfigured, mapContentType } from '@/src/lib/instagram/client'
 import { urlsMatch } from '@/src/lib/instagram/matching'
-import type { PbContentType } from '@/src/types/personalBrand'
 
 interface SyncResult {
   contentId: string
@@ -13,18 +12,6 @@ interface SyncResult {
   inserted: boolean
   created: boolean
   error?: string
-}
-
-// Maps Instagram's media/product type onto this project's own content_type
-// enum — best-effort only, since an auto-created item has no way to know
-// which of "reel"/"post" the admin would have called it beyond what
-// Instagram itself reports.
-function mapContentType(media: InstagramMedia): PbContentType {
-  if (media.media_product_type === 'REELS') return 'reel'
-  if (media.media_product_type === 'STORY') return 'story'
-  if (media.media_type === 'CAROUSEL_ALBUM') return 'carousel'
-  if (media.media_type === 'IMAGE' || media.media_type === 'VIDEO') return 'post'
-  return 'other'
 }
 
 function deriveTitle(caption: string | null): string | null {

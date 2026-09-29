@@ -3,7 +3,9 @@
 `/admin/personal-brand/automations` lets you create rules like:
 
 - **Comment keyword** — someone comments "LINK" on a post → they get an
-  automatic Private Reply DM.
+  automatic Private Reply DM. Optionally scoped to one specific post/reel
+  (pick it from your synced Instagram media in the rule form) instead of
+  firing on that keyword anywhere on the account.
 - **DM keyword** — someone DMs you a keyword directly → auto-reply.
 - **Story reply** — someone replies to your Story → auto-reply.
 

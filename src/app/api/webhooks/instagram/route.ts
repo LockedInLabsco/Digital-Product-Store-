@@ -6,6 +6,11 @@ interface CommentValue {
   id: string
   text?: string
   from?: { id: string }
+  // ID and product type of the IG Media the comment was created on — per
+  // Meta's Instagram webhooks reference (graph-api/webhooks/reference/
+  // instagram), the media id lives at value.media.id, not a top-level
+  // value.media_id.
+  media?: { id: string }
 }
 
 interface MessageEnvelope {
@@ -65,6 +70,7 @@ export async function POST(request: NextRequest) {
           sourceId: value.id,
           recipientIgId: value.from.id,
           text: value.text ?? null,
+          mediaId: value.media?.id ?? null,
         })
       } else if (change.field === 'messages') {
         await handleMessageEnvelope(change.value as MessageEnvelope)

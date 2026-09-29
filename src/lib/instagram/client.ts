@@ -29,6 +29,27 @@ export interface InstagramMedia {
   /** Not exposed for every media type/age — Meta only backfills this on
    * the media list endpoint, not on a per-media insights lookup. */
   views: number | null
+  /** The playable/full-res file — absent for video-ish types where
+   * Instagram only exposes a thumbnail instead (see thumbnail_url). */
+  media_url: string | null
+  /** Only present on VIDEO/REELS media; images have no separate
+   * thumbnail — use media_url for those instead. */
+  thumbnail_url: string | null
+}
+
+/**
+ * Maps Instagram's media/product type onto this project's own
+ * content_type enum — best-effort only, since neither an auto-created
+ * content item nor the automation media picker has any way to know which
+ * of "reel"/"post" the admin would call it beyond what Instagram itself
+ * reports.
+ */
+export function mapContentType(media: Pick<InstagramMedia, 'media_type' | 'media_product_type'>): 'reel' | 'story' | 'carousel' | 'post' | 'other' {
+  if (media.media_product_type === 'REELS') return 'reel'
+  if (media.media_product_type === 'STORY') return 'story'
+  if (media.media_type === 'CAROUSEL_ALBUM') return 'carousel'
+  if (media.media_type === 'IMAGE' || media.media_type === 'VIDEO') return 'post'
+  return 'other'
 }
 
 async function graphRequest<T>(
@@ -95,7 +116,8 @@ export async function fetchAllAccountMedia(): Promise<InstagramResult<InstagramM
     return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
   }
 
-  const fields = 'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,views'
+  const fields =
+    'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,views,media_url,thumbnail_url'
   const all: InstagramMedia[] = []
   let after: string | undefined
 

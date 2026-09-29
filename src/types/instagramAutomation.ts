@@ -23,6 +23,10 @@ export interface IgAutomationRule {
    * under `reply_message`. Both null together means a plain text reply. */
   button_url: string | null
   button_label: string | null
+  /** comment_keyword only: restricts the rule to comments on this one
+   * Instagram media id. null means "any post" — the only meaningful
+   * value for dm_keyword/story_reply, which have no post to scope to. */
+  instagram_media_id: string | null
   is_active: boolean
   created_at: string
   updated_at: string

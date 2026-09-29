@@ -12,6 +12,7 @@ function makeRule(overrides: Partial<IgAutomationRule>): IgAutomationRule {
     reply_message: 'Here you go!',
     button_url: null,
     button_label: null,
+    instagram_media_id: null,
     is_active: true,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
@@ -56,5 +57,24 @@ describe('findMatchingRule', () => {
     const first = makeRule({ id: 'first', keyword: 'link' })
     const second = makeRule({ id: 'second', keyword: 'link' })
     expect(findMatchingRule([first, second], 'comment_keyword', 'link')?.id).toBe('first')
+  })
+
+  it('a rule with no instagram_media_id matches a comment on any post', () => {
+    const rule = makeRule({ keyword: 'link', instagram_media_id: null })
+    expect(findMatchingRule([rule], 'comment_keyword', 'link', '999')).toEqual(rule)
+    expect(findMatchingRule([rule], 'comment_keyword', 'link', undefined)).toEqual(rule)
+  })
+
+  it('a rule scoped to one post only matches a comment on that exact media id', () => {
+    const rule = makeRule({ keyword: 'link', instagram_media_id: '12345' })
+    expect(findMatchingRule([rule], 'comment_keyword', 'link', '12345')).toEqual(rule)
+    expect(findMatchingRule([rule], 'comment_keyword', 'link', '67890')).toBeNull()
+    expect(findMatchingRule([rule], 'comment_keyword', 'link', undefined)).toBeNull()
+  })
+
+  it('falls through to an any-post rule when a post-scoped rule does not match the media id', () => {
+    const scoped = makeRule({ id: 'scoped', keyword: 'link', instagram_media_id: '12345' })
+    const anyPost = makeRule({ id: 'any', keyword: 'link', instagram_media_id: null })
+    expect(findMatchingRule([scoped, anyPost], 'comment_keyword', 'link', '67890')?.id).toBe('any')
   })
 })
