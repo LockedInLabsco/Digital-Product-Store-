@@ -22,20 +22,50 @@ mechanism those tools themselves sit on top of — Meta's Instagram
 Messaging API and Private Replies.
 
 This builds on the read-only sync in `docs/INSTAGRAM_SYNC_SETUP.md` —
-do that first if you haven't. Everything below uses the same Meta app
-and access token.
+do that first if you haven't. Everything below uses the same Meta app,
+but a **separate token** — see the next section for why.
 
-## 1. Add messaging permissions to your Meta app's token
+## 0. Two different Meta products, two different tokens
 
-In Graph API Explorer (or wherever you generated `INSTAGRAM_ACCESS_TOKEN`),
-regenerate the token with these additional permissions:
+`INSTAGRAM_ACCESS_TOKEN` (from the sync setup) is a **Facebook Login for
+Business** token — it only works against `graph.facebook.com`, and only
+has the read scopes (`instagram_basic`, `instagram_manage_insights`,
+`pages_show_list`, `pages_read_engagement`). Outbound messaging
+(private replies, DMs, follow-ups) is a **completely separate Meta
+product** — the **Instagram API with Instagram Login** — which lives at
+`graph.instagram.com` and needs its own token with its own
+`instagram_business_*` permission namespace. The two are not
+interchangeable: calling `graph.instagram.com` with a Facebook Login
+token (or vice versa) fails with Graph API error
+`(#3) Application does not have the capability to make this API call.`
+— this is a real bug this project hit and fixed; see
+[[instagram-messaging-permission-mixup]] in memory if this recurs.
 
-- `instagram_manage_messages` (may show as `instagram_business_manage_messages`)
-- `instagram_manage_comments`
-- `pages_manage_metadata`
+`src/lib/instagram/client.ts` keeps the two hard-separated: content sync
+uses `INSTAGRAM_ACCESS_TOKEN` against `graph.facebook.com`; every
+outbound send (`sendPrivateReplyToComment`, `sendDirectMessage`) uses
+`INSTAGRAM_MESSAGING_ACCESS_TOKEN` against `graph.instagram.com`,
+addressing the literal id `me` rather than
+`INSTAGRAM_BUSINESS_ACCOUNT_ID` (that id is specific to the Facebook
+Login flow and isn't guaranteed to match under Instagram Login).
 
-Same rule as before: since this app only ever touches your own account,
-it stays on **Standard Access** — no App Review needed.
+## 1. Generate the Instagram Login messaging token
+
+App Dashboard → your Instagram product → **API setup with Instagram
+login** → generate an Instagram User access token with:
+
+- `instagram_business_basic`
+- `instagram_business_manage_comments`
+- `instagram_business_manage_messages`
+
+This is `INSTAGRAM_MESSAGING_ACCESS_TOKEN` — a different value from
+`INSTAGRAM_ACCESS_TOKEN`, generated from a different screen in the
+dashboard. Do not paste the Facebook Login token here; do not reuse this
+token as `INSTAGRAM_ACCESS_TOKEN` either. Same rule as before: since
+this app only ever touches your own account, it stays on **Standard
+Access** — no App Review needed for testing against your own
+tester/admin account (see "If Private Replies fail for real users" under
+How to debug below for what Standard Access does and doesn't cover).
 
 ## 2. Get your Meta app secret
 
@@ -58,8 +88,9 @@ The webhook needs a real, public HTTPS URL — it cannot be tested against
 (Settings → Environment Variables) before doing step 5.
 
 ```
-INSTAGRAM_ACCESS_TOKEN=        (already set from the sync setup)
-INSTAGRAM_BUSINESS_ACCOUNT_ID= (already set from the sync setup)
+INSTAGRAM_ACCESS_TOKEN=           (already set from the sync setup — content sync only)
+INSTAGRAM_BUSINESS_ACCOUNT_ID=    (already set from the sync setup — content sync only)
+INSTAGRAM_MESSAGING_ACCESS_TOKEN= (new — from step 1 above, messaging only)
 INSTAGRAM_APP_SECRET=
 INSTAGRAM_WEBHOOK_VERIFY_TOKEN=
 CRON_SECRET=
@@ -122,3 +153,14 @@ all when you comment/DM as a test:
 3. Confirm the rule is `is_active: true` and the keyword actually
    appears in what you typed (comment keyword matching is case-insensitive
    substring by default).
+4. If a run's `last_error` shows `(#3) Application does not have the
+   capability to make this API call`, that's the two-token mixup above —
+   check `INSTAGRAM_MESSAGING_ACCESS_TOKEN` is actually set (not blank,
+   not a copy of `INSTAGRAM_ACCESS_TOKEN`) and was generated from **API
+   setup with Instagram login** with the `instagram_business_*`
+   permissions in step 1, not from Graph API Explorer.
+5. If Private Replies fail only for people who aren't your own
+   admins/testers on the app, that's Standard Access's real limit for
+   `instagram_business_manage_messages` — it only sends to people with a
+   role on the app itself. Messaging real (non-tester) users needs
+   Advanced Access for that permission via App Review.

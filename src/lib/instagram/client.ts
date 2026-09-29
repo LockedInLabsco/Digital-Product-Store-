@@ -1,14 +1,36 @@
 /**
- * Server-only Instagram Graph API client — plain fetch, no SDK, mirroring
+ * Server-only Instagram API client — plain fetch, no SDK, mirroring
  * src/lib/ai/client.ts's own reasoning: this is a low-volume, admin-
- * triggered integration (the "Sync from Instagram" button), not
- * something that needs a dependency, and staying on plain fetch keeps
- * INSTAGRAM_ACCESS_TOKEN nowhere near a client bundle by construction.
+ * triggered integration (the "Sync from Instagram" button) plus a
+ * personal-brand-scale volume of automated DMs, not something that needs
+ * a dependency, and staying on plain fetch keeps the access tokens
+ * nowhere near a client bundle by construction.
+ *
+ * Two unrelated Meta products live in this one file, deliberately kept
+ * on separate hosts/tokens/permission namespaces rather than sharing one
+ * — mixing them is exactly what caused Graph API error
+ * `(#3) Application does not have the capability to make this API call.`
+ * on outbound messaging (see docs/INSTAGRAM_AUTOMATIONS_SETUP.md):
+ *
+ * - CONTENT_API_BASE (graph.facebook.com) + INSTAGRAM_ACCESS_TOKEN —
+ *   Facebook Login for Business / the classic Instagram Graph API,
+ *   Page-linked. Used only for read-only content sync (media, insights).
+ * - MESSAGING_API_BASE (graph.instagram.com) + INSTAGRAM_MESSAGING_ACCESS_TOKEN —
+ *   Instagram API with Instagram Login, a separate product with its own
+ *   `instagram_business_*` permissions. Used only for outbound messaging
+ *   (private replies, DMs, follow-ups). Every messaging call addresses
+ *   the literal id `me` rather than INSTAGRAM_BUSINESS_ACCOUNT_ID — that
+ *   id comes from the Facebook Login flow's Page→Instagram link and is
+ *   not guaranteed to be the same value under Instagram Login (Meta's
+ *   own docs distinguish the two), so reusing it here would just
+ *   reintroduce the same kind of cross-flow mismatch. `me` is Meta's own
+ *   documented pattern for this API and sidesteps the question entirely.
  */
 import 'server-only'
 
 const GRAPH_API_VERSION = 'v21.0'
-const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+const MESSAGING_API_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`
 const REQUEST_TIMEOUT_MS = 15000
 
 export function isInstagramConfigured(): boolean {
@@ -52,18 +74,20 @@ export function mapContentType(media: Pick<InstagramMedia, 'media_type' | 'media
   return 'other'
 }
 
-async function graphRequest<T>(
+async function apiRequest<T>(
+  baseUrl: string,
+  accessToken: string | undefined,
+  missingTokenError: string,
   method: 'GET' | 'POST',
   path: string,
   params: Record<string, string>,
   body?: unknown
 ): Promise<InstagramResult<T>> {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
   if (!accessToken) {
-    return { ok: false, error: 'INSTAGRAM_ACCESS_TOKEN is not configured' }
+    return { ok: false, error: missingTokenError }
   }
 
-  const url = new URL(`${GRAPH_API_BASE}/${path}`)
+  const url = new URL(`${baseUrl}/${path}`)
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
   url.searchParams.set('access_token', accessToken)
 
@@ -96,11 +120,23 @@ async function graphRequest<T>(
 }
 
 function graphGet<T>(path: string, params: Record<string, string>): Promise<InstagramResult<T>> {
-  return graphRequest<T>('GET', path, params)
+  return apiRequest<T>(CONTENT_API_BASE, process.env.INSTAGRAM_ACCESS_TOKEN, 'INSTAGRAM_ACCESS_TOKEN is not configured', 'GET', path, params)
 }
 
 function graphPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
-  return graphRequest<T>('POST', path, {}, body)
+  return apiRequest<T>(CONTENT_API_BASE, process.env.INSTAGRAM_ACCESS_TOKEN, 'INSTAGRAM_ACCESS_TOKEN is not configured', 'POST', path, {}, body)
+}
+
+function messagingPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
+  return apiRequest<T>(
+    MESSAGING_API_BASE,
+    process.env.INSTAGRAM_MESSAGING_ACCESS_TOKEN,
+    'INSTAGRAM_MESSAGING_ACCESS_TOKEN is not configured',
+    'POST',
+    path,
+    {},
+    body
+  )
 }
 
 /**
@@ -205,19 +241,16 @@ function buildMessagePayload(text: string, button: MessageButton | null) {
  * within 7 days of the comment; only one per comment is allowed (Meta
  * rejects a second attempt, which the caller never gets to make anyway
  * since src/lib/instagram/automations.ts de-dupes by comment id before
- * this is ever called).
+ * this is ever called). Goes through the Instagram API with Instagram
+ * Login (graph.instagram.com + INSTAGRAM_MESSAGING_ACCESS_TOKEN), not
+ * the Facebook Login content API above — see the file-level comment.
  */
 export async function sendPrivateReplyToComment(
   commentId: string,
   message: string,
   button: MessageButton | null = null
 ): Promise<InstagramResult<{ id: string }>> {
-  const accountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
-  if (!accountId) {
-    return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
-  }
-
-  return graphPost(`${accountId}/messages`, {
+  return messagingPost('me/messages', {
     recipient: { comment_id: commentId },
     message: buildMessagePayload(message, button),
   })
@@ -231,19 +264,15 @@ export async function sendPrivateReplyToComment(
  * follow-up scheduled further out than that will fail at send time (see
  * docs/INSTAGRAM_AUTOMATIONS_SETUP.md) — this function surfaces that as
  * an ordinary `{ ok: false }` result rather than throwing, so the
- * follow-up cron can record it on the run and move on.
+ * follow-up cron can record it on the run and move on. Same Instagram
+ * Login messaging path as sendPrivateReplyToComment above.
  */
 export async function sendDirectMessage(
   recipientIgId: string,
   message: string,
   button: MessageButton | null = null
 ): Promise<InstagramResult<{ id: string }>> {
-  const accountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
-  if (!accountId) {
-    return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
-  }
-
-  return graphPost(`${accountId}/messages`, {
+  return messagingPost('me/messages', {
     recipient: { id: recipientIgId },
     message: buildMessagePayload(message, button),
   })
