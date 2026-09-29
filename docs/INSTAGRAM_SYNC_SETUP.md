@@ -1,11 +1,19 @@
 # Instagram sync setup
 
 The Personal Brand Content OS (`/admin/personal-brand/content`) has a
-**"Sync from Instagram"** button that pulls views/likes/comments/saves/
-reach for every posted Instagram item and saves them as a metrics
-snapshot — the same shape you'd get from filling out the manual snapshot
-form, just automated. It only ever runs when you click the button —
-never on a schedule, never in the background.
+**"Sync from Instagram"** button that:
+
+1. Auto-creates a posted content item for any Instagram post that isn't
+   logged yet (title/caption prefilled from the post's own caption,
+   content type guessed from reel/carousel/post), and
+2. Pulls views/likes/comments/saves/reach for every posted Instagram
+   item — newly created or already logged — and saves them as a metrics
+   snapshot, the same shape you'd get from filling out the manual
+   snapshot form, just automated.
+
+It only ever runs when you click the button — never on a schedule,
+never in the background. Clicking it any time picks up whatever's new
+since the last click.
 
 The site works normally with no Instagram configuration at all — the
 button just returns "Instagram is not connected" instead of erroring.
@@ -70,12 +78,16 @@ INSTAGRAM_BUSINESS_ACCOUNT_ID=
 
 ## How matching works
 
-The sync matches each posted content item to an Instagram post by
-comparing `platform_url` against the post's permalink (normalized —
-`www.` and trailing slashes are ignored, case-insensitive). A content
-item only gets synced if it has `platform: instagram`, `status: posted`,
-and a `platform_url` set. If a post doesn't match, the sync reports it
-as unmatched rather than guessing — check that `platform_url` is the
+The sync matches content items to Instagram posts by comparing
+`platform_url` against the post's permalink (normalized — `www.` and
+trailing slashes are ignored, case-insensitive). Any Instagram post
+whose permalink doesn't match an existing instagram-platform item (in
+any status) gets a new content item auto-created for it, `status:
+posted`, `platform_url` set to that permalink. Metrics are then synced
+for every `platform: instagram`, `status: posted` item that has a
+`platform_url` — newly created or logged by hand. If a logged item's
+`platform_url` doesn't match any post the account has, the sync reports
+it as unmatched rather than guessing — check that `platform_url` is the
 exact Instagram link.
 
 ## Known limitation

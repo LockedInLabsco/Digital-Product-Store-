@@ -72,11 +72,13 @@ export default function ContentLibraryClient() {
       if (data.message) {
         setSyncMessage(data.message)
       } else {
-        const results: { matched: boolean; inserted: boolean }[] = data.results || []
+        const results: { matched: boolean; inserted: boolean; created: boolean }[] = data.results || []
         const inserted = results.filter((r) => r.inserted).length
+        const created = results.filter((r) => r.created).length
         const unmatched = results.filter((r) => !r.matched).length
         setSyncMessage(
           `Synced ${inserted} post${inserted === 1 ? '' : 's'}` +
+            (created > 0 ? ` — ${created} new post${created === 1 ? '' : 's'} imported from Instagram` : '') +
             (unmatched > 0 ? ` — ${unmatched} post${unmatched === 1 ? '' : 's'} couldn't be matched to Instagram` : '')
         )
       }
