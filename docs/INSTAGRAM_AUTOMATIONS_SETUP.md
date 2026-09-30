@@ -149,6 +149,43 @@ a paid plan.)
   delivery. A failed send is recorded on the run (visible in the
   "Recent activity" table on the Automations page) rather than retried.
 
+## 7. Automatic token renewal (no more manual re-pasting every ~60 days)
+
+`INSTAGRAM_MESSAGING_ACCESS_TOKEN` from step 1 only seeds the system
+once. From then on, the real token lives encrypted in the
+`instagram_integration_credentials` table (migration
+`0023_instagram_token_store.sql`) and is kept alive automatically by
+`src/lib/instagram/tokenStore.ts` — see that file for the full lifecycle
+logic. In short:
+
+- The **first** outbound send (or the token-refresh cron below) copies
+  the env var token into the database, trying Meta's refresh/exchange
+  endpoints to confirm and store it as long-lived (~60 days) up front.
+- **`/api/cron/instagram-token-refresh`**, pinged once a day by the same
+  external scheduler as `instagram-followups` (same `CRON_SECRET`
+  bearer auth), refreshes the stored token whenever it's within 10 days
+  of expiry using Meta's `ig_refresh_token` grant — no login, no manual
+  step.
+- Add one more job at [cron-job.org](https://cron-job.org) (or reuse the
+  existing one, just at a daily interval instead of every 15-30 min):
+  `GET https://<your-domain>/api/cron/instagram-token-refresh` with
+  header `Authorization: Bearer <CRON_SECRET>`.
+- `INSTAGRAM_TOKEN_ENCRYPTION_KEY` (a base64 32-byte key, e.g. from
+  `openssl rand -base64 32`) encrypts the stored token at rest. Without
+  it, the bootstrap step is skipped and messaging just keeps reading
+  `INSTAGRAM_MESSAGING_ACCESS_TOKEN` directly (the old behavior) — set it
+  before relying on auto-refresh.
+- A live status panel — connected/needs attention, last refreshed, token
+  expiry, last refresh status, plus a manual "Refresh token" button — is
+  on `/admin/personal-brand/automations`. If the stored token ever
+  becomes unrecoverable (refresh keeps failing and it's actually
+  expired), the panel shows "Reconnect Instagram": generate a fresh token
+  as in step 1, update `INSTAGRAM_MESSAGING_ACCESS_TOKEN` in Vercel,
+  redeploy, then click Reconnect.
+- If refresh fails, the previously stored (still-valid) token keeps
+  being used for sends — a failed refresh never deletes or blocks the
+  current token, it only gets recorded and retried the next day.
+
 ## How to debug
 
 Every trigger (matched or not) that actually reaches `processTrigger`

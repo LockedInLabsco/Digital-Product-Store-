@@ -15,18 +15,26 @@
  * - CONTENT_API_BASE (graph.facebook.com) + INSTAGRAM_ACCESS_TOKEN —
  *   Facebook Login for Business / the classic Instagram Graph API,
  *   Page-linked. Used only for read-only content sync (media, insights).
- * - MESSAGING_API_BASE (graph.instagram.com) + INSTAGRAM_MESSAGING_ACCESS_TOKEN —
- *   Instagram API with Instagram Login, a separate product with its own
- *   `instagram_business_*` permissions. Used only for outbound messaging
- *   (private replies, DMs, follow-ups). Every messaging call addresses
- *   the literal id `me` rather than INSTAGRAM_BUSINESS_ACCOUNT_ID — that
- *   id comes from the Facebook Login flow's Page→Instagram link and is
- *   not guaranteed to be the same value under Instagram Login (Meta's
- *   own docs distinguish the two), so reusing it here would just
- *   reintroduce the same kind of cross-flow mismatch. `me` is Meta's own
- *   documented pattern for this API and sidesteps the question entirely.
+ * - MESSAGING_API_BASE (graph.instagram.com) + a token from
+ *   src/lib/instagram/tokenStore.ts — Instagram API with Instagram
+ *   Login, a separate product with its own `instagram_business_*`
+ *   permissions. Used only for outbound messaging (private replies, DMs,
+ *   follow-ups). Every messaging call addresses the literal id `me`
+ *   rather than INSTAGRAM_BUSINESS_ACCOUNT_ID — that id comes from the
+ *   Facebook Login flow's Page→Instagram link and is not guaranteed to
+ *   be the same value under Instagram Login (Meta's own docs distinguish
+ *   the two), so reusing it here would just reintroduce the same kind of
+ *   cross-flow mismatch. `me` is Meta's own documented pattern for this
+ *   API and sidesteps the question entirely.
+ *
+ *   The messaging token itself now lives in the database
+ *   (instagram_integration_credentials, encrypted at rest), not directly
+ *   in INSTAGRAM_MESSAGING_ACCESS_TOKEN — that env var only seeds the
+ *   database once (see tokenStore.bootstrapMessagingTokenIfNeeded) and
+ *   is refreshed automatically from then on. See tokenStore.ts for why.
  */
 import 'server-only'
+import { getCurrentMessagingToken, refreshAfterAuthFailure } from './tokenStore'
 
 const GRAPH_API_VERSION = 'v21.0'
 const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
@@ -37,7 +45,7 @@ export function isInstagramConfigured(): boolean {
   return Boolean(process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID)
 }
 
-export type InstagramResult<T> = { ok: true; data: T } | { ok: false; error: string }
+export type InstagramResult<T> = { ok: true; data: T } | { ok: false; error: string; code?: number }
 
 export interface InstagramMedia {
   id: string
@@ -106,7 +114,7 @@ async function apiRequest<T>(
     if (!response.ok || !json) {
       const message = json?.error?.message || `Instagram API request failed (status ${response.status})`
       console.error('[Instagram] Graph API error', response.status, message)
-      return { ok: false, error: message }
+      return { ok: false, error: message, code: json?.error?.code }
     }
 
     return { ok: true, data: json as T }
@@ -127,16 +135,36 @@ function graphPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> 
   return apiRequest<T>(CONTENT_API_BASE, process.env.INSTAGRAM_ACCESS_TOKEN, 'INSTAGRAM_ACCESS_TOKEN is not configured', 'POST', path, {}, body)
 }
 
-function messagingPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
-  return apiRequest<T>(
-    MESSAGING_API_BASE,
-    process.env.INSTAGRAM_MESSAGING_ACCESS_TOKEN,
-    'INSTAGRAM_MESSAGING_ACCESS_TOKEN is not configured',
-    'POST',
-    path,
-    {},
-    body
-  )
+/** Meta's OAuthException code for an invalid/expired access token — the signal to try a refresh-and-retry. */
+const AUTH_ERROR_CODE = 190
+
+/**
+ * POSTs to the messaging API using whatever token tokenStore currently
+ * considers current — never process.env directly, so a refreshed token
+ * takes effect on the very next send with no redeploy. If the send fails
+ * with Meta's "invalid/expired access token" error, attempts exactly one
+ * refresh + one retry (never more, so a genuinely dead token can't loop):
+ * the retry either succeeds on the freshly refreshed token, or the
+ * caller gets back a sanitized message telling the owner to reconnect —
+ * the real Meta error/token is never included.
+ */
+async function messagingPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
+  const current = await getCurrentMessagingToken()
+  if (!current) {
+    return { ok: false, error: 'Instagram messaging is not configured' }
+  }
+
+  const result = await apiRequest<T>(MESSAGING_API_BASE, current.token, 'Instagram messaging is not configured', 'POST', path, {}, body)
+  if (result.ok || result.code !== AUTH_ERROR_CODE || !current.rowId) {
+    return result
+  }
+
+  const refreshedToken = await refreshAfterAuthFailure(current.rowId)
+  if (!refreshedToken) {
+    return { ok: false, error: 'Instagram messaging authorization requires reconnection.' }
+  }
+
+  return apiRequest<T>(MESSAGING_API_BASE, refreshedToken, 'Instagram messaging is not configured', 'POST', path, {}, body)
 }
 
 /**
@@ -242,8 +270,9 @@ function buildMessagePayload(text: string, button: MessageButton | null) {
  * rejects a second attempt, which the caller never gets to make anyway
  * since src/lib/instagram/automations.ts de-dupes by comment id before
  * this is ever called). Goes through the Instagram API with Instagram
- * Login (graph.instagram.com + INSTAGRAM_MESSAGING_ACCESS_TOKEN), not
- * the Facebook Login content API above — see the file-level comment.
+ * Login (graph.instagram.com, via messagingPost's tokenStore-backed
+ * token), not the Facebook Login content API above — see the file-level
+ * comment.
  */
 export async function sendPrivateReplyToComment(
   commentId: string,
@@ -264,8 +293,8 @@ export async function sendPrivateReplyToComment(
  * distinct Instagram capabilities, and Meta only allows one Private
  * Reply per comment — this call is unaffected by whether a private
  * reply was already sent (or fails) for the same comment. Same
- * Instagram Login messaging path (graph.instagram.com +
- * INSTAGRAM_MESSAGING_ACCESS_TOKEN) as the rest of this section, since
+ * Instagram Login messaging path (graph.instagram.com, via
+ * messagingPost) as the rest of this section, since
  * `instagram_business_manage_comments` is part of that token's scope.
  */
 export async function replyToComment(commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {

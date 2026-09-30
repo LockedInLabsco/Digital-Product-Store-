@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Container from '@/src/components/Container'
 import Button from '@/src/components/admin/AdminButton'
 import PersonalBrandTabs from '@/src/components/admin/personal-brand/PersonalBrandTabs'
+import InstagramTokenStatusPanel from '@/src/components/admin/personal-brand/InstagramTokenStatusPanel'
 import AutomationRuleForm, { type AutomationRuleFormData } from '@/src/components/admin/personal-brand/AutomationRuleForm'
 import type { IgAutomationFollowup, IgAutomationRule, IgAutomationRun } from '@/src/types/instagramAutomation'
 
@@ -318,6 +319,8 @@ export default function AutomationsClient() {
             </div>
             <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Close' : '+ New Rule'}</Button>
           </div>
+
+          <InstagramTokenStatusPanel />
 
           {showForm && (
             <div className="mb-8">
