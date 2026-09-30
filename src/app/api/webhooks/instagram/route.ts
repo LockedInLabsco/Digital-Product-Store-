@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/src/lib/instagram/webhookVerify'
 import { processTrigger } from '@/src/lib/instagram/processTrigger'
+import { maskId, previewText, webhookDebug } from '@/src/lib/instagram/webhookDebug'
 
 interface CommentValue {
   id: string
@@ -60,6 +61,16 @@ export async function POST(request: NextRequest) {
   const entries: any[] = payload.entry || []
 
   for (const entry of entries) {
+    // Temporary diagnostic — tells us which container the event actually
+    // arrived in (changes[] vs messaging[]) and which fields Meta sent,
+    // which is the one thing the webhook's 200 response can't tell us.
+    webhookDebug('entry', {
+      object: payload.object,
+      entryKeys: Object.keys(entry || {}),
+      changeFields: (entry.changes || []).map((c: any) => c?.field),
+      messagingCount: (entry.messaging || []).length,
+    })
+
     for (const change of entry.changes || []) {
       if (change.field === 'comments') {
         const value = change.value as CommentValue
@@ -73,29 +84,54 @@ export async function POST(request: NextRequest) {
           mediaId: value.media?.id ?? null,
         })
       } else if (change.field === 'messages') {
-        await handleMessageEnvelope(change.value as MessageEnvelope)
+        await handleMessageEnvelope(change.value as MessageEnvelope, 'changes.messages')
       }
     }
 
     for (const item of entry.messaging || []) {
-      await handleMessageEnvelope(item as MessageEnvelope)
+      await handleMessageEnvelope(item as MessageEnvelope, 'messaging')
     }
   }
 
   return NextResponse.json({ received: true })
 }
 
-async function handleMessageEnvelope(envelope: MessageEnvelope): Promise<void> {
+async function handleMessageEnvelope(envelope: MessageEnvelope, source: string): Promise<void> {
   const message = envelope.message
   const senderId = envelope.sender?.id
+
+  // Temporary diagnostic — shows whether this envelope actually has the
+  // shape the parser above expects (sender.id + message.mid/text), which
+  // is what decides whether a DM ever reaches processTrigger at all.
+  webhookDebug('envelope', {
+    source,
+    envelopeKeys: Object.keys(envelope || {}),
+    messageKeys: message ? Object.keys(message) : [],
+    hasSender: Boolean(senderId),
+    hasMid: Boolean(message?.mid),
+    isEcho: Boolean(message?.is_echo),
+    hasText: typeof message?.text === 'string',
+    textPreview: previewText(message?.text),
+    sender: maskId(senderId),
+  })
+
   // is_echo means this is our own outgoing message being echoed back —
   // must be skipped, or an automated reply could trigger itself in a loop.
-  if (!message?.mid || !senderId || message.is_echo) return
+  if (!message?.mid || !senderId || message.is_echo) {
+    webhookDebug('skipped', {
+      source,
+      reason: !message?.mid ? 'no-message-mid' : !senderId ? 'no-sender-id' : 'is-echo',
+    })
+    return
+  }
 
   const isStoryReply = Boolean(message.reply_to?.story)
+  const triggerType = isStoryReply ? 'story_reply' : 'dm_keyword'
+
+  webhookDebug('dispatch', { source, triggerType, isStoryReply, sender: maskId(senderId) })
 
   await processTrigger({
-    triggerType: isStoryReply ? 'story_reply' : 'dm_keyword',
+    triggerType,
     sourceType: isStoryReply ? 'story_reply' : 'dm',
     sourceId: message.mid,
     recipientIgId: senderId,

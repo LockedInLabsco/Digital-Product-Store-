@@ -3,6 +3,7 @@ import { supabaseServer } from '@/src/lib/supabase/server'
 import { sendDirectMessage, sendPrivateReplyToComment, replyToComment } from './client'
 import { findMatchingRule } from './automations'
 import { pickPublicReplyVariationIndex } from './publicReply'
+import { maskId, previewText, sanitizeError, webhookDebug } from './webhookDebug'
 import type { IgAutomationRule, IgRunSourceType, IgTriggerType } from '@/src/types/instagramAutomation'
 
 export interface TriggerEvent {
@@ -40,7 +41,25 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     return
   }
 
+  // Temporary diagnostic — keywords here are admin-authored rule config,
+  // not user data, so logging them is safe and is what makes a
+  // keyword/normalization mismatch obvious at a glance.
+  webhookDebug('rules', {
+    triggerType: event.triggerType,
+    activeRules: (rules || []).length,
+    keywords: ((rules || []) as IgAutomationRule[]).map((r) => r.keyword),
+    matchTypes: ((rules || []) as IgAutomationRule[]).map((r) => r.match_type),
+    textPreview: previewText(event.text),
+  })
+
   const rule = findMatchingRule((rules || []) as IgAutomationRule[], event.triggerType, event.text, event.mediaId)
+
+  webhookDebug('match', {
+    triggerType: event.triggerType,
+    matched: Boolean(rule),
+    ruleId: rule ? rule.id.slice(0, 8) : 'none',
+  })
+
   if (!rule) return
 
   const { data: run, error: insertError } = await supabaseServer
@@ -58,6 +77,7 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     // 23505 = unique violation on (source_type, source_id) — this exact
     // comment/message was already processed (e.g. a redelivered
     // webhook). Not an error, just a no-op.
+    webhookDebug('runInsert', { ok: false, duplicate: insertError.code === '23505', code: insertError.code })
     if (insertError.code !== '23505') {
       console.error('[Instagram Webhook] Failed to record run', insertError.message)
     }
@@ -95,10 +115,24 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
 
   const button = rule.button_url && rule.button_label ? { url: rule.button_url, label: rule.button_label } : null
 
+  webhookDebug('send', {
+    method: event.sourceType === 'comment' ? 'sendPrivateReplyToComment' : 'sendDirectMessage',
+    sourceType: event.sourceType,
+    ruleId: rule.id.slice(0, 8),
+    hasButton: Boolean(button),
+    recipient: maskId(event.recipientIgId),
+  })
+
   const sendResult =
     event.sourceType === 'comment'
       ? await sendPrivateReplyToComment(event.sourceId, rule.reply_message, button)
       : await sendDirectMessage(event.recipientIgId, rule.reply_message, button)
+
+  webhookDebug('sendResult', {
+    sourceType: event.sourceType,
+    ok: sendResult.ok,
+    error: sendResult.ok ? 'none' : sanitizeError(sendResult.error),
+  })
 
   if (!sendResult.ok) {
     await supabaseServer
