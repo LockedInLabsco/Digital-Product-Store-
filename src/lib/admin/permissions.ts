@@ -26,6 +26,20 @@ export const ALL_PERMISSIONS: AdminPermission[] = [
   'personal_brand:read',
   'personal_brand:write',
   'personal_brand:ai',
+
+  // Work system (teams/tasks). These gate entry into /admin/work and its
+  // API routes only — WHICH teams/tasks a given admin can actually see
+  // or touch within that is a separate, relational question answered by
+  // getWorkScope() (src/lib/admin/workScope.ts) from wk_team_members,
+  // never by this flat table alone. 'work:read_team' is reserved for a
+  // future role that should see every team's work without being a lead
+  // of each one; nothing is granted it in V1 (team-scoped visibility
+  // today comes from actual wk_team_members lead rows, not a role).
+  'work:read_own',
+  'work:read_team',
+  'work:read_all',
+  'work:manage_teams',
+  'work:manage_all',
 ]
 
 /**
@@ -50,6 +64,9 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'media:write',
     'hero_slider:read',
     'hero_slider:write',
+    // Conservative default (see Work System Phase 1 report, §3): every
+    // existing role gets its own Work workspace, nothing company-wide.
+    'work:read_own',
   ],
 
   // Owns the Personal Brand Content OS day-to-day — this is the role
@@ -63,9 +80,14 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'personal_brand:read',
     'personal_brand:write',
     'personal_brand:ai',
+    // Own Work workspace only — does NOT appear in PERSONAL_BRAND_NAV_ITEMS
+    // (AdminShell's focused nav for social_media-only admins), consistent
+    // with keeping that nav unchanged; still reachable/enforced via direct
+    // URL + API, same as every permission check in this codebase.
+    'work:read_own',
   ],
 
-  analyst: ['dashboard:read', 'analytics:read'],
+  analyst: ['dashboard:read', 'analytics:read', 'work:read_own'],
 }
 
 export function permissionsForRole(role: AdminRole): AdminPermission[] {

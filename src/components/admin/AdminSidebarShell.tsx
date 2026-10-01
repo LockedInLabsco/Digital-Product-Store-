@@ -22,6 +22,7 @@ import {
   FlaskConical,
   CalendarClock,
   Send,
+  Briefcase,
   type LucideIcon,
 } from 'lucide-react'
 import SignOutButton from './SignOutButton'
@@ -43,6 +44,7 @@ export type AdminNavIconKey =
   | 'experiments'
   | 'planner'
   | 'automations'
+  | 'work'
 
 const ICONS: Record<AdminNavIconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -61,6 +63,7 @@ const ICONS: Record<AdminNavIconKey, LucideIcon> = {
   experiments: FlaskConical,
   planner: CalendarClock,
   automations: Send,
+  work: Briefcase,
 }
 
 export interface AdminNavItem {

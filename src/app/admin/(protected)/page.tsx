@@ -56,6 +56,13 @@ const CARDS: DashboardCard[] = [
     permission: 'hero_slider:read',
   },
   {
+    href: '/admin/work',
+    title: 'Work',
+    description: 'Teams, tasks, and who owns what',
+    cta: 'Open Work ->',
+    permission: 'work:read_own',
+  },
+  {
     href: '/admin/team',
     title: 'Team',
     description: 'Invite teammates, assign roles, and manage access',
