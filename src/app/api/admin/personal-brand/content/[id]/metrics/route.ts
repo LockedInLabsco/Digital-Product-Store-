@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, canReadWorkspace, canWriteWorkspace } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateContentMetricInput } from '@/src/lib/personal-brand/validate'
 
-// GET all metric snapshots for one content item, oldest first.
+// GET all metric snapshots for one content item, oldest first. Ownership
+// is inherited through the parent content item (pb_content_metrics has
+// no workspace_id of its own by design — see the Social Media
+// Multi-Workspace Audit §12), so the parent's workspace_id is checked
+// before returning anything for its content_id.
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const auth = await requirePermission('personal_brand:read')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: content } = await supabaseServer.from('pb_content_items').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!content || !content.workspace_id || !canReadWorkspace(scope, content.workspace_id)) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
     }
 
     const { data, error } = await supabaseServer
@@ -39,13 +54,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { data: content } = await supabaseServer
-      .from('pb_content_items')
-      .select('id')
-      .eq('id', params.id)
-      .maybeSingle()
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
-    if (!content) {
+    const { data: content } = await supabaseServer.from('pb_content_items').select('id, workspace_id').eq('id', params.id).maybeSingle()
+
+    if (!content || !content.workspace_id || !canWriteWorkspace(scope, content.workspace_id)) {
       return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
     }
 

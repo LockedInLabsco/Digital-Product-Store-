@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
+import { resolveConnectedAccountIdsForWorkspaces, canAccessAutomationAccount } from '@/src/lib/social/automationAccountScope'
 import { validateAutomationFollowupInput } from '@/src/lib/instagram/validate'
 
-// POST add a follow-up step to a rule's drip sequence.
+// POST add a follow-up step to a rule's drip sequence. Ownership is
+// inherited through the parent rule_id (ig_automation_followups has no
+// connected_account_id of its own by design), so the parent rule's
+// connected_account_id is checked before anything is written.
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const auth = await requirePermission('personal_brand:write')
@@ -11,8 +16,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { data: rule } = await supabaseServer.from('ig_automation_rules').select('id').eq('id', params.id).maybeSingle()
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: rule } = await supabaseServer.from('ig_automation_rules').select('id, connected_account_id').eq('id', params.id).maybeSingle()
     if (!rule) {
+      return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
+    }
+    const writableAccountIds = await resolveConnectedAccountIdsForWorkspaces(scope.writableWorkspaceIds)
+    if (!canAccessAutomationAccount(scope, writableAccountIds, rule.connected_account_id)) {
       return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
     }
 

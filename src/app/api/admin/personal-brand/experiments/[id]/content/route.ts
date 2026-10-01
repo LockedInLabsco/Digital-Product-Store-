@@ -1,16 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, canWriteWorkspace } from '@/src/lib/admin/socialWorkspaceScope'
 
 // POST link a content item to this experiment — { content_id }. Uses the
 // pb_experiment_content join table (composite primary key on
 // (experiment_id, content_id)), never a packed id list on the experiment
 // row itself.
+//
+// Both sides of a join must be independently verified AND must belong to
+// the SAME workspace — this is exactly the cross-workspace IDOR shape
+// the Social Media Multi-Workspace Audit called out: neither id can be
+// trusted just because the other one checks out, and an experiment in
+// Workspace A must never be linkable to a content item from Workspace B
+// even if the caller happens to have write access to both.
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -20,12 +33,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const [{ data: experiment }, { data: content }] = await Promise.all([
-      supabaseServer.from('pb_experiments').select('id').eq('id', params.id).maybeSingle(),
-      supabaseServer.from('pb_content_items').select('id').eq('id', contentId).maybeSingle(),
+      supabaseServer.from('pb_experiments').select('id, workspace_id').eq('id', params.id).maybeSingle(),
+      supabaseServer.from('pb_content_items').select('id, workspace_id').eq('id', contentId).maybeSingle(),
     ])
 
-    if (!experiment) return NextResponse.json({ error: 'Experiment not found' }, { status: 404 })
-    if (!content) return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
+    if (!experiment || !experiment.workspace_id || !canWriteWorkspace(scope, experiment.workspace_id)) {
+      return NextResponse.json({ error: 'Experiment not found' }, { status: 404 })
+    }
+    if (!content || !content.workspace_id || !canWriteWorkspace(scope, content.workspace_id)) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
+    }
+    if (experiment.workspace_id !== content.workspace_id) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
+    }
 
     const { error } = await supabaseServer
       .from('pb_experiment_content')
@@ -54,10 +74,20 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json().catch(() => ({}))
     const contentId = typeof body.content_id === 'string' ? body.content_id.trim() : ''
     if (!contentId) {
       return NextResponse.json({ error: 'content_id is required' }, { status: 400 })
+    }
+
+    const { data: experiment } = await supabaseServer.from('pb_experiments').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!experiment || !experiment.workspace_id || !canWriteWorkspace(scope, experiment.workspace_id)) {
+      return NextResponse.json({ error: 'Experiment not found' }, { status: 404 })
     }
 
     const { error } = await supabaseServer

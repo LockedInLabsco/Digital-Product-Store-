@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, canReadWorkspace, canWriteWorkspace } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateFormatInput } from '@/src/lib/personal-brand/validate'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -10,9 +11,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { data, error } = await supabaseServer.from('pb_formats').select('*').eq('id', params.id).maybeSingle()
 
-    if (error || !data) {
+    if (error || !data || !data.workspace_id || !canReadWorkspace(scope, data.workspace_id)) {
       return NextResponse.json({ error: 'Format not found' }, { status: 404 })
     }
 
@@ -28,6 +34,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('pb_formats').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!existing || !existing.workspace_id || !canWriteWorkspace(scope, existing.workspace_id)) {
+      return NextResponse.json({ error: 'Format not found' }, { status: 404 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -63,6 +79,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('pb_formats').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!existing || !existing.workspace_id || !canWriteWorkspace(scope, existing.workspace_id)) {
+      return NextResponse.json({ error: 'Format not found' }, { status: 404 })
     }
 
     const { data, error } = await supabaseServer.from('pb_formats').delete().eq('id', params.id).select()

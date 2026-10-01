@@ -432,6 +432,83 @@ export async function reconnectMessagingTokenFromEnv(): Promise<RefreshOutcome> 
  * fresh token to retry with, or null if refresh couldn't recover it —
  * callers must not retry again after null.
  */
+// ---------------------------------------------------------------------
+// Phase F (Social Workspace Foundation) — account-aware token
+// resolution, additive only. Everything above this line is UNCHANGED:
+// the webhook (src/app/api/webhooks/instagram/route.ts), the follow-up
+// cron, and client.ts's messagingPost() all still call the zero-arg
+// getCurrentMessagingToken() above, reading the single legacy
+// instagram_integration_credentials row exactly as before. Nothing here
+// is wired into that live send path yet — see the Social Workspace
+// Foundation implementation report's "Next Phase" section for when it
+// will be. These functions read from the NEW social_account_tokens
+// table (keyed by connected_account_id) instead.
+// ---------------------------------------------------------------------
+
+export interface AccountScopedMessagingToken {
+  token: string
+  rowId: string
+}
+
+/**
+ * The messaging token for ONE specific connected account — no env-var
+ * bootstrap/fallback (that concept only applies to the legacy singleton
+ * row above); a connected account with no migrated token row simply
+ * returns null. Not yet called by any live send path — see the file
+ * header comment.
+ */
+export async function getMessagingTokenForAccount(connectedAccountId: string): Promise<AccountScopedMessagingToken | null> {
+  const { data, error } = await supabaseServer
+    .from('social_account_tokens')
+    .select('id, encrypted_access_token')
+    .eq('connected_account_id', connectedAccountId)
+    .eq('provider', PROVIDER)
+    .maybeSingle()
+
+  if (error || !data) {
+    if (error) console.error('[Instagram Token] Failed to read account-scoped token', error.message)
+    return null
+  }
+
+  try {
+    return { token: decryptToken(data.encrypted_access_token), rowId: data.id }
+  } catch (decryptError) {
+    console.error('[Instagram Token] Failed to decrypt account-scoped token', decryptError instanceof Error ? decryptError.message : decryptError)
+    return null
+  }
+}
+
+/**
+ * TRANSITIONAL compatibility resolver — for a caller not yet updated to
+ * receive an explicit connected_account_id (e.g. the current webhook,
+ * before account-routing is built — see the Social Media Multi-Workspace
+ * Audit's Phase 2). Resolves the one connected account that actually has
+ * a migrated instagram_login token row.
+ *
+ * Deliberately UNSAFE-BY-DEFAULT rather than convenient: if more than one
+ * connected account has a migrated token, this throws instead of picking
+ * one — "just select first active account" is exactly the failure mode
+ * this function exists to prevent once a second real account exists.
+ * Returns null (not an error) only when zero accounts have migrated yet,
+ * since that's a legitimate pre-migration state, not an ambiguity.
+ */
+export async function resolveLegacySingleConnectedAccountId(): Promise<string | null> {
+  const { data, error } = await supabaseServer.from('social_account_tokens').select('connected_account_id').eq('provider', PROVIDER)
+
+  if (error) {
+    console.error('[Instagram Token] Failed to resolve legacy single connected account', error.message)
+    return null
+  }
+
+  const distinctIds = Array.from(new Set((data || []).map((r) => r.connected_account_id)))
+  if (distinctIds.length > 1) {
+    throw new Error(
+      'Multiple connected Instagram accounts have migrated tokens — legacy zero-arg token resolution is no longer unambiguous. Callers must be updated to pass an explicit connected_account_id.'
+    )
+  }
+  return distinctIds[0] ?? null
+}
+
 export async function refreshAfterAuthFailure(rowId: string): Promise<string | null> {
   try {
     const { data } = await supabaseServer.from(TABLE).select('*').eq('id', rowId).maybeSingle()

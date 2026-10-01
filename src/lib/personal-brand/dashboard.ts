@@ -7,10 +7,13 @@ import type { PbBaseline, PbContentItem, PbContentMetric, PbExperiment, PbFormat
 const RECENT_WINDOW_DAYS = 30
 const TOP_N = 5
 
-async function fetchAllContentWithMetrics(): Promise<{ items: PbContentItem[]; metricsByContentId: Record<string, PbContentMetric[]> }> {
+async function fetchAllContentWithMetrics(workspaceIds: string[]): Promise<{ items: PbContentItem[]; metricsByContentId: Record<string, PbContentMetric[]> }> {
+  if (workspaceIds.length === 0) return { items: [], metricsByContentId: {} }
+
   const { data: items, error } = await supabaseServer
     .from('pb_content_items')
     .select('*')
+    .in('workspace_id', workspaceIds)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -77,14 +80,29 @@ export interface DashboardData {
  * Aggregates everything the dashboard needs into one payload, computed
  * entirely with plain arithmetic (see metrics.ts/baselines.ts/
  * formatEvidence.ts) — no AI involved in any number shown here.
+ *
+ * `workspaceIds` scopes every query below to the caller's authorized
+ * Social Workspace(s) (see the Social Media Multi-Workspace Audit) —
+ * pass getSocialWorkspaceScope().memberWorkspaceIds, never an unfiltered
+ * fetch. An empty array returns an empty-but-valid dashboard payload
+ * rather than falling back to "every workspace's data."
  */
-export async function getDashboardData(): Promise<DashboardData> {
-  const [{ items, metricsByContentId }, formatsResult, experimentsResult, ideasResult] = await Promise.all([
-    fetchAllContentWithMetrics(),
-    supabaseServer.from('pb_formats').select('*'),
-    supabaseServer.from('pb_experiments').select('*').in('status', ['planned', 'active']),
-    supabaseServer.from('pb_ideas').select('*').eq('status', 'idea').order('created_at', { ascending: false }).limit(10),
-  ])
+export async function getDashboardData(workspaceIds: string[]): Promise<DashboardData> {
+  const [{ items, metricsByContentId }, formatsResult, experimentsResult, ideasResult] =
+    workspaceIds.length === 0
+      ? [{ items: [], metricsByContentId: {} }, { data: [] }, { data: [] }, { data: [] }]
+      : await Promise.all([
+          fetchAllContentWithMetrics(workspaceIds),
+          supabaseServer.from('pb_formats').select('*').in('workspace_id', workspaceIds),
+          supabaseServer.from('pb_experiments').select('*').in('workspace_id', workspaceIds).in('status', ['planned', 'active']),
+          supabaseServer
+            .from('pb_ideas')
+            .select('*')
+            .in('workspace_id', workspaceIds)
+            .eq('status', 'idea')
+            .order('created_at', { ascending: false })
+            .limit(10),
+        ])
 
   const formats: PbFormat[] = formatsResult.data || []
   const experiments: PbExperiment[] = experimentsResult.data || []

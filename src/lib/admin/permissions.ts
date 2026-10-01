@@ -40,6 +40,21 @@ export const ALL_PERMISSIONS: AdminPermission[] = [
   'work:read_all',
   'work:manage_teams',
   'work:manage_all',
+
+  // Social Workspaces (Personal Brand / Instagram automation isolation —
+  // see the Social Media Multi-Workspace Audit and
+  // src/lib/admin/socialWorkspaceScope.ts). Same two-tier split as Work:
+  // these gate entry into the Social system and global workspace
+  // administration only. WHICH workspace's content/analytics/automation
+  // a given admin can actually read or write is answered entirely by
+  // getSocialWorkspaceScope() from social_workspace_members — there is
+  // deliberately no 'social:read_all'/'social:manage_all' here, unlike
+  // Work's seesAll equivalent: an Owner holding social:manage_workspaces
+  // can administer workspace existence/membership/suspension but must
+  // still be an explicit social_workspace_members row to read a single
+  // byte of that workspace's private content. No hidden bypass.
+  'social:read_own',
+  'social:manage_workspaces',
 ]
 
 /**
@@ -77,9 +92,22 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   // panel — see AdminShell's social-media-only nav branch.
   social_media: [
     'dashboard:read',
+    // TRANSITIONAL — kept exactly as-is deliberately. These three still
+    // gate every existing /admin/personal-brand page and
+    // /api/admin/personal-brand/* route unchanged; removing them now
+    // (before those routes are workspace-scoped) would break the
+    // current UI mid-migration. Once every Personal Brand route checks
+    // social:read_own + actual workspace membership instead (Phase E),
+    // these three should be retired from this role — see the Social
+    // Workspace Foundation implementation report for exactly what still
+    // depends on them.
     'personal_brand:read',
     'personal_brand:write',
     'personal_brand:ai',
+    // Gates entry into the Social system — actual workspace content
+    // access comes from an explicit social_workspace_members row
+    // (getSocialWorkspaceScope()), never from this permission alone.
+    'social:read_own',
     // Own Work workspace only — does NOT appear in PERSONAL_BRAND_NAV_ITEMS
     // (AdminShell's focused nav for social_media-only admins), consistent
     // with keeping that nav unchanged; still reachable/enforced via direct

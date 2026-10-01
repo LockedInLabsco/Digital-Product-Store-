@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, canReadWorkspace, canWriteWorkspace } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateContentItemInput } from '@/src/lib/personal-brand/validate'
 
 // GET single content item, with its full metrics snapshot history
 // (oldest first, so charts/tables can read it in chronological order).
+// Loads the row FIRST, then checks its actual workspace_id against the
+// caller's scope — never trusts the URL's id to imply authorization
+// (see the Social Media Multi-Workspace Audit's IDOR requirement). A
+// content item from a workspace the caller doesn't belong to returns the
+// same 404 as one that doesn't exist at all — existence is not leaked.
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const auth = await requirePermission('personal_brand:read')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { data: content, error } = await supabaseServer
@@ -18,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       .eq('id', params.id)
       .maybeSingle()
 
-    if (error || !content) {
+    if (error || !content || !content.workspace_id || !canReadWorkspace(scope, content.workspace_id)) {
       return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
     }
 
@@ -46,6 +57,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('pb_content_items').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!existing || !existing.workspace_id || !canWriteWorkspace(scope, existing.workspace_id)) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
+    }
+    const workspaceId = existing.workspace_id
+
     const body = await request.json().catch(() => ({}))
     const result = validateContentItemInput(body)
     if (result.error || !result.value) {
@@ -57,6 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         .from('pb_formats')
         .select('id')
         .eq('id', result.value.format_id)
+        .eq('workspace_id', workspaceId)
         .maybeSingle()
       if (!format) {
         return NextResponse.json({ error: 'Selected format does not exist' }, { status: 400 })
@@ -91,6 +114,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('pb_content_items').select('workspace_id').eq('id', params.id).maybeSingle()
+    if (!existing || !existing.workspace_id || !canWriteWorkspace(scope, existing.workspace_id)) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
     }
 
     const { data, error } = await supabaseServer.from('pb_content_items').delete().eq('id', params.id).select()

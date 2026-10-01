@@ -47,7 +47,11 @@ async function buildAnalysisContext(content: PbContentItem) {
     content.format_id
       ? supabaseServer.from('pb_formats').select('*').eq('id', content.format_id).maybeSingle()
       : Promise.resolve({ data: null }),
-    supabaseServer.from('pb_content_items').select('*').eq('status', 'posted'),
+    // Scoped to this content item's own workspace — the account/format
+    // baselines and "similar historical content" below must only ever
+    // compare against the same Social Workspace's own data (see the
+    // Social Media Multi-Workspace Audit).
+    supabaseServer.from('pb_content_items').select('*').eq('workspace_id', content.workspace_id).eq('status', 'posted'),
   ])
 
   const format = formatResult.data
@@ -130,13 +134,20 @@ async function buildAnalysisContext(content: PbContentItem) {
   }
 }
 
-export async function analyzeContent(contentId: string): Promise<AiResult<ContentAnalysisResult>> {
+/**
+ * `workspaceIds` is the caller's authorized Social Workspace(s) — the
+ * content item is loaded first, then its OWN workspace_id is checked
+ * against this list before anything else happens (never trust contentId
+ * alone to imply authorization — see the Social Media Multi-Workspace
+ * Audit's IDOR requirement).
+ */
+export async function analyzeContent(contentId: string, workspaceIds: string[]): Promise<AiResult<ContentAnalysisResult>> {
   if (!isAnthropicConfigured()) {
     return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY to enable AI analysis' }
   }
 
   const { data: content, error } = await supabaseServer.from('pb_content_items').select('*').eq('id', contentId).maybeSingle()
-  if (error || !content) {
+  if (error || !content || !content.workspace_id || !workspaceIds.includes(content.workspace_id)) {
     return { ok: false, error: 'Content item not found' }
   }
 

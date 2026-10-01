@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
+import { resolveConnectedAccountIdsForWorkspaces, canAccessAutomationAccount } from '@/src/lib/social/automationAccountScope'
 import { validateAutomationRuleInput } from '@/src/lib/instagram/validate'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -8,6 +10,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('ig_automation_rules').select('connected_account_id').eq('id', params.id).maybeSingle()
+    if (!existing) {
+      return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
+    }
+    const writableAccountIds = await resolveConnectedAccountIdsForWorkspaces(scope.writableWorkspaceIds)
+    if (!canAccessAutomationAccount(scope, writableAccountIds, existing.connected_account_id)) {
+      return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -45,6 +61,20 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: existing } = await supabaseServer.from('ig_automation_rules').select('connected_account_id').eq('id', params.id).maybeSingle()
+    if (!existing) {
+      return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
+    }
+    const writableAccountIds = await resolveConnectedAccountIdsForWorkspaces(scope.writableWorkspaceIds)
+    if (!canAccessAutomationAccount(scope, writableAccountIds, existing.connected_account_id)) {
+      return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 })
     }
 
     const { data, error } = await supabaseServer.from('ig_automation_rules').delete().eq('id', params.id).select()

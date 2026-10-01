@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateIdeaInput } from '@/src/lib/personal-brand/validate'
 
 export async function GET() {
@@ -10,7 +11,19 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const { data, error } = await supabaseServer.from('pb_ideas').select('*').order('created_at', { ascending: false })
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (scope.memberWorkspaceIds.length === 0) {
+      return NextResponse.json({ ideas: [] })
+    }
+
+    const { data, error } = await supabaseServer
+      .from('pb_ideas')
+      .select('*')
+      .in('workspace_id', scope.memberWorkspaceIds)
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('[Personal Brand Ideas] Failed to fetch ideas', error.message)
@@ -31,13 +44,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
+    if (!workspaceResult.ok) {
+      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    }
+
     const body = await request.json().catch(() => ({}))
     const result = validateIdeaInput(body)
     if (result.error || !result.value) {
       return NextResponse.json({ error: result.error || 'Invalid idea' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseServer.from('pb_ideas').insert(result.value).select().single()
+    const { data, error } = await supabaseServer
+      .from('pb_ideas')
+      .insert({ ...result.value, workspace_id: workspaceResult.workspaceId })
+      .select()
+      .single()
 
     if (error) {
       console.error('[Personal Brand Ideas] Insert error', error.message)

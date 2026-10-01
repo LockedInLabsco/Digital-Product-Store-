@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
 import { analyzeContent } from '@/src/lib/ai/contentAnalysis'
 
 // POST { content_id } — on-demand AI analysis grounded in this content
@@ -14,13 +15,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json().catch(() => ({}))
     const contentId = typeof body.content_id === 'string' ? body.content_id.trim() : ''
     if (!contentId) {
       return NextResponse.json({ error: 'content_id is required' }, { status: 400 })
     }
 
-    const result = await analyzeContent(contentId)
+    const result = await analyzeContent(contentId, scope.memberWorkspaceIds)
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 503 })
     }

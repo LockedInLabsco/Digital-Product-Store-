@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
 import { getDashboardData } from '@/src/lib/personal-brand/dashboard'
 
-// GET the computed Dashboard payload — every number here is plain
-// arithmetic (see src/lib/personal-brand/{metrics,baselines,formatEvidence,dashboard}.ts),
+// GET the computed Dashboard payload, scoped to the caller's authorized
+// Social Workspace(s) — every number here is plain arithmetic (see
+// src/lib/personal-brand/{metrics,baselines,formatEvidence,dashboard}.ts),
 // never AI-generated.
 export async function GET() {
   try {
@@ -12,7 +14,12 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const data = await getDashboardData()
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const data = await getDashboardData(scope.memberWorkspaceIds)
     return NextResponse.json(data)
   } catch (error) {
     console.error('[Personal Brand Analytics] Exception in GET', error)

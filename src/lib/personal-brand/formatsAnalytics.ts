@@ -9,11 +9,19 @@ import type { PbContentItem, PbContentMetric } from '@/src/types/personalBrand'
  * computed only from posted content, same as the dashboard's account
  * baseline, so a format is never credited with performance from a draft
  * that hasn't actually gone out yet.
+ *
+ * `workspaceIds` scopes both queries to the caller's authorized Social
+ * Workspace(s) — see the Social Media Multi-Workspace Audit. Pass the
+ * caller's getSocialWorkspaceScope().memberWorkspaceIds, never an
+ * unfiltered query; an empty array returns empty evidence rather than
+ * falling back to "everything."
  */
-export async function getAllFormatEvidence(): Promise<FormatEvidence[]> {
+export async function getAllFormatEvidence(workspaceIds: string[]): Promise<FormatEvidence[]> {
+  if (workspaceIds.length === 0) return []
+
   const [{ data: formats, error: formatsError }, { data: items, error: itemsError }] = await Promise.all([
-    supabaseServer.from('pb_formats').select('*').order('created_at', { ascending: false }),
-    supabaseServer.from('pb_content_items').select('*').eq('status', 'posted'),
+    supabaseServer.from('pb_formats').select('*').in('workspace_id', workspaceIds).order('created_at', { ascending: false }),
+    supabaseServer.from('pb_content_items').select('*').in('workspace_id', workspaceIds).eq('status', 'posted'),
   ])
 
   if (formatsError) {

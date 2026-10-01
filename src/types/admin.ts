@@ -34,6 +34,8 @@ export type AdminPermission =
   | 'work:read_all'
   | 'work:manage_teams'
   | 'work:manage_all'
+  | 'social:read_own'
+  | 'social:manage_workspaces'
 
 /** Row shape of public.admin_users (email is denormalized onto the row
  * at invite-accept/bootstrap time — see getCurrentAdmin — so the team

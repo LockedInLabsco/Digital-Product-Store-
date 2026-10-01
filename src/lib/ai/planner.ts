@@ -50,16 +50,44 @@ Strict rules:
 - If an active experiment is relevant, mention it as an "experimentOpportunity" — e.g. suggest logging the next post as part of that experiment.
 - Set "hasEnoughData" to false (and explain why in "why", leaving other fields null except "why") when there simply isn't enough posted content with metrics, ideas, or formats to ground a real recommendation — do not fabricate a confident-sounding recommendation to fill the shape when the data doesn't support one.`
 
-export async function generatePlan(): Promise<AiResult<PlannerRecommendation>> {
+/**
+ * `workspaceIds` scopes every Content OS query to the caller's
+ * authorized Social Workspace(s) — see the Social Media Multi-Workspace
+ * Audit. An empty array short-circuits to "not enough data" rather than
+ * reading every workspace's content.
+ */
+export async function generatePlan(workspaceIds: string[]): Promise<AiResult<PlannerRecommendation>> {
   if (!isAnthropicConfigured()) {
     return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY to enable the AI Planner' }
   }
+  if (workspaceIds.length === 0) {
+    return {
+      ok: true,
+      data: {
+        hasEnoughData: false,
+        contentType: null,
+        goal: null,
+        format: null,
+        topic: null,
+        why: 'No Social Workspace content is available to this account yet.',
+        suggestedHook: null,
+        suggestedStructure: null,
+        experimentOpportunity: null,
+      },
+    }
+  }
 
   const [{ data: items }, { data: formats }, { data: ideas }, { data: experiments }] = await Promise.all([
-    supabaseServer.from('pb_content_items').select('*').eq('status', 'posted'),
-    supabaseServer.from('pb_formats').select('*').eq('status', 'active'),
-    supabaseServer.from('pb_ideas').select('*').eq('status', 'idea').order('created_at', { ascending: false }).limit(15),
-    supabaseServer.from('pb_experiments').select('*').in('status', ['planned', 'active']),
+    supabaseServer.from('pb_content_items').select('*').in('workspace_id', workspaceIds).eq('status', 'posted'),
+    supabaseServer.from('pb_formats').select('*').in('workspace_id', workspaceIds).eq('status', 'active'),
+    supabaseServer
+      .from('pb_ideas')
+      .select('*')
+      .in('workspace_id', workspaceIds)
+      .eq('status', 'idea')
+      .order('created_at', { ascending: false })
+      .limit(15),
+    supabaseServer.from('pb_experiments').select('*').in('workspace_id', workspaceIds).in('status', ['planned', 'active']),
   ])
 
   const postedItems: PbContentItem[] = items || []

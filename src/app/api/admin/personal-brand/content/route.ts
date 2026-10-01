@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateContentItemInput } from '@/src/lib/personal-brand/validate'
 
 const MAX_ITEMS = 2000
 
-// GET all content items, each annotated with its latest metrics
-// snapshot (if any) so the library list can show current performance
-// without a per-row round trip. This is a personal content log, not a
-// multi-tenant table, so "fetch everything, filter/sort client-side" —
-// the same approach the existing Waitlists admin list uses — is plenty.
+// GET all content items the caller's Social Workspace(s) own, each
+// annotated with its latest metrics snapshot (if any) so the library
+// list can show current performance without a per-row round trip. See
+// the Social Media Multi-Workspace Audit — this used to be a plain
+// `select('*')` across every workspace; now every row is explicitly
+// intersected with social_workspace_members-derived scope, never trusted
+// from the client.
 export async function GET() {
   try {
     const auth = await requirePermission('personal_brand:read')
@@ -17,9 +20,18 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (scope.memberWorkspaceIds.length === 0) {
+      return NextResponse.json({ content: [] })
+    }
+
     const { data: items, error } = await supabaseServer
       .from('pb_content_items')
       .select('*')
+      .in('workspace_id', scope.memberWorkspaceIds)
       .order('created_at', { ascending: false })
       .limit(MAX_ITEMS)
 
@@ -63,13 +75,27 @@ export async function GET() {
   }
 }
 
-// POST create a new content item
+// POST create a new content item, in the caller's one writable Social
+// Workspace (see resolveDefaultWritableWorkspaceId — there is no
+// workspace selector in the UI yet, so this is only unambiguous while an
+// admin belongs to exactly one writable workspace, which matches today's
+// real state).
 export async function POST(request: NextRequest) {
   try {
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
+
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
+    if (!workspaceResult.ok) {
+      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    }
+    const workspaceId = workspaceResult.workspaceId
 
     const body = await request.json().catch(() => ({}))
     const result = validateContentItemInput(body)
@@ -78,17 +104,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (result.value.format_id) {
+      // Never trust format_id to be the caller's own — a format from a
+      // different workspace must not be linkable here.
       const { data: format } = await supabaseServer
         .from('pb_formats')
         .select('id')
         .eq('id', result.value.format_id)
+        .eq('workspace_id', workspaceId)
         .maybeSingle()
       if (!format) {
         return NextResponse.json({ error: 'Selected format does not exist' }, { status: 400 })
       }
     }
 
-    const { data, error } = await supabaseServer.from('pb_content_items').insert(result.value).select().single()
+    const { data, error } = await supabaseServer
+      .from('pb_content_items')
+      .insert({ ...result.value, workspace_id: workspaceId })
+      .select()
+      .single()
 
     if (error) {
       console.error('[Personal Brand Content] Insert error', error.message)

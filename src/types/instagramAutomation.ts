@@ -14,6 +14,10 @@ export const IG_MATCH_TYPES: IgMatchType[] = ['contains', 'exact']
 
 export interface IgAutomationRule {
   id: string
+  /** Owning connected Instagram account — nullable only until the
+   * one-time backfill (src/lib/social/backfillWorkspace.ts) completes;
+   * see the Social Media Multi-Workspace Audit. */
+  connected_account_id: string | null
   name: string
   trigger_type: IgTriggerType
   keyword: string | null
@@ -53,6 +57,8 @@ export interface IgAutomationFollowup {
 
 export interface IgAutomationRun {
   id: string
+  /** Owning connected Instagram account — see IgAutomationRule's note. */
+  connected_account_id: string | null
   rule_id: string
   source_type: IgRunSourceType
   source_id: string

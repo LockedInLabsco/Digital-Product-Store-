@@ -5,6 +5,7 @@ import type { IgAutomationRule } from '@/src/types/instagramAutomation'
 function makeRule(overrides: Partial<IgAutomationRule>): IgAutomationRule {
   return {
     id: 'r1',
+    connected_account_id: null,
     name: 'Test rule',
     trigger_type: 'comment_keyword',
     keyword: 'link',

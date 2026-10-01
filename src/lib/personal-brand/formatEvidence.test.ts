@@ -5,6 +5,7 @@ import type { PbContentItem, PbContentMetric, PbFormat } from '@/src/types/perso
 function makeContent(overrides: Partial<PbContentItem>): PbContentItem {
   return {
     id: 'c1',
+    workspace_id: null,
     platform: 'instagram',
     content_type: 'reel',
     status: 'posted',
@@ -57,6 +58,7 @@ function makeMetric(overrides: Partial<PbContentMetric>): PbContentMetric {
 function makeFormat(overrides: Partial<PbFormat>): PbFormat {
   return {
     id: 'f1',
+    workspace_id: null,
     name: 'Direct Promise',
     description: null,
     hook_structure: null,

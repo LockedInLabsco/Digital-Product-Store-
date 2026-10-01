@@ -31,12 +31,18 @@ export interface PbFormat {
   cta_structure: string | null
   status: PbFormatStatus
   notes: string | null
+  /** Owning Social Workspace — nullable only until the one-time backfill
+   * (src/lib/social/backfillWorkspace.ts) completes; see the Social
+   * Media Multi-Workspace Audit. */
+  workspace_id: string | null
   created_at: string
   updated_at: string
 }
 
 export interface PbContentItem {
   id: string
+  /** Owning Social Workspace — see PbFormat.workspace_id's note. */
+  workspace_id: string | null
   platform: PbPlatform
   content_type: PbContentType
   status: PbContentStatus
@@ -83,6 +89,8 @@ export interface PbContentMetric {
 
 export interface PbIdea {
   id: string
+  /** Owning Social Workspace — see PbFormat.workspace_id's note. */
+  workspace_id: string | null
   title: string
   raw_idea: string | null
   notes: string | null
@@ -99,6 +107,8 @@ export interface PbIdea {
 
 export interface PbExperiment {
   id: string
+  /** Owning Social Workspace — see PbFormat.workspace_id's note. */
+  workspace_id: string | null
   name: string
   hypothesis: string | null
   variable_tested: string | null

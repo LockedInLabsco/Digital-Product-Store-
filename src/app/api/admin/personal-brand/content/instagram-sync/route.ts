@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
+import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateContentItemInput, validateContentMetricInput } from '@/src/lib/personal-brand/validate'
 import { fetchAllAccountMedia, fetchMediaInsights, isInstagramConfigured, mapContentType } from '@/src/lib/instagram/client'
 import { urlsMatch } from '@/src/lib/instagram/matching'
@@ -37,6 +38,16 @@ export async function POST() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
+    const scope = await getSocialWorkspaceScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
+    if (!workspaceResult.ok) {
+      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    }
+    const workspaceId = workspaceResult.workspaceId
+
     if (!isInstagramConfigured()) {
       return NextResponse.json(
         { error: 'Instagram is not connected — INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID are not configured' },
@@ -44,12 +55,17 @@ export async function POST() {
       )
     }
 
-    // All Instagram-platform items that already have a platform_url, in any
-    // status — used only to detect which Instagram posts are already
-    // logged, so a matched-but-not-yet-posted item is never duplicated.
+    // All of THIS workspace's Instagram-platform items that already have
+    // a platform_url, in any status — used only to detect which Instagram
+    // posts are already logged, so a matched-but-not-yet-posted item is
+    // never duplicated. Scoped so syncing never matches against another
+    // workspace's content (today there is only one connected Instagram
+    // account app-wide — see src/lib/instagram/client.ts — so this scope
+    // is what keeps the sync correct once a second workspace exists).
     const { data: existingLinked, error: existingError } = await supabaseServer
       .from('pb_content_items')
       .select('id, platform_url')
+      .eq('workspace_id', workspaceId)
       .eq('platform', 'instagram')
       .not('platform_url', 'is', null)
 
@@ -91,7 +107,7 @@ export async function POST() {
 
       const { data: created, error: createError } = await supabaseServer
         .from('pb_content_items')
-        .insert(validation.value)
+        .insert({ ...validation.value, workspace_id: workspaceId })
         .select('id')
         .single()
 
@@ -106,6 +122,7 @@ export async function POST() {
     const { data: items, error: itemsError } = await supabaseServer
       .from('pb_content_items')
       .select('id, title, platform_url')
+      .eq('workspace_id', workspaceId)
       .eq('platform', 'instagram')
       .eq('status', 'posted')
       .not('platform_url', 'is', null)
