@@ -3,7 +3,8 @@ import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
 import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
 import { validateContentItemInput, validateContentMetricInput } from '@/src/lib/personal-brand/validate'
-import { fetchAllAccountMedia, fetchMediaInsights, isInstagramConfigured, mapContentType } from '@/src/lib/instagram/client'
+import { fetchAllAccountMedia, fetchMediaInsights, mapContentType } from '@/src/lib/instagram/client'
+import { resolveContentAccountForWorkspace, contentAccountFailureStatus } from '@/src/lib/instagram/contentAccountResolution'
 import { urlsMatch } from '@/src/lib/instagram/matching'
 
 interface SyncResult {
@@ -48,20 +49,22 @@ export async function POST() {
     }
     const workspaceId = workspaceResult.workspaceId
 
-    if (!isInstagramConfigured()) {
-      return NextResponse.json(
-        { error: 'Instagram is not connected — INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID are not configured' },
-        { status: 400 }
-      )
+    // Resolves THIS workspace's own connected Instagram account + content
+    // token — never a global/env-var account. Fails closed (400/409/500,
+    // never a silent fallback) if the workspace has no connected account,
+    // more than one, or no usable token — see
+    // src/lib/instagram/contentAccountResolution.ts.
+    const accountResult = await resolveContentAccountForWorkspace(workspaceId)
+    if (!accountResult.ok) {
+      return NextResponse.json({ error: accountResult.error }, { status: contentAccountFailureStatus(accountResult.reason) })
     }
+    const { instagramAccountId, accessToken } = accountResult.account
 
     // All of THIS workspace's Instagram-platform items that already have
     // a platform_url, in any status — used only to detect which Instagram
     // posts are already logged, so a matched-but-not-yet-posted item is
     // never duplicated. Scoped so syncing never matches against another
-    // workspace's content (today there is only one connected Instagram
-    // account app-wide — see src/lib/instagram/client.ts — so this scope
-    // is what keeps the sync correct once a second workspace exists).
+    // workspace's content.
     const { data: existingLinked, error: existingError } = await supabaseServer
       .from('pb_content_items')
       .select('id, platform_url')
@@ -74,7 +77,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to fetch content items' }, { status: 500 })
     }
 
-    const mediaResult = await fetchAllAccountMedia()
+    const mediaResult = await fetchAllAccountMedia({ instagramAccountId, accessToken })
     if (!mediaResult.ok) {
       return NextResponse.json({ error: mediaResult.error }, { status: 502 })
     }
@@ -147,7 +150,7 @@ export async function POST() {
         continue
       }
 
-      const insights = await fetchMediaInsights(media.id)
+      const insights = await fetchMediaInsights({ mediaId: media.id, accessToken })
 
       const validation = validateContentMetricInput({
         views: media.views,

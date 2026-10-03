@@ -12,26 +12,33 @@
  * `(#3) Application does not have the capability to make this API call.`
  * on outbound messaging (see docs/INSTAGRAM_AUTOMATIONS_SETUP.md):
  *
- * - CONTENT_API_BASE (graph.facebook.com) + INSTAGRAM_ACCESS_TOKEN —
- *   Facebook Login for Business / the classic Instagram Graph API,
- *   Page-linked. Used only for read-only content sync (media, insights).
+ * - CONTENT_API_BASE (graph.facebook.com) — Facebook Login for Business /
+ *   the classic Instagram Graph API, Page-linked. Used only for read-only
+ *   content sync (media, insights). As of the Social Workspace Foundation
+ *   Phase G refactor, every function on this side (fetchAllAccountMedia,
+ *   fetchMediaInsights) takes its Instagram account id + access token as
+ *   an explicit argument instead of reading
+ *   INSTAGRAM_ACCESS_TOKEN/INSTAGRAM_BUSINESS_ACCOUNT_ID from
+ *   process.env — those env vars are no longer read anywhere in this
+ *   file. Callers resolve the right account/token per workspace via
+ *   src/lib/instagram/contentAccountResolution.ts
+ *   (resolveContentAccountForWorkspace), which reads the per-connected-
+ *   account `social_account_tokens` row (provider='facebook_login')
+ *   instead. The legacy env vars still exist only as a one-time seed for
+ *   that table (src/lib/social/backfillWorkspace.ts) — never consulted on
+ *   a normal request path anymore.
  * - MESSAGING_API_BASE (graph.instagram.com) + a token from
  *   src/lib/instagram/tokenStore.ts — Instagram API with Instagram
  *   Login, a separate product with its own `instagram_business_*`
  *   permissions. Used only for outbound messaging (private replies, DMs,
  *   follow-ups). Every messaging call addresses the literal id `me`
- *   rather than INSTAGRAM_BUSINESS_ACCOUNT_ID — that id comes from the
+ *   rather than an explicit business account id — that id comes from the
  *   Facebook Login flow's Page→Instagram link and is not guaranteed to
  *   be the same value under Instagram Login (Meta's own docs distinguish
  *   the two), so reusing it here would just reintroduce the same kind of
  *   cross-flow mismatch. `me` is Meta's own documented pattern for this
- *   API and sidesteps the question entirely.
- *
- *   The messaging token itself now lives in the database
- *   (instagram_integration_credentials, encrypted at rest), not directly
- *   in INSTAGRAM_MESSAGING_ACCESS_TOKEN — that env var only seeds the
- *   database once (see tokenStore.bootstrapMessagingTokenIfNeeded) and
- *   is refreshed automatically from then on. See tokenStore.ts for why.
+ *   API and sidesteps the question entirely. NOT part of this refactor —
+ *   still single-account/global, see tokenStore.ts's own Phase F note.
  */
 import 'server-only'
 import { getCurrentMessagingToken, refreshAfterAuthFailure } from './tokenStore'
@@ -40,10 +47,6 @@ const GRAPH_API_VERSION = 'v21.0'
 const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
 const MESSAGING_API_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`
 const REQUEST_TIMEOUT_MS = 15000
-
-export function isInstagramConfigured(): boolean {
-  return Boolean(process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID)
-}
 
 export type InstagramResult<T> = { ok: true; data: T } | { ok: false; error: string; code?: number }
 
@@ -127,12 +130,12 @@ async function apiRequest<T>(
   }
 }
 
-function graphGet<T>(path: string, params: Record<string, string>): Promise<InstagramResult<T>> {
-  return apiRequest<T>(CONTENT_API_BASE, process.env.INSTAGRAM_ACCESS_TOKEN, 'INSTAGRAM_ACCESS_TOKEN is not configured', 'GET', path, params)
+function graphGet<T>(accessToken: string, path: string, params: Record<string, string>): Promise<InstagramResult<T>> {
+  return apiRequest<T>(CONTENT_API_BASE, accessToken, 'Instagram content access token is required', 'GET', path, params)
 }
 
-function graphPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
-  return apiRequest<T>(CONTENT_API_BASE, process.env.INSTAGRAM_ACCESS_TOKEN, 'INSTAGRAM_ACCESS_TOKEN is not configured', 'POST', path, {}, body)
+function graphPost<T>(accessToken: string, path: string, body: unknown): Promise<InstagramResult<T>> {
+  return apiRequest<T>(CONTENT_API_BASE, accessToken, 'Instagram content access token is required', 'POST', path, {}, body)
 }
 
 /** Meta's OAuthException code for an invalid/expired access token — the signal to try a refresh-and-retry. */
@@ -167,19 +170,29 @@ async function messagingPost<T>(path: string, body: unknown): Promise<InstagramR
   return apiRequest<T>(MESSAGING_API_BASE, refreshedToken, 'Instagram messaging is not configured', 'POST', path, {}, body)
 }
 
-/**
- * Fetches every media item on the connected account, newest first,
- * following pagination. `views` is requested directly on the media
- * object (not via /insights) — Meta stopped reliably returning view
- * counts from a single media's /insights lookup in 2026, but it's still
- * available on the media list itself.
- */
-export async function fetchAllAccountMedia(): Promise<InstagramResult<InstagramMedia[]>> {
-  const accountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
-  if (!accountId) {
-    return { ok: false, error: 'INSTAGRAM_BUSINESS_ACCOUNT_ID is not configured' }
-  }
+export interface InstagramAccountCredentials {
+  /** social_connected_accounts.external_account_id — the Instagram
+   * Business Account id to query, resolved per-workspace by
+   * src/lib/instagram/contentAccountResolution.ts. Never a global/env
+   * default. */
+  instagramAccountId: string
+  /** The decrypted content/insights token for that same account. */
+  accessToken: string
+}
 
+/**
+ * Fetches every media item on the given account, newest first, following
+ * pagination. `views` is requested directly on the media object (not via
+ * /insights) — Meta stopped reliably returning view counts from a single
+ * media's /insights lookup in 2026, but it's still available on the media
+ * list itself.
+ *
+ * Takes the account/token explicitly — the caller (a workspace-scoped API
+ * route) is responsible for resolving which account that is, via
+ * resolveContentAccountForWorkspace. This function has no concept of
+ * "the" Instagram account and never falls back to one.
+ */
+export async function fetchAllAccountMedia({ instagramAccountId, accessToken }: InstagramAccountCredentials): Promise<InstagramResult<InstagramMedia[]>> {
   const fields =
     'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,views,media_url,thumbnail_url'
   const all: InstagramMedia[] = []
@@ -190,7 +203,8 @@ export async function fetchAllAccountMedia(): Promise<InstagramResult<InstagramM
     if (after) params.after = after
 
     const result = await graphGet<{ data: InstagramMedia[]; paging?: { cursors?: { after?: string }; next?: string } }>(
-      `${accountId}/media`,
+      accessToken,
+      `${instagramAccountId}/media`,
       params
     )
     if (!result.ok) return result
@@ -215,9 +229,14 @@ export interface InstagramMediaInsights {
  * throws past this point) on failure — a missing insight for one post
  * must not abort syncing the rest, since Meta's supported metric set
  * varies by media type and has changed release to release.
+ *
+ * Takes the access token explicitly, same as fetchAllAccountMedia — a
+ * media id alone doesn't reveal which workspace's account it belongs to,
+ * so the caller must pass the token it already resolved for that media's
+ * sync run.
  */
-export async function fetchMediaInsights(mediaId: string): Promise<InstagramMediaInsights> {
-  const result = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(`${mediaId}/insights`, {
+export async function fetchMediaInsights({ mediaId, accessToken }: { mediaId: string; accessToken: string }): Promise<InstagramMediaInsights> {
+  const result = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(accessToken, `${mediaId}/insights`, {
     metric: 'reach,saved,shares',
   })
 
