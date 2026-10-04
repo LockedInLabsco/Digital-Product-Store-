@@ -43,7 +43,7 @@
 import 'server-only'
 import { getCurrentMessagingToken, refreshAfterAuthFailure } from './tokenStore'
 
-const GRAPH_API_VERSION = 'v21.0'
+export const GRAPH_API_VERSION = 'v21.0'
 const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
 const MESSAGING_API_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`
 const REQUEST_TIMEOUT_MS = 15000

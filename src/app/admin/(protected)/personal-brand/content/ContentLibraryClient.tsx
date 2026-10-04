@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Container from '@/src/components/Container'
 import Button from '@/src/components/admin/AdminButton'
 import PersonalBrandTabs from '@/src/components/admin/personal-brand/PersonalBrandTabs'
+import InstagramConnectionPanel from '@/src/components/admin/personal-brand/InstagramConnectionPanel'
 import SortableTable, { type ColumnDef } from '@/src/components/admin/analytics/SortableTable'
 import { calculateRates, formatRate } from '@/src/lib/personal-brand/metrics'
 import type { PbContentItem, PbContentMetric, PbContentStatus, PbFormat } from '@/src/types/personalBrand'
@@ -183,6 +184,8 @@ export default function ContentLibraryClient() {
       <Container className="py-12">
         <div className="max-w-6xl">
           <PersonalBrandTabs />
+
+          <InstagramConnectionPanel />
 
           <div className="mb-8 flex items-center justify-between">
             <div>
