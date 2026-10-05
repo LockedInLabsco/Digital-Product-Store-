@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
+import { ensureWritableSocialWorkspace } from '@/src/lib/social/ensureSocialWorkspace'
 
 export interface InstagramConnectionStatus {
   connected: boolean
@@ -30,7 +31,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
+    // Auto-provisions exactly one new Social Workspace the first time a
+    // zero-membership admin (new or pre-existing social_media account)
+    // hits this route — see ensureWritableSocialWorkspace's own doc
+    // comment for why this is safe (only acts when membership is zero,
+    // never when it's ambiguous) and why this route in particular is the
+    // chosen provisioning trigger (it's the first call the Content
+    // Library page makes on load).
+    const workspaceResult = await ensureWritableSocialWorkspace(scope, auth.admin.user.email)
     if (!workspaceResult.ok) {
       return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
     }

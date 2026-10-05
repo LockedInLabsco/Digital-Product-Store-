@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
+import { ensureWritableSocialWorkspace } from '@/src/lib/social/ensureSocialWorkspace'
 import { createInstagramOAuthState } from '@/src/lib/social/instagramOAuthState'
 import { buildFacebookAuthorizationUrl, isInstagramConnectConfigured } from '@/src/lib/instagram/facebookOAuth'
 
@@ -38,7 +39,11 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, 'You do not have access to a Social Workspace.')
   }
 
-  const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
+  // Same auto-provisioning as the status route (see
+  // ensureWritableSocialWorkspace) — belt-and-suspenders for an admin
+  // who lands directly on Connect without the Content page ever having
+  // called /status first.
+  const workspaceResult = await ensureWritableSocialWorkspace(scope, auth.admin.user.email)
   if (!workspaceResult.ok) {
     return redirectWithError(request, workspaceResult.error)
   }
