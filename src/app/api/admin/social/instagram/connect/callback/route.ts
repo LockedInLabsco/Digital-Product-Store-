@@ -5,6 +5,7 @@ import { consumeInstagramOAuthState } from '@/src/lib/social/instagramOAuthState
 import {
   exchangeCodeForUserToken,
   exchangeForLongLivedUserToken,
+  fetchGrantedPermissions,
   fetchPagesWithInstagramAccounts,
   selectInstagramAccount,
 } from '@/src/lib/instagram/facebookOAuth'
@@ -156,6 +157,14 @@ export async function GET(request: NextRequest) {
     if (!longLived.ok) {
       return redirectWithError(request, 'long_lived_exchange_failed', 'Instagram authorization failed while confirming your access. Please try connecting again.')
     }
+
+    // Diagnostic only, intentionally non-blocking — a failure here must
+    // never change what happens next (selectInstagramAccount's behavior
+    // is unchanged). This exists purely to show, in the log, whether
+    // Meta actually granted every requested scope on THIS token — a
+    // person can decline an individual permission while accepting
+    // others, which the OAuth callback itself never reports.
+    await fetchGrantedPermissions(longLived.data.accessToken)
 
     const pagesResult = await fetchPagesWithInstagramAccounts(longLived.data.accessToken)
     if (!pagesResult.ok) {

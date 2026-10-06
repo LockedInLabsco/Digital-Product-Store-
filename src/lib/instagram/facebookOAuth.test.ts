@@ -42,6 +42,11 @@ describe('buildFacebookAuthorizationUrl', () => {
     expect(url.searchParams.get('scope')).toBe(CONTENT_OAUTH_SCOPES.join(','))
   })
 
+  it('always sets auth_type=rerequest so a previously-declined scope is re-asked instead of silently staying declined', () => {
+    const url = new URL(buildFacebookAuthorizationUrl({ redirectUri: 'https://site.example/callback', state: 'nonce-abc' }))
+    expect(url.searchParams.get('auth_type')).toBe('rerequest')
+  })
+
   it('never requests any instagram_business_* (messaging) scope — content/insights only', () => {
     expect(CONTENT_OAUTH_SCOPES.some((scope) => scope.startsWith('instagram_business_'))).toBe(false)
   })

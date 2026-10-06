@@ -51,6 +51,18 @@ function requireAppSecret(): string {
   return secret
 }
 
+/**
+ * auth_type=rerequest — the current, officially documented Facebook
+ * Login parameter (Meta's "Manually Build a Login Flow" docs) for
+ * forcing the consent dialog to re-ask for a permission the user
+ * previously DECLINED, rather than silently reusing whatever was
+ * granted on an earlier authorization. Verified directly against
+ * Meta's own docs before adding — not guessed. Safe to leave on
+ * permanently: it has no effect when every requested scope is either
+ * already granted or being asked for the first time, so it only
+ * changes behavior in exactly the case we need visibility into (a
+ * previously-declined permission silently staying declined).
+ */
 export function buildFacebookAuthorizationUrl({ redirectUri, state }: { redirectUri: string; state: string }): string {
   const url = new URL(`${AUTHORIZE_BASE}/${GRAPH_API_VERSION}/dialog/oauth`)
   url.searchParams.set('client_id', requireAppId())
@@ -58,26 +70,54 @@ export function buildFacebookAuthorizationUrl({ redirectUri, state }: { redirect
   url.searchParams.set('state', state)
   url.searchParams.set('scope', CONTENT_OAUTH_SCOPES.join(','))
   url.searchParams.set('response_type', 'code')
+  url.searchParams.set('auth_type', 'rerequest')
   return url.toString()
 }
 
 type OAuthHttpResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
-async function graphGetJson<T>(url: string): Promise<OAuthHttpResult<T>> {
+interface MetaErrorObject {
+  message?: string
+  type?: string
+  code?: number
+  error_subcode?: number
+  fbtrace_id?: string
+}
+
+/**
+ * `label` identifies which call this is for in the diagnostic log only
+ * — never part of the request itself. Logs the literal HTTP status and,
+ * on failure, Meta's own safe error object (message/type/code/
+ * error_subcode/fbtrace_id — all public diagnostic metadata Meta
+ * returns in the response body itself, never anything derived from the
+ * access token/app secret/code used to make the call).
+ */
+async function graphGetJson<T>(url: string, label: string): Promise<OAuthHttpResult<T>> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   try {
     const response = await fetch(url, { signal: controller.signal })
     const json = await response.json().catch(() => null)
+    const metaError: MetaErrorObject | undefined = json?.error
+
     if (!response.ok || !json) {
-      const message = json?.error?.message || `Meta API request failed (status ${response.status})`
+      const message = metaError?.message || `Meta API request failed (status ${response.status})`
       console.error('[Instagram Connect] Meta API error', response.status, message)
+      logConnectStage('graph_api_call', {
+        label,
+        httpStatus: response.status,
+        ok: false,
+        metaError: metaError ? { message: metaError.message, type: metaError.type, code: metaError.code, errorSubcode: metaError.error_subcode, fbtraceId: metaError.fbtrace_id } : null,
+      })
       return { ok: false, error: message }
     }
+
+    logConnectStage('graph_api_call', { label, httpStatus: response.status, ok: true })
     return { ok: true, data: json as T }
   } catch (error) {
     const isAbort = error instanceof Error && error.name === 'AbortError'
     console.error('[Instagram Connect] Exception calling Meta API', isAbort ? 'timed out' : error)
+    logConnectStage('graph_api_call', { label, ok: false, exception: isAbort ? 'timed_out' : 'fetch_failed' })
     return { ok: false, error: isAbort ? 'Meta API request timed out' : 'Meta API request failed' }
   } finally {
     clearTimeout(timeout)
@@ -92,8 +132,7 @@ export async function exchangeCodeForUserToken({ code, redirectUri }: { code: st
   url.searchParams.set('redirect_uri', redirectUri)
   url.searchParams.set('code', code)
 
-  const result = await graphGetJson<{ access_token: string }>(url.toString())
-  logConnectStage('code_exchange', { ok: result.ok })
+  const result = await graphGetJson<{ access_token: string }>(url.toString(), 'code_exchange')
   if (!result.ok) return result
   return { ok: true, data: { accessToken: result.data.access_token } }
 }
@@ -106,14 +145,52 @@ export async function exchangeForLongLivedUserToken(shortLivedToken: string): Pr
   url.searchParams.set('client_secret', requireAppSecret())
   url.searchParams.set('fb_exchange_token', shortLivedToken)
 
-  const result = await graphGetJson<{ access_token: string; expires_in?: number }>(url.toString())
-  if (!result.ok) {
-    logConnectStage('long_lived_exchange', { ok: false })
-    return result
-  }
+  const result = await graphGetJson<{ access_token: string; expires_in?: number }>(url.toString(), 'long_lived_exchange')
+  if (!result.ok) return result
   const expiresAt = typeof result.data.expires_in === 'number' ? new Date(Date.now() + result.data.expires_in * 1000).toISOString() : null
   logConnectStage('long_lived_exchange', { ok: true, hasExpiry: expiresAt !== null })
   return { ok: true, data: { accessToken: result.data.access_token, expiresAt } }
+}
+
+export interface GrantedPermission {
+  permission: string
+  status: 'granted' | 'declined' | string
+}
+
+/** The four scopes this flow actually requests (CONTENT_OAUTH_SCOPES) — explicitly called out in every granted-permissions log line so a declined one is impossible to miss. */
+const TRACKED_SCOPES = ['pages_show_list', 'pages_read_engagement', 'instagram_basic', 'instagram_manage_insights'] as const
+
+/**
+ * `GET /me/permissions` — the official Graph API endpoint for checking
+ * which of the requested permissions a user token ACTUALLY has granted
+ * vs declined. Critical because Meta's own docs are explicit that a
+ * person can decline individual permissions while accepting others, and
+ * the login callback itself never reports that — only this endpoint
+ * does. Read-only, diagnostic only: callers must not change
+ * account-selection behavior based on this (that's selectInstagramAccount's
+ * job, unchanged) — this exists purely so a production log can show
+ * definitively whether e.g. pages_show_list was actually granted.
+ */
+export async function fetchGrantedPermissions(userAccessToken: string): Promise<OAuthHttpResult<GrantedPermission[]>> {
+  const url = new URL(`${GRAPH_BASE}/me/permissions`)
+  url.searchParams.set('access_token', userAccessToken)
+
+  const result = await graphGetJson<{ data: GrantedPermission[] }>(url.toString(), 'me_permissions')
+  if (!result.ok) {
+    logConnectStage('granted_permissions_check', { ok: false })
+    return result
+  }
+
+  const permissions = result.data.data || []
+  const byName = new Map(permissions.map((p) => [p.permission, p.status]))
+
+  logConnectStage('granted_permissions_check', {
+    ok: true,
+    trackedScopes: Object.fromEntries(TRACKED_SCOPES.map((scope) => [scope, byName.get(scope) ?? 'not_present'])),
+    allPermissions: permissions,
+  })
+
+  return { ok: true, data: permissions }
 }
 
 export interface FacebookPageWithInstagram {
@@ -154,11 +231,8 @@ export async function fetchPagesWithInstagramAccounts(userAccessToken: string): 
   url.searchParams.set('fields', 'id,name,access_token,instagram_business_account{id,username,name}')
   url.searchParams.set('access_token', userAccessToken)
 
-  const result = await graphGetJson<{ data: RawPage[] }>(url.toString())
-  if (!result.ok) {
-    logConnectStage('me_accounts_fetch', { ok: false })
-    return result
-  }
+  const result = await graphGetJson<{ data: RawPage[] }>(url.toString(), 'me_accounts')
+  if (!result.ok) return result
 
   const rawPages = result.data.data || []
 
