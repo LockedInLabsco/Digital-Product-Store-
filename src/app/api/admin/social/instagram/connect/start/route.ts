@@ -4,6 +4,7 @@ import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
 import { ensureWritableSocialWorkspace } from '@/src/lib/social/ensureSocialWorkspace'
 import { createInstagramOAuthState } from '@/src/lib/social/instagramOAuthState'
 import { buildFacebookAuthorizationUrl, isInstagramConnectConfigured } from '@/src/lib/instagram/facebookOAuth'
+import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
 
 const RETURN_PATH = '/admin/personal-brand/content'
 const CALLBACK_PATH = '/api/admin/social/instagram/connect/callback'
@@ -59,5 +60,6 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, 'Instagram connection is not configured for this site yet.')
   }
 
+  logConnectStage('oauth_started', { workspaceId: workspaceResult.workspaceId })
   return NextResponse.redirect(authorizationUrl)
 }

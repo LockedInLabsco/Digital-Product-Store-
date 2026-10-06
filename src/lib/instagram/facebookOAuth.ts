@@ -21,7 +21,6 @@
  */
 import 'server-only'
 import { GRAPH_API_VERSION } from './client'
-import { logConnectStage } from './connectDiagnostics'
 
 const AUTHORIZE_BASE = 'https://www.facebook.com'
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
@@ -102,12 +101,16 @@ interface MetaErrorObject {
 }
 
 /**
- * `label` identifies which call this is for in the diagnostic log only
- * — never part of the request itself. Logs the literal HTTP status and,
- * on failure, Meta's own safe error object (message/type/code/
- * error_subcode/fbtrace_id — all public diagnostic metadata Meta
- * returns in the response body itself, never anything derived from the
- * access token/app secret/code used to make the call).
+ * `label` identifies which call this is for in console.error only —
+ * never part of the request itself. On failure, logs Meta's own safe
+ * error object (message/type/code/error_subcode/fbtrace_id — all public
+ * diagnostic metadata Meta returns in the response body itself, never
+ * anything derived from the access token/app secret/code used to make
+ * the call). The earlier per-call structured logConnectStage dump
+ * (HTTP status + full response shape on every call) was temporary,
+ * used to root-cause the business_management/no_pages issue — removed
+ * now that it's fixed; console.error on real failures is enough for
+ * ongoing operation.
  */
 async function graphGetJson<T>(url: string, label: string): Promise<OAuthHttpResult<T>> {
   const controller = new AbortController()
@@ -119,22 +122,14 @@ async function graphGetJson<T>(url: string, label: string): Promise<OAuthHttpRes
 
     if (!response.ok || !json) {
       const message = metaError?.message || `Meta API request failed (status ${response.status})`
-      console.error('[Instagram Connect] Meta API error', response.status, message)
-      logConnectStage('graph_api_call', {
-        label,
-        httpStatus: response.status,
-        ok: false,
-        metaError: metaError ? { message: metaError.message, type: metaError.type, code: metaError.code, errorSubcode: metaError.error_subcode, fbtraceId: metaError.fbtrace_id } : null,
-      })
+      console.error('[Instagram Connect]', label, 'Meta API error', response.status, message, metaError?.type, metaError?.code, metaError?.fbtrace_id)
       return { ok: false, error: message }
     }
 
-    logConnectStage('graph_api_call', { label, httpStatus: response.status, ok: true })
     return { ok: true, data: json as T }
   } catch (error) {
     const isAbort = error instanceof Error && error.name === 'AbortError'
-    console.error('[Instagram Connect] Exception calling Meta API', isAbort ? 'timed out' : error)
-    logConnectStage('graph_api_call', { label, ok: false, exception: isAbort ? 'timed_out' : 'fetch_failed' })
+    console.error('[Instagram Connect]', label, 'Exception calling Meta API', isAbort ? 'timed out' : error)
     return { ok: false, error: isAbort ? 'Meta API request timed out' : 'Meta API request failed' }
   } finally {
     clearTimeout(timeout)
@@ -165,7 +160,6 @@ export async function exchangeForLongLivedUserToken(shortLivedToken: string): Pr
   const result = await graphGetJson<{ access_token: string; expires_in?: number }>(url.toString(), 'long_lived_exchange')
   if (!result.ok) return result
   const expiresAt = typeof result.data.expires_in === 'number' ? new Date(Date.now() + result.data.expires_in * 1000).toISOString() : null
-  logConnectStage('long_lived_exchange', { ok: true, hasExpiry: expiresAt !== null })
   return { ok: true, data: { accessToken: result.data.access_token, expiresAt } }
 }
 
@@ -173,9 +167,6 @@ export interface GrantedPermission {
   permission: string
   status: 'granted' | 'declined' | string
 }
-
-/** Every scope this flow actually requests (CONTENT_OAUTH_SCOPES) — explicitly called out in every granted-permissions log line so a declined one is impossible to miss. business_management is the one most likely to be silently declined for a Business-Manager-assigned Page — see CONTENT_OAUTH_SCOPES's own comment. */
-const TRACKED_SCOPES = ['pages_show_list', 'pages_read_engagement', 'instagram_basic', 'instagram_manage_insights', 'business_management'] as const
 
 /**
  * `GET /me/permissions` — the official Graph API endpoint for checking
@@ -195,21 +186,9 @@ export async function fetchGrantedPermissions(userAccessToken: string): Promise<
   url.searchParams.set('access_token', userAccessToken)
 
   const result = await graphGetJson<{ data: GrantedPermission[] }>(url.toString(), 'me_permissions')
-  if (!result.ok) {
-    logConnectStage('granted_permissions_check', { ok: false })
-    return result
-  }
+  if (!result.ok) return result
 
-  const permissions = result.data.data || []
-  const byName = new Map(permissions.map((p) => [p.permission, p.status]))
-
-  logConnectStage('granted_permissions_check', {
-    ok: true,
-    trackedScopes: Object.fromEntries(TRACKED_SCOPES.map((scope) => [scope, byName.get(scope) ?? 'not_present'])),
-    allPermissions: permissions,
-  })
-
-  return { ok: true, data: permissions }
+  return { ok: true, data: result.data.data || [] }
 }
 
 /** Looks up one scope's granted/declined status from an already-fetched fetchGrantedPermissions() result — 'not_present' if Meta didn't return it at all (distinct from 'declined'). */
@@ -260,23 +239,6 @@ export async function fetchPagesWithInstagramAccounts(userAccessToken: string): 
 
   const rawPages = result.data.data || []
 
-  // Safe-only: Page id/name and Instagram account id/username are
-  // display-level identifiers the admin already sees in Meta's own UI,
-  // never a token/secret. Logged per-page so a production investigation
-  // can see exactly which of the authorizing user's Pages did or didn't
-  // have a linked Instagram account, without needing DB/token access.
-  logConnectStage('me_accounts_fetch', {
-    ok: true,
-    totalPageCount: rawPages.length,
-    pages: rawPages.map((page) => ({
-      pageId: page.id,
-      pageName: page.name ?? null,
-      hasInstagramAccount: Boolean(page.instagram_business_account?.id),
-      instagramAccountId: page.instagram_business_account?.id ?? null,
-      username: page.instagram_business_account?.username ?? null,
-    })),
-  })
-
   const pages: FacebookPageWithInstagram[] = rawPages
     .filter((page): page is RawPage & { instagram_business_account: { id: string; username?: string; name?: string } } =>
       Boolean(page.instagram_business_account?.id)
@@ -306,7 +268,6 @@ export type SelectInstagramAccountResult = { ok: true; page: FacebookPageWithIns
  */
 export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): SelectInstagramAccountResult {
   if (pages.length === 0) {
-    logConnectStage('select_instagram_account', { ok: false, reason: 'none', eligiblePageCount: 0 })
     return {
       ok: false,
       reason: 'none',
@@ -315,7 +276,6 @@ export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): Sele
     }
   }
   if (pages.length > 1) {
-    logConnectStage('select_instagram_account', { ok: false, reason: 'ambiguous', eligiblePageCount: pages.length })
     return {
       ok: false,
       reason: 'ambiguous',
@@ -323,6 +283,5 @@ export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): Sele
         "More than one Facebook Page with a linked Instagram account was found. Connecting a specific account out of several isn't supported yet — authorize with a Facebook login that manages only one such Page.",
     }
   }
-  logConnectStage('select_instagram_account', { ok: true, instagramAccountId: pages[0].instagramAccountId, username: pages[0].username })
   return { ok: true, page: pages[0] }
 }

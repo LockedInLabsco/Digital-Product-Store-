@@ -21,6 +21,14 @@ import { supabaseServer } from '@/src/lib/supabase/server'
 import { encryptToken } from '@/src/lib/instagram/tokenCrypto'
 import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
 
+/**
+ * Production-safe logging only — the fine-grained per-write-step/error-
+ * code diagnostics used to root-cause the business_management/no_pages
+ * issue have been removed now that it's fixed. Real failures still go
+ * to console.error with a Postgres error code (never removed, never a
+ * secret), just not duplicated into logConnectStage anymore.
+ */
+
 const PLATFORM = 'instagram'
 const CONTENT_TOKEN_PROVIDER = 'facebook_login'
 const IDENTIFIER_TYPE = 'graph_business_account_id'
@@ -42,6 +50,8 @@ export type UpsertConnectedAccountResult =
       reauthorized: boolean
       /** true if a DIFFERENT account was previously active for this workspace and has now been marked disconnected. */
       replacedPreviousAccount: boolean
+      /** The replaced account's username, if it had one and replacedPreviousAccount is true — lets the UI say "Replaced @old with @new" instead of a generic message. */
+      previousUsername: string | null
     }
   | {
       ok: false
@@ -66,8 +76,6 @@ export async function upsertConnectedInstagramAccount(
   adminUserId: string,
   resolved: ResolvedInstagramAccount
 ): Promise<UpsertConnectedAccountResult> {
-  logConnectStage('upsert_connected_account_reached', { workspaceId, instagramAccountId: resolved.instagramAccountId })
-
   const now = new Date().toISOString()
 
   const { data: existingByExternalId, error: lookupError } = await supabaseServer
@@ -79,12 +87,10 @@ export async function upsertConnectedInstagramAccount(
 
   if (lookupError) {
     console.error('[Instagram Connect] Failed to look up existing connected account', lookupError.code, lookupError.message)
-    logConnectStage('upsert_connected_account_result', { ok: false, stage: 'lookup_by_external_id', errorCode: lookupError.code })
     return { ok: false, reason: 'write_failed', error: 'Failed to check for an existing connection for this Instagram account' }
   }
 
   if (existingByExternalId && existingByExternalId.workspace_id !== workspaceId) {
-    logConnectStage('upsert_connected_account_result', { ok: false, stage: 'already_connected_elsewhere' })
     return {
       ok: false,
       reason: 'already_connected_elsewhere',
@@ -95,6 +101,7 @@ export async function upsertConnectedInstagramAccount(
   let connectedAccountId: string
   let reauthorized: boolean
   let replacedPreviousAccount = false
+  let previousUsername: string | null = null
 
   if (existingByExternalId) {
     // Same account, same workspace — a plain re-authorization (token
@@ -114,7 +121,6 @@ export async function upsertConnectedInstagramAccount(
 
     if (updateError) {
       console.error('[Instagram Connect] Failed to reauthorize connected account', updateError.code, updateError.message)
-      logConnectStage('upsert_connected_account_result', { ok: false, stage: 'reauthorize_update', errorCode: updateError.code })
       return { ok: false, reason: 'write_failed', error: 'Failed to update the connected Instagram account' }
     }
 
@@ -129,7 +135,7 @@ export async function upsertConnectedInstagramAccount(
     // ig_automation_rules/runs rows keep a valid connected_account_id.
     const { data: existingActiveForWorkspace, error: activeLookupError } = await supabaseServer
       .from('social_connected_accounts')
-      .select('id')
+      .select('id, username')
       .eq('workspace_id', workspaceId)
       .eq('platform', PLATFORM)
       .eq('status', 'active')
@@ -137,7 +143,6 @@ export async function upsertConnectedInstagramAccount(
 
     if (activeLookupError) {
       console.error('[Instagram Connect] Failed to look up this workspace’s active account', activeLookupError.code, activeLookupError.message)
-      logConnectStage('upsert_connected_account_result', { ok: false, stage: 'lookup_active_for_workspace', errorCode: activeLookupError.code })
       return { ok: false, reason: 'write_failed', error: 'Failed to check this workspace’s existing Instagram connection' }
     }
 
@@ -149,10 +154,10 @@ export async function upsertConnectedInstagramAccount(
 
       if (disconnectOldError) {
         console.error('[Instagram Connect] Failed to disconnect the previous account', disconnectOldError.code, disconnectOldError.message)
-        logConnectStage('upsert_connected_account_result', { ok: false, stage: 'disconnect_old', errorCode: disconnectOldError.code })
         return { ok: false, reason: 'write_failed', error: 'Failed to replace the previous Instagram connection' }
       }
       replacedPreviousAccount = true
+      previousUsername = existingActiveForWorkspace.username
     }
 
     const { data: created, error: insertError } = await supabaseServer
@@ -172,7 +177,6 @@ export async function upsertConnectedInstagramAccount(
 
     if (insertError || !created) {
       console.error('[Instagram Connect] Failed to create connected account', insertError?.code, insertError?.message)
-      logConnectStage('upsert_connected_account_result', { ok: false, stage: 'insert_new_account', errorCode: insertError?.code })
       return { ok: false, reason: 'write_failed', error: 'Failed to create the connected Instagram account' }
     }
 
@@ -197,7 +201,6 @@ export async function upsertConnectedInstagramAccount(
 
   if (tokenError) {
     console.error('[Instagram Connect] Failed to store content token', tokenError.code, tokenError.message)
-    logConnectStage('upsert_connected_account_result', { ok: false, stage: 'store_token', errorCode: tokenError.code, connectedAccountId })
     return { ok: false, reason: 'write_failed', error: 'Account connected, but failed to store its access token — try reconnecting' }
   }
 
@@ -219,11 +222,10 @@ export async function upsertConnectedInstagramAccount(
     // already stored above) — only future webhook-routing work would
     // depend on this row. Logged, not surfaced as a connect failure.
     console.error('[Instagram Connect] Failed to store account identifier', identifierError.code, identifierError.message)
-    logConnectStage('upsert_connected_account_identifier_failed_nonfatal', { errorCode: identifierError.code, connectedAccountId })
   }
 
-  logConnectStage('upsert_connected_account_result', { ok: true, connectedAccountId, reauthorized, replacedPreviousAccount })
-  return { ok: true, connectedAccountId, reauthorized, replacedPreviousAccount }
+  logConnectStage(reauthorized ? 'account_reauthorized' : 'account_connected', { connectedAccountId, replacedPreviousAccount })
+  return { ok: true, connectedAccountId, reauthorized, replacedPreviousAccount, previousUsername }
 }
 
 export type DisconnectInstagramAccountResult = { ok: true } | { ok: false; reason: 'not_connected' | 'write_failed'; error: string }
@@ -280,5 +282,6 @@ export async function disconnectInstagramAccount(workspaceId: string): Promise<D
     console.error('[Instagram Disconnect] Failed to delete stored token(s)', deleteTokenError.message)
   }
 
+  logConnectStage('account_disconnected', { connectedAccountId: account.id })
   return { ok: true }
 }

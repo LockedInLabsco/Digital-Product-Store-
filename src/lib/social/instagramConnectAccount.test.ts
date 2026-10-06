@@ -68,7 +68,7 @@ describe('upsertConnectedInstagramAccount', () => {
 
     const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED)
 
-    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-a', reauthorized: false, replacedPreviousAccount: false })
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-a', reauthorized: false, replacedPreviousAccount: false, previousUsername: null })
   })
 
   it('reauthorizes the SAME account already connected to THIS workspace — no replacement', async () => {
@@ -81,13 +81,13 @@ describe('upsertConnectedInstagramAccount', () => {
 
     const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED)
 
-    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-a', reauthorized: true, replacedPreviousAccount: false })
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-a', reauthorized: true, replacedPreviousAccount: false, previousUsername: null })
   })
 
-  it('CASE 7: a workspace with a DIFFERENT active account gets it replaced explicitly, never silently', async () => {
+  it('CASE 7: a workspace with a DIFFERENT active account gets it replaced explicitly, never silently, and reports the replaced account’s username', async () => {
     queue('social_connected_accounts', [
       { data: null, error: null }, // lookup by external_id — this new account isn't connected anywhere yet
-      { data: { id: 'connected-old' }, error: null }, // this workspace's current active account
+      { data: { id: 'connected-old', username: 'old_brand' }, error: null }, // this workspace's current active account
       { data: null, error: null }, // update old -> disconnected
       { data: { id: 'connected-new' }, error: null }, // insert new
     ])
@@ -96,7 +96,7 @@ describe('upsertConnectedInstagramAccount', () => {
 
     const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED)
 
-    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-new', reauthorized: false, replacedPreviousAccount: true })
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-new', reauthorized: false, replacedPreviousAccount: true, previousUsername: 'old_brand' })
   })
 
   it('CASE 3/security: rejects connecting an account already active on a DIFFERENT workspace — never moves it, never overwrites', async () => {

@@ -13,8 +13,8 @@ interface ConnectionStatus {
 
 const SUCCESS_MESSAGES: Record<string, string> = {
   connected: 'Instagram account connected.',
-  reconnected: 'Instagram account reconnected.',
-  replaced: 'Instagram account replaced — this workspace is now connected to the new account.',
+  reconnected: 'Permissions refreshed.',
+  replaced: 'Instagram account replaced.',
 }
 
 /**
@@ -57,13 +57,22 @@ export default function InstagramConnectionPanel() {
 
     const outcome = searchParams.get('instagram')
     const oauthError = searchParams.get('instagram_error')
-    if (outcome) setBanner(SUCCESS_MESSAGES[outcome] || 'Instagram connection updated.')
+    const previousUsername = searchParams.get('instagram_previous_username')
+    const newUsername = searchParams.get('instagram_new_username')
+
+    if (outcome === 'replaced' && (previousUsername || newUsername)) {
+      setBanner(`Replaced ${previousUsername ? `@${previousUsername}` : 'the previous account'} with ${newUsername ? `@${newUsername}` : 'the new account'}.`)
+    } else if (outcome) {
+      setBanner(SUCCESS_MESSAGES[outcome] || 'Instagram connection updated.')
+    }
     if (oauthError) setError(oauthError)
 
     if (outcome || oauthError) {
       const url = new URL(window.location.href)
       url.searchParams.delete('instagram')
       url.searchParams.delete('instagram_error')
+      url.searchParams.delete('instagram_previous_username')
+      url.searchParams.delete('instagram_new_username')
       router.replace(`${url.pathname}${url.search}`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,6 +82,22 @@ export default function InstagramConnectionPanel() {
     window.location.href = '/api/admin/social/instagram/connect/start'
   }
 
+  // Re-runs the exact same Meta authorization flow as Connect — Meta's
+  // own consent screen re-asks for permissions (auth_type=rerequest,
+  // always on, see facebookOAuth.ts) and re-confirms the SAME account.
+  // No confirmation needed: authorizing the same account again only
+  // ever refreshes its token/permissions in place
+  // (upsertConnectedInstagramAccount's reauthorize path) — it cannot by
+  // itself replace anything.
+  const handleRefreshPermissions = () => {
+    window.location.href = '/api/admin/social/instagram/connect/start'
+  }
+
+  // Also the same flow, but framed for "I want to connect a different
+  // account" — confirmed up front since authorizing a different account
+  // this time replaces the current one (the exact account being
+  // replaced is confirmed again, by name, in the success banner once
+  // Meta reports back which account was actually chosen).
   const handleReconnect = () => {
     if (
       window.confirm(
@@ -126,6 +151,9 @@ export default function InstagramConnectionPanel() {
         <div className="flex gap-2">
           {status?.connected ? (
             <>
+              <Button size="sm" variant="secondary" onClick={handleRefreshPermissions}>
+                Refresh permissions
+              </Button>
               <Button size="sm" variant="secondary" onClick={handleReconnect}>
                 Reconnect
               </Button>

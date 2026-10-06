@@ -48,8 +48,17 @@ function siteOrigin(request: NextRequest): string {
   return process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
 }
 
+/**
+ * Every error exit funnels through here — the single chokepoint that
+ * logs the production-safe `oauth_callback_failure` event. The earlier,
+ * much noisier per-branch diagnostic logs (callback_received,
+ * meta_denied, state_consume_failed, session_mismatch, ...) have been
+ * removed now that the business_management root cause is fixed: the
+ * error code alone (already distinct per branch) identifies which
+ * branch fired, so a separate log line per branch was redundant.
+ */
 function redirectWithError(request: NextRequest, code: ConnectErrorCode, message: string): NextResponse {
-  logConnectStage('callback_redirect_error', { code })
+  logConnectStage('oauth_callback_failure', { code })
   const url = new URL(RETURN_PATH, siteOrigin(request))
   url.searchParams.set('instagram_error', message)
   url.searchParams.set('instagram_connect_error', code)
@@ -57,16 +66,24 @@ function redirectWithError(request: NextRequest, code: ConnectErrorCode, message
 }
 
 function redirectToLogin(request: NextRequest, code: ConnectErrorCode): NextResponse {
-  logConnectStage('callback_redirect_error', { code })
+  logConnectStage('oauth_callback_failure', { code })
   const url = new URL('/admin/login', siteOrigin(request))
   url.searchParams.set('instagram_connect_error', code)
   return NextResponse.redirect(url)
 }
 
-function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'reconnected' | 'replaced'): NextResponse {
-  logConnectStage('callback_redirect_success', { outcome })
+function redirectWithSuccess(
+  request: NextRequest,
+  outcome: 'connected' | 'reconnected' | 'replaced',
+  details?: { previousUsername?: string | null; newUsername?: string | null }
+): NextResponse {
+  logConnectStage('oauth_callback_success', { outcome })
   const url = new URL(RETURN_PATH, siteOrigin(request))
   url.searchParams.set('instagram', outcome)
+  if (outcome === 'replaced') {
+    if (details?.previousUsername) url.searchParams.set('instagram_previous_username', details.previousUsername)
+    if (details?.newUsername) url.searchParams.set('instagram_new_username', details.newUsername)
+  }
   return NextResponse.redirect(url)
 }
 
@@ -74,9 +91,8 @@ function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'recon
 // either `?code=...&state=...` (authorized) or `?error=...&state=...`
 // (denied/cancelled). Every exit path is a redirect, never a JSON
 // response (top-level browser navigation, not a fetch call), and every
-// exit path now carries a safe `instagram_connect_error`/`instagram`
-// outcome code — see logConnectStage calls throughout for the matching
-// structured log line to correlate in Vercel function logs.
+// exit path carries a safe `instagram_connect_error`/`instagram`
+// outcome code.
 //
 // Nothing is written to the database until every one of these has
 // succeeded: state popped + validated, current session matches the
@@ -85,17 +101,13 @@ function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'recon
 // failure before upsertConnectedInstagramAccount leaves zero partial
 // state — there is no "half-connected" account possible.
 //
-// Wrapped in a top-level try/catch (previously absent): an uncaught
-// exception anywhere in this handler — e.g. a thrown error from a
-// misconfigured env var deep in facebookOAuth.ts — used to produce a
-// generic framework error page with no diagnostic trail and no
-// `instagram_connect_error` code. It now always redirects back with
-// `unexpected_error` plus a full stack-free log line.
+// Wrapped in a top-level try/catch: an uncaught exception anywhere in
+// this handler always redirects back with `unexpected_error` instead of
+// a bare framework error page.
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const stateParam = searchParams.get('state') || ''
-    logConnectStage('callback_received', { hasCode: Boolean(searchParams.get('code')), hasState: Boolean(stateParam), hasError: Boolean(searchParams.get('error')) })
 
     // The admin declined Meta's consent screen (or Meta itself errored) —
     // non-destructive: best-effort consume the state purely to avoid
@@ -103,24 +115,20 @@ export async function GET(request: NextRequest) {
     // friendly "cancelled" redirect, never an error page.
     const metaError = searchParams.get('error')
     if (metaError) {
-      logConnectStage('meta_denied', { error: metaError, errorReason: searchParams.get('error_reason') })
       if (stateParam) await consumeInstagramOAuthState(stateParam)
       return redirectWithError(request, 'user_cancelled', 'Instagram authorization was cancelled. No changes were made.')
     }
 
     const auth = await requirePermission('personal_brand:write')
     if (!auth.ok) {
-      logConnectStage('auth_check_failed', { status: auth.status })
       return redirectToLogin(request, 'session_expired')
     }
 
     const consumed = await consumeInstagramOAuthState(stateParam)
     if (!consumed.ok) {
-      logConnectStage('state_consume_failed', { reason: consumed.reason })
       const code: ConnectErrorCode = consumed.reason === 'expired' ? 'state_expired' : consumed.reason === 'lookup_failed' ? 'state_lookup_failed' : 'state_invalid'
       return redirectWithError(request, code, consumed.error)
     }
-    logConnectStage('state_consumed', { workspaceId: consumed.payload.workspaceId })
 
     // The security-critical check: the state proves someone (adminUserId)
     // started this flow for a specific workspace — this proves the
@@ -130,7 +138,6 @@ export async function GET(request: NextRequest) {
     // that other admin's workspace.
     const scope = await getSocialWorkspaceScope()
     if (!scope || scope.adminUserId !== consumed.payload.adminUserId) {
-      logConnectStage('session_mismatch', { hasScope: Boolean(scope) })
       return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Personal Brand.")
     }
 
@@ -138,13 +145,11 @@ export async function GET(request: NextRequest) {
     // membership could have changed in the (short) window between
     // starting the flow and Meta redirecting back.
     if (!canWriteWorkspace(scope, consumed.payload.workspaceId)) {
-      logConnectStage('workspace_permission_denied', { workspaceId: consumed.payload.workspaceId })
       return redirectWithError(request, 'workspace_permission_denied', 'You no longer have permission to connect Instagram for that Social Workspace.')
     }
 
     const code = searchParams.get('code')
     if (!code) {
-      logConnectStage('missing_code')
       return redirectWithError(request, 'missing_code', 'Instagram did not return an authorization code. Please try connecting again.')
     }
 
@@ -188,7 +193,6 @@ export async function GET(request: NextRequest) {
       // admin isn't told the generic, less actionable "no_pages" when
       // the real, fixable cause is a declined permission.
       const businessManagementStatus = grantedPermissionsResult.ok ? getPermissionStatus(grantedPermissionsResult.data, 'business_management') : 'unknown'
-      logConnectStage('no_pages_found', { businessManagementStatus, fallbackDiscoveryAttempted: false })
 
       if (businessManagementStatus === 'declined') {
         return redirectWithError(
@@ -224,10 +228,12 @@ export async function GET(request: NextRequest) {
       return redirectWithError(request, code, upsertResult.error)
     }
 
-    return redirectWithSuccess(request, upsertResult.reauthorized ? 'reconnected' : upsertResult.replacedPreviousAccount ? 'replaced' : 'connected')
+    if (upsertResult.replacedPreviousAccount) {
+      return redirectWithSuccess(request, 'replaced', { previousUsername: upsertResult.previousUsername, newUsername: selected.page.username })
+    }
+    return redirectWithSuccess(request, upsertResult.reauthorized ? 'reconnected' : 'connected')
   } catch (error) {
     console.error('[Instagram Connect] Unhandled exception in callback', error instanceof Error ? error.message : error)
-    logConnectStage('unexpected_exception', { message: error instanceof Error ? error.message : 'non-Error thrown' })
     return redirectWithError(request, 'unexpected_error', 'Something went wrong connecting Instagram. Please try again.')
   }
 }
