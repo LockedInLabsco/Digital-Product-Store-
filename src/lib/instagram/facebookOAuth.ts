@@ -21,6 +21,7 @@
  */
 import 'server-only'
 import { GRAPH_API_VERSION } from './client'
+import { logConnectStage } from './connectDiagnostics'
 
 const AUTHORIZE_BASE = 'https://www.facebook.com'
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
@@ -92,6 +93,7 @@ export async function exchangeCodeForUserToken({ code, redirectUri }: { code: st
   url.searchParams.set('code', code)
 
   const result = await graphGetJson<{ access_token: string }>(url.toString())
+  logConnectStage('code_exchange', { ok: result.ok })
   if (!result.ok) return result
   return { ok: true, data: { accessToken: result.data.access_token } }
 }
@@ -105,8 +107,12 @@ export async function exchangeForLongLivedUserToken(shortLivedToken: string): Pr
   url.searchParams.set('fb_exchange_token', shortLivedToken)
 
   const result = await graphGetJson<{ access_token: string; expires_in?: number }>(url.toString())
-  if (!result.ok) return result
+  if (!result.ok) {
+    logConnectStage('long_lived_exchange', { ok: false })
+    return result
+  }
   const expiresAt = typeof result.data.expires_in === 'number' ? new Date(Date.now() + result.data.expires_in * 1000).toISOString() : null
+  logConnectStage('long_lived_exchange', { ok: true, hasExpiry: expiresAt !== null })
   return { ok: true, data: { accessToken: result.data.access_token, expiresAt } }
 }
 
@@ -130,16 +136,50 @@ interface RawPage {
   instagram_business_account?: { id: string; username?: string; name?: string }
 }
 
-/** Step 3 — every Page the authorizing user manages, with its linked Instagram Business/Creator account (if any) expanded in the same call. Pages with no linked Instagram account are filtered out here, not left for the caller to re-check. */
-export async function fetchPagesWithInstagramAccounts(userAccessToken: string): Promise<OAuthHttpResult<FacebookPageWithInstagram[]>> {
+export interface FetchPagesResult {
+  pages: FacebookPageWithInstagram[]
+  /** Total Pages returned by /me/accounts, BEFORE filtering to only
+   * those with a linked Instagram account — lets the caller tell "the
+   * authorizing user manages zero Pages at all" (no_pages) apart from
+   * "they manage Pages, but none has a linked Instagram account"
+   * (no_instagram_account), which otherwise collapse to the same empty
+   * `pages` array. Purely additive diagnostic info — selectInstagramAccount()'s
+   * own decision logic is unchanged and still only ever sees `pages`. */
+  totalPageCount: number
+}
+
+/** Step 3 — every Page the authorizing user manages, with its linked Instagram Business/Creator account (if any) expanded in the same call. Pages with no linked Instagram account are filtered out of `pages` here, not left for the caller to re-check. */
+export async function fetchPagesWithInstagramAccounts(userAccessToken: string): Promise<OAuthHttpResult<FetchPagesResult>> {
   const url = new URL(`${GRAPH_BASE}/me/accounts`)
   url.searchParams.set('fields', 'id,name,access_token,instagram_business_account{id,username,name}')
   url.searchParams.set('access_token', userAccessToken)
 
   const result = await graphGetJson<{ data: RawPage[] }>(url.toString())
-  if (!result.ok) return result
+  if (!result.ok) {
+    logConnectStage('me_accounts_fetch', { ok: false })
+    return result
+  }
 
-  const pages: FacebookPageWithInstagram[] = (result.data.data || [])
+  const rawPages = result.data.data || []
+
+  // Safe-only: Page id/name and Instagram account id/username are
+  // display-level identifiers the admin already sees in Meta's own UI,
+  // never a token/secret. Logged per-page so a production investigation
+  // can see exactly which of the authorizing user's Pages did or didn't
+  // have a linked Instagram account, without needing DB/token access.
+  logConnectStage('me_accounts_fetch', {
+    ok: true,
+    totalPageCount: rawPages.length,
+    pages: rawPages.map((page) => ({
+      pageId: page.id,
+      pageName: page.name ?? null,
+      hasInstagramAccount: Boolean(page.instagram_business_account?.id),
+      instagramAccountId: page.instagram_business_account?.id ?? null,
+      username: page.instagram_business_account?.username ?? null,
+    })),
+  })
+
+  const pages: FacebookPageWithInstagram[] = rawPages
     .filter((page): page is RawPage & { instagram_business_account: { id: string; username?: string; name?: string } } =>
       Boolean(page.instagram_business_account?.id)
     )
@@ -152,7 +192,7 @@ export async function fetchPagesWithInstagramAccounts(userAccessToken: string): 
       name: page.instagram_business_account.name ?? null,
     }))
 
-  return { ok: true, data: pages }
+  return { ok: true, data: { pages, totalPageCount: rawPages.length } }
 }
 
 export type SelectInstagramAccountResult = { ok: true; page: FacebookPageWithInstagram } | { ok: false; reason: 'none' | 'ambiguous'; error: string }
@@ -168,6 +208,7 @@ export type SelectInstagramAccountResult = { ok: true; page: FacebookPageWithIns
  */
 export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): SelectInstagramAccountResult {
   if (pages.length === 0) {
+    logConnectStage('select_instagram_account', { ok: false, reason: 'none', eligiblePageCount: 0 })
     return {
       ok: false,
       reason: 'none',
@@ -176,6 +217,7 @@ export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): Sele
     }
   }
   if (pages.length > 1) {
+    logConnectStage('select_instagram_account', { ok: false, reason: 'ambiguous', eligiblePageCount: pages.length })
     return {
       ok: false,
       reason: 'ambiguous',
@@ -183,5 +225,6 @@ export function selectInstagramAccount(pages: FacebookPageWithInstagram[]): Sele
         "More than one Facebook Page with a linked Instagram account was found. Connecting a specific account out of several isn't supported yet — authorize with a Facebook login that manages only one such Page.",
     }
   }
+  logConnectStage('select_instagram_account', { ok: true, instagramAccountId: pages[0].instagramAccountId, username: pages[0].username })
   return { ok: true, page: pages[0] }
 }

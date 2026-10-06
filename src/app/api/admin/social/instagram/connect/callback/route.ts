@@ -9,21 +9,59 @@ import {
   selectInstagramAccount,
 } from '@/src/lib/instagram/facebookOAuth'
 import { upsertConnectedInstagramAccount } from '@/src/lib/social/instagramConnectAccount'
+import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
 
 const RETURN_PATH = '/admin/personal-brand/content'
 const CALLBACK_PATH = '/api/admin/social/instagram/connect/callback'
+
+/**
+ * Short, stable, non-sensitive codes surfaced to the browser as
+ * `instagram_connect_error` — safe to appear in a URL/server log, never
+ * Meta's raw response text or anything secret. The existing
+ * `instagram_error` param (a human-readable sentence, already read by
+ * InstagramConnectionPanel) is kept unchanged alongside it on every
+ * redirect below, so the current UI needs no changes.
+ */
+type ConnectErrorCode =
+  | 'user_cancelled'
+  | 'session_expired'
+  | 'state_invalid'
+  | 'state_expired'
+  | 'state_lookup_failed'
+  | 'session_mismatch'
+  | 'workspace_permission_denied'
+  | 'missing_code'
+  | 'token_exchange_failed'
+  | 'long_lived_exchange_failed'
+  | 'pages_fetch_failed'
+  | 'no_pages'
+  | 'no_instagram_account'
+  | 'multiple_accounts'
+  | 'already_connected_elsewhere'
+  | 'account_save_failed'
+  | 'unexpected_error'
 
 function siteOrigin(request: NextRequest): string {
   return process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
 }
 
-function redirectWithError(request: NextRequest, message: string): NextResponse {
+function redirectWithError(request: NextRequest, code: ConnectErrorCode, message: string): NextResponse {
+  logConnectStage('callback_redirect_error', { code })
   const url = new URL(RETURN_PATH, siteOrigin(request))
   url.searchParams.set('instagram_error', message)
+  url.searchParams.set('instagram_connect_error', code)
+  return NextResponse.redirect(url)
+}
+
+function redirectToLogin(request: NextRequest, code: ConnectErrorCode): NextResponse {
+  logConnectStage('callback_redirect_error', { code })
+  const url = new URL('/admin/login', siteOrigin(request))
+  url.searchParams.set('instagram_connect_error', code)
   return NextResponse.redirect(url)
 }
 
 function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'reconnected' | 'replaced'): NextResponse {
+  logConnectStage('callback_redirect_success', { outcome })
   const url = new URL(RETURN_PATH, siteOrigin(request))
   url.searchParams.set('instagram', outcome)
   return NextResponse.redirect(url)
@@ -31,10 +69,11 @@ function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'recon
 
 // GET — Meta redirects the browser here after the consent screen, with
 // either `?code=...&state=...` (authorized) or `?error=...&state=...`
-// (denied/cancelled). Every exit path is a redirect back to
-// RETURN_PATH, never a JSON response — this is a top-level browser
-// navigation, not a fetch call, and the whole point of a callback route
-// is to land the admin back on a normal page with a clear outcome.
+// (denied/cancelled). Every exit path is a redirect, never a JSON
+// response (top-level browser navigation, not a fetch call), and every
+// exit path now carries a safe `instagram_connect_error`/`instagram`
+// outcome code — see logConnectStage calls throughout for the matching
+// structured log line to correlate in Vercel function logs.
 //
 // Nothing is written to the database until every one of these has
 // succeeded: state popped + validated, current session matches the
@@ -42,86 +81,119 @@ function redirectWithSuccess(request: NextRequest, outcome: 'connected' | 'recon
 // token obtained, exactly one linked Instagram account resolved. Any
 // failure before upsertConnectedInstagramAccount leaves zero partial
 // state — there is no "half-connected" account possible.
+//
+// Wrapped in a top-level try/catch (previously absent): an uncaught
+// exception anywhere in this handler — e.g. a thrown error from a
+// misconfigured env var deep in facebookOAuth.ts — used to produce a
+// generic framework error page with no diagnostic trail and no
+// `instagram_connect_error` code. It now always redirects back with
+// `unexpected_error` plus a full stack-free log line.
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const stateParam = searchParams.get('state') || ''
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const stateParam = searchParams.get('state') || ''
+    logConnectStage('callback_received', { hasCode: Boolean(searchParams.get('code')), hasState: Boolean(stateParam), hasError: Boolean(searchParams.get('error')) })
 
-  // The admin declined Meta's consent screen (or Meta itself errored) —
-  // non-destructive: best-effort consume the state purely to avoid
-  // leaving it around for reuse, but the outcome either way is the same
-  // friendly "cancelled" redirect, never an error page.
-  const metaError = searchParams.get('error')
-  if (metaError) {
-    if (stateParam) await consumeInstagramOAuthState(stateParam)
-    return redirectWithError(request, 'Instagram authorization was cancelled. No changes were made.')
+    // The admin declined Meta's consent screen (or Meta itself errored) —
+    // non-destructive: best-effort consume the state purely to avoid
+    // leaving it around for reuse, but the outcome either way is the same
+    // friendly "cancelled" redirect, never an error page.
+    const metaError = searchParams.get('error')
+    if (metaError) {
+      logConnectStage('meta_denied', { error: metaError, errorReason: searchParams.get('error_reason') })
+      if (stateParam) await consumeInstagramOAuthState(stateParam)
+      return redirectWithError(request, 'user_cancelled', 'Instagram authorization was cancelled. No changes were made.')
+    }
+
+    const auth = await requirePermission('personal_brand:write')
+    if (!auth.ok) {
+      logConnectStage('auth_check_failed', { status: auth.status })
+      return redirectToLogin(request, 'session_expired')
+    }
+
+    const consumed = await consumeInstagramOAuthState(stateParam)
+    if (!consumed.ok) {
+      logConnectStage('state_consume_failed', { reason: consumed.reason })
+      const code: ConnectErrorCode = consumed.reason === 'expired' ? 'state_expired' : consumed.reason === 'lookup_failed' ? 'state_lookup_failed' : 'state_invalid'
+      return redirectWithError(request, code, consumed.error)
+    }
+    logConnectStage('state_consumed', { workspaceId: consumed.payload.workspaceId })
+
+    // The security-critical check: the state proves someone (adminUserId)
+    // started this flow for a specific workspace — this proves the
+    // CURRENTLY authenticated admin is that same person, not merely "some
+    // logged-in admin." Without this, a state leaked or replayed from a
+    // different admin's browser would silently connect an account into
+    // that other admin's workspace.
+    const scope = await getSocialWorkspaceScope()
+    if (!scope || scope.adminUserId !== consumed.payload.adminUserId) {
+      logConnectStage('session_mismatch', { hasScope: Boolean(scope) })
+      return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Personal Brand.")
+    }
+
+    // Re-checked independently of the state payload itself — role/
+    // membership could have changed in the (short) window between
+    // starting the flow and Meta redirecting back.
+    if (!canWriteWorkspace(scope, consumed.payload.workspaceId)) {
+      logConnectStage('workspace_permission_denied', { workspaceId: consumed.payload.workspaceId })
+      return redirectWithError(request, 'workspace_permission_denied', 'You no longer have permission to connect Instagram for that Social Workspace.')
+    }
+
+    const code = searchParams.get('code')
+    if (!code) {
+      logConnectStage('missing_code')
+      return redirectWithError(request, 'missing_code', 'Instagram did not return an authorization code. Please try connecting again.')
+    }
+
+    const redirectUri = new URL(CALLBACK_PATH, siteOrigin(request)).toString()
+
+    const shortLived = await exchangeCodeForUserToken({ code, redirectUri })
+    if (!shortLived.ok) {
+      return redirectWithError(request, 'token_exchange_failed', 'Instagram authorization failed while exchanging the authorization code. Please try connecting again.')
+    }
+
+    const longLived = await exchangeForLongLivedUserToken(shortLived.data.accessToken)
+    if (!longLived.ok) {
+      return redirectWithError(request, 'long_lived_exchange_failed', 'Instagram authorization failed while confirming your access. Please try connecting again.')
+    }
+
+    const pagesResult = await fetchPagesWithInstagramAccounts(longLived.data.accessToken)
+    if (!pagesResult.ok) {
+      return redirectWithError(request, 'pages_fetch_failed', 'Failed to look up your Facebook Pages. Please try connecting again.')
+    }
+
+    if (pagesResult.data.totalPageCount === 0) {
+      logConnectStage('no_pages_found')
+      return redirectWithError(
+        request,
+        'no_pages',
+        'No Facebook Page is linked to the account you authorized with. Connect a Facebook Page first, then try again.'
+      )
+    }
+
+    const selected = selectInstagramAccount(pagesResult.data.pages)
+    if (!selected.ok) {
+      const code: ConnectErrorCode = selected.reason === 'ambiguous' ? 'multiple_accounts' : 'no_instagram_account'
+      return redirectWithError(request, code, selected.error)
+    }
+
+    const upsertResult = await upsertConnectedInstagramAccount(consumed.payload.workspaceId, consumed.payload.adminUserId, {
+      instagramAccountId: selected.page.instagramAccountId,
+      username: selected.page.username,
+      displayName: selected.page.name,
+      pageAccessToken: selected.page.pageAccessToken,
+      tokenExpiresAt: longLived.data.expiresAt,
+    })
+
+    if (!upsertResult.ok) {
+      const code: ConnectErrorCode = upsertResult.reason === 'already_connected_elsewhere' ? 'already_connected_elsewhere' : 'account_save_failed'
+      return redirectWithError(request, code, upsertResult.error)
+    }
+
+    return redirectWithSuccess(request, upsertResult.reauthorized ? 'reconnected' : upsertResult.replacedPreviousAccount ? 'replaced' : 'connected')
+  } catch (error) {
+    console.error('[Instagram Connect] Unhandled exception in callback', error instanceof Error ? error.message : error)
+    logConnectStage('unexpected_exception', { message: error instanceof Error ? error.message : 'non-Error thrown' })
+    return redirectWithError(request, 'unexpected_error', 'Something went wrong connecting Instagram. Please try again.')
   }
-
-  const auth = await requirePermission('personal_brand:write')
-  if (!auth.ok) {
-    return NextResponse.redirect(new URL('/admin/login', siteOrigin(request)))
-  }
-
-  const consumed = await consumeInstagramOAuthState(stateParam)
-  if (!consumed.ok) {
-    return redirectWithError(request, consumed.error)
-  }
-
-  // The security-critical check: the state proves someone (adminUserId)
-  // started this flow for a specific workspace — this proves the
-  // CURRENTLY authenticated admin is that same person, not merely "some
-  // logged-in admin." Without this, a state leaked or replayed from a
-  // different admin's browser would silently connect an account into
-  // that other admin's workspace.
-  const scope = await getSocialWorkspaceScope()
-  if (!scope || scope.adminUserId !== consumed.payload.adminUserId) {
-    return redirectWithError(request, "This Instagram connection request doesn't match your current session. Start over from Personal Brand.")
-  }
-
-  // Re-checked independently of the state payload itself — role/
-  // membership could have changed in the (short) window between
-  // starting the flow and Meta redirecting back.
-  if (!canWriteWorkspace(scope, consumed.payload.workspaceId)) {
-    return redirectWithError(request, 'You no longer have permission to connect Instagram for that Social Workspace.')
-  }
-
-  const code = searchParams.get('code')
-  if (!code) {
-    return redirectWithError(request, 'Instagram did not return an authorization code. Please try connecting again.')
-  }
-
-  const redirectUri = new URL(CALLBACK_PATH, siteOrigin(request)).toString()
-
-  const shortLived = await exchangeCodeForUserToken({ code, redirectUri })
-  if (!shortLived.ok) {
-    return redirectWithError(request, `Instagram authorization failed: ${shortLived.error}`)
-  }
-
-  const longLived = await exchangeForLongLivedUserToken(shortLived.data.accessToken)
-  if (!longLived.ok) {
-    return redirectWithError(request, `Instagram authorization failed: ${longLived.error}`)
-  }
-
-  const pagesResult = await fetchPagesWithInstagramAccounts(longLived.data.accessToken)
-  if (!pagesResult.ok) {
-    return redirectWithError(request, `Failed to look up your Instagram account: ${pagesResult.error}`)
-  }
-
-  const selected = selectInstagramAccount(pagesResult.data)
-  if (!selected.ok) {
-    return redirectWithError(request, selected.error)
-  }
-
-  const upsertResult = await upsertConnectedInstagramAccount(consumed.payload.workspaceId, consumed.payload.adminUserId, {
-    instagramAccountId: selected.page.instagramAccountId,
-    username: selected.page.username,
-    displayName: selected.page.name,
-    pageAccessToken: selected.page.pageAccessToken,
-    tokenExpiresAt: longLived.data.expiresAt,
-  })
-
-  if (!upsertResult.ok) {
-    return redirectWithError(request, upsertResult.error)
-  }
-
-  return redirectWithSuccess(request, upsertResult.reauthorized ? 'reconnected' : upsertResult.replacedPreviousAccount ? 'replaced' : 'connected')
 }
