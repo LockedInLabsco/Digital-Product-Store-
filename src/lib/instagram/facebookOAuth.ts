@@ -32,8 +32,25 @@ const REQUEST_TIMEOUT_MS = 15000
  * manually-generated token instructions exactly, now requested via a real
  * OAuth dialog instead of pasted from Graph API Explorer. Never includes
  * any instagram_business_* (messaging) scope.
+ *
+ * business_management added after diagnosing a real production failure:
+ * for a Facebook Page managed through a Meta Business Portfolio/Business
+ * Manager (as opposed to a Page the person manages directly), GET
+ * /me/accounts returns an empty `data: []` without it — confirmed
+ * against Meta's own Developer Community
+ * (developers.facebook.com/community/threads/335402512246332/, where
+ * multiple developers independently reproduced and fixed this exact
+ * symptom by adding this permission) and against
+ * developers.facebook.com/docs/permissions/'s own business_management
+ * entry. There is no separate/alternate Page-discovery endpoint to call
+ * instead — the official Graph API `User` node reference
+ * (developers.facebook.com/docs/graph-api/reference/user/) lists only
+ * one Page-related edge, `accounts` ("Pages the User has a role on"),
+ * which is exactly /me/accounts, already in use below. No
+ * `/me/assigned_pages` or equivalent exists in the current reference —
+ * deliberately not invented here.
  */
-export const CONTENT_OAUTH_SCOPES = ['instagram_basic', 'instagram_manage_insights', 'pages_show_list', 'pages_read_engagement']
+export const CONTENT_OAUTH_SCOPES = ['instagram_basic', 'instagram_manage_insights', 'pages_show_list', 'pages_read_engagement', 'business_management']
 
 export function isInstagramConnectConfigured(): boolean {
   return Boolean(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET)
@@ -157,8 +174,8 @@ export interface GrantedPermission {
   status: 'granted' | 'declined' | string
 }
 
-/** The four scopes this flow actually requests (CONTENT_OAUTH_SCOPES) — explicitly called out in every granted-permissions log line so a declined one is impossible to miss. */
-const TRACKED_SCOPES = ['pages_show_list', 'pages_read_engagement', 'instagram_basic', 'instagram_manage_insights'] as const
+/** Every scope this flow actually requests (CONTENT_OAUTH_SCOPES) — explicitly called out in every granted-permissions log line so a declined one is impossible to miss. business_management is the one most likely to be silently declined for a Business-Manager-assigned Page — see CONTENT_OAUTH_SCOPES's own comment. */
+const TRACKED_SCOPES = ['pages_show_list', 'pages_read_engagement', 'instagram_basic', 'instagram_manage_insights', 'business_management'] as const
 
 /**
  * `GET /me/permissions` — the official Graph API endpoint for checking
@@ -166,10 +183,12 @@ const TRACKED_SCOPES = ['pages_show_list', 'pages_read_engagement', 'instagram_b
  * vs declined. Critical because Meta's own docs are explicit that a
  * person can decline individual permissions while accepting others, and
  * the login callback itself never reports that — only this endpoint
- * does. Read-only, diagnostic only: callers must not change
- * account-selection behavior based on this (that's selectInstagramAccount's
- * job, unchanged) — this exists purely so a production log can show
- * definitively whether e.g. pages_show_list was actually granted.
+ * does. Read-only, primarily diagnostic: selectInstagramAccount()'s own
+ * decision logic (which Page/account to connect) never consults this —
+ * the one place the callback DOES use the result is to pick a clearer
+ * error message when zero Pages come back (see getPermissionStatus),
+ * which changes WHAT THE ADMIN IS TOLD, never which account gets
+ * selected or saved.
  */
 export async function fetchGrantedPermissions(userAccessToken: string): Promise<OAuthHttpResult<GrantedPermission[]>> {
   const url = new URL(`${GRAPH_BASE}/me/permissions`)
@@ -191,6 +210,11 @@ export async function fetchGrantedPermissions(userAccessToken: string): Promise<
   })
 
   return { ok: true, data: permissions }
+}
+
+/** Looks up one scope's granted/declined status from an already-fetched fetchGrantedPermissions() result — 'not_present' if Meta didn't return it at all (distinct from 'declined'). */
+export function getPermissionStatus(permissions: GrantedPermission[], scope: string): string {
+  return permissions.find((p) => p.permission === scope)?.status ?? 'not_present'
 }
 
 export interface FacebookPageWithInstagram {

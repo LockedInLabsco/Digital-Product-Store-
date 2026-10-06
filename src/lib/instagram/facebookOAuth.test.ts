@@ -8,7 +8,14 @@ vi.mock('server-only', () => ({}))
 // throws). Nothing in this test actually touches supabaseServer.
 vi.mock('@/src/lib/supabase/server', () => ({ supabaseServer: {} }))
 
-import { buildFacebookAuthorizationUrl, isInstagramConnectConfigured, selectInstagramAccount, CONTENT_OAUTH_SCOPES, type FacebookPageWithInstagram } from './facebookOAuth'
+import {
+  buildFacebookAuthorizationUrl,
+  getPermissionStatus,
+  isInstagramConnectConfigured,
+  selectInstagramAccount,
+  CONTENT_OAUTH_SCOPES,
+  type FacebookPageWithInstagram,
+} from './facebookOAuth'
 
 const ORIGINAL_ENV = { ...process.env }
 
@@ -51,9 +58,27 @@ describe('buildFacebookAuthorizationUrl', () => {
     expect(CONTENT_OAUTH_SCOPES.some((scope) => scope.startsWith('instagram_business_'))).toBe(false)
   })
 
+  it('requests business_management — required for a Facebook Page managed through a Business Portfolio to appear via /me/accounts', () => {
+    expect(CONTENT_OAUTH_SCOPES).toContain('business_management')
+  })
+
   it('throws rather than silently building an unusable URL when INSTAGRAM_APP_ID is missing', () => {
     delete process.env.INSTAGRAM_APP_ID
     expect(() => buildFacebookAuthorizationUrl({ redirectUri: 'https://site.example/callback', state: 'nonce-abc' })).toThrow(/INSTAGRAM_APP_ID/)
+  })
+})
+
+describe('getPermissionStatus', () => {
+  it('CASE 3: reports a declined scope’s exact status', () => {
+    expect(getPermissionStatus([{ permission: 'business_management', status: 'declined' }], 'business_management')).toBe('declined')
+  })
+
+  it('reports a granted scope’s exact status', () => {
+    expect(getPermissionStatus([{ permission: 'pages_show_list', status: 'granted' }], 'pages_show_list')).toBe('granted')
+  })
+
+  it('reports "not_present" rather than "declined" for a scope Meta never returned at all', () => {
+    expect(getPermissionStatus([{ permission: 'pages_show_list', status: 'granted' }], 'business_management')).toBe('not_present')
   })
 })
 

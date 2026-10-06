@@ -7,6 +7,7 @@ import {
   exchangeForLongLivedUserToken,
   fetchGrantedPermissions,
   fetchPagesWithInstagramAccounts,
+  getPermissionStatus,
   selectInstagramAccount,
 } from '@/src/lib/instagram/facebookOAuth'
 import { upsertConnectedInstagramAccount } from '@/src/lib/social/instagramConnectAccount'
@@ -36,6 +37,7 @@ type ConnectErrorCode =
   | 'long_lived_exchange_failed'
   | 'pages_fetch_failed'
   | 'no_pages'
+  | 'business_access_declined'
   | 'no_instagram_account'
   | 'multiple_accounts'
   | 'already_connected_elsewhere'
@@ -158,13 +160,16 @@ export async function GET(request: NextRequest) {
       return redirectWithError(request, 'long_lived_exchange_failed', 'Instagram authorization failed while confirming your access. Please try connecting again.')
     }
 
-    // Diagnostic only, intentionally non-blocking — a failure here must
-    // never change what happens next (selectInstagramAccount's behavior
-    // is unchanged). This exists purely to show, in the log, whether
-    // Meta actually granted every requested scope on THIS token — a
-    // person can decline an individual permission while accepting
-    // others, which the OAuth callback itself never reports.
-    await fetchGrantedPermissions(longLived.data.accessToken)
+    // Non-blocking: a failure here must never change what happens next
+    // (selectInstagramAccount's own decision logic is unchanged either
+    // way). The one thing the captured result IS used for below is
+    // picking a more specific error message if /me/accounts comes back
+    // empty — Meta never reports a declined permission through the
+    // OAuth callback itself, only this endpoint does, and
+    // business_management is the scope most likely to be silently
+    // declined for a Page managed through a Business Portfolio (see
+    // CONTENT_OAUTH_SCOPES's own comment in facebookOAuth.ts).
+    const grantedPermissionsResult = await fetchGrantedPermissions(longLived.data.accessToken)
 
     const pagesResult = await fetchPagesWithInstagramAccounts(longLived.data.accessToken)
     if (!pagesResult.ok) {
@@ -172,7 +177,27 @@ export async function GET(request: NextRequest) {
     }
 
     if (pagesResult.data.totalPageCount === 0) {
-      logConnectStage('no_pages_found')
+      // No separate/alternate Page-discovery endpoint exists to fall
+      // back to here — verified directly against Meta's current Graph
+      // API `User` node reference, which lists only the `accounts` edge
+      // (i.e. /me/accounts, already called above) for this purpose. The
+      // only thing that can legitimately explain zero Pages at this
+      // point is either a genuine lack of access, or — specifically for
+      // a Business-Manager-assigned Page — business_management having
+      // been declined on this authorization. Distinguish the two so the
+      // admin isn't told the generic, less actionable "no_pages" when
+      // the real, fixable cause is a declined permission.
+      const businessManagementStatus = grantedPermissionsResult.ok ? getPermissionStatus(grantedPermissionsResult.data, 'business_management') : 'unknown'
+      logConnectStage('no_pages_found', { businessManagementStatus, fallbackDiscoveryAttempted: false })
+
+      if (businessManagementStatus === 'declined') {
+        return redirectWithError(
+          request,
+          'business_access_declined',
+          'Facebook declined to grant Business Page access (business_management) during authorization. Reconnect and approve that permission when prompted.'
+        )
+      }
+
       return redirectWithError(
         request,
         'no_pages',
