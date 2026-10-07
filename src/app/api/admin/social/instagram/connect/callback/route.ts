@@ -57,11 +57,14 @@ function siteOrigin(request: NextRequest): string {
  * error code alone (already distinct per branch) identifies which
  * branch fired, so a separate log line per branch was redundant.
  */
-function redirectWithError(request: NextRequest, code: ConnectErrorCode, message: string): NextResponse {
+function redirectWithError(request: NextRequest, code: ConnectErrorCode, message: string, extraParams?: Record<string, string>): NextResponse {
   logConnectStage('oauth_callback_failure', { code })
   const url = new URL(RETURN_PATH, siteOrigin(request))
   url.searchParams.set('instagram_error', message)
   url.searchParams.set('instagram_connect_error', code)
+  if (extraParams) {
+    for (const [key, value] of Object.entries(extraParams)) url.searchParams.set(key, value)
+  }
   return NextResponse.redirect(url)
 }
 
@@ -224,8 +227,21 @@ export async function GET(request: NextRequest) {
     })
 
     if (!upsertResult.ok) {
-      const code: ConnectErrorCode = upsertResult.reason === 'already_connected_elsewhere' ? 'already_connected_elsewhere' : 'account_save_failed'
-      return redirectWithError(request, code, upsertResult.error)
+      if (upsertResult.reason === 'already_connected_elsewhere') {
+        // Only the Meta-side account id + its (public, already known to
+        // this admin — they just picked it in Meta's own consent screen)
+        // username cross the response boundary here — never our own
+        // workspace_id/connected_account_id. The Request Access flow
+        // (src/app/api/admin/social/instagram/request-access/route.ts)
+        // re-resolves the owning workspace from this account id itself,
+        // server-side, exactly like upsertConnectedInstagramAccount's own
+        // lookup above — the browser never gets to name a workspace.
+        return redirectWithError(request, 'already_connected_elsewhere', upsertResult.error, {
+          instagram_attempted_account_id: selected.page.instagramAccountId,
+          instagram_attempted_username: selected.page.username || '',
+        })
+      }
+      return redirectWithError(request, 'account_save_failed', upsertResult.error)
     }
 
     if (upsertResult.replacedPreviousAccount) {

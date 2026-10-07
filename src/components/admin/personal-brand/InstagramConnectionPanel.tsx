@@ -28,6 +28,13 @@ const SUCCESS_MESSAGES: Record<string, string> = {
  * param, read below and then stripped from the URL so a refresh doesn't
  * re-show a stale banner.
  */
+interface AccessRequestState {
+  accountId: string
+  username: string | null
+  status: 'offered' | 'pending' | 'already_pending' | 'already_member'
+  requestId: string | null
+}
+
 export default function InstagramConnectionPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -36,6 +43,8 @@ export default function InstagramConnectionPanel() {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [error, setError] = useState('')
   const [banner, setBanner] = useState('')
+  const [accessRequest, setAccessRequest] = useState<AccessRequestState | null>(null)
+  const [isRequestingAccess, setIsRequestingAccess] = useState(false)
 
   const load = async () => {
     try {
@@ -57,26 +66,79 @@ export default function InstagramConnectionPanel() {
 
     const outcome = searchParams.get('instagram')
     const oauthError = searchParams.get('instagram_error')
+    const oauthErrorCode = searchParams.get('instagram_connect_error')
     const previousUsername = searchParams.get('instagram_previous_username')
     const newUsername = searchParams.get('instagram_new_username')
+    const attemptedAccountId = searchParams.get('instagram_attempted_account_id')
+    const attemptedUsername = searchParams.get('instagram_attempted_username')
 
     if (outcome === 'replaced' && (previousUsername || newUsername)) {
       setBanner(`Replaced ${previousUsername ? `@${previousUsername}` : 'the previous account'} with ${newUsername ? `@${newUsername}` : 'the new account'}.`)
     } else if (outcome) {
       setBanner(SUCCESS_MESSAGES[outcome] || 'Instagram connection updated.')
     }
-    if (oauthError) setError(oauthError)
+
+    // already_connected_elsewhere gets its own Request Access UI instead
+    // of the generic error banner — see the dedicated block below.
+    if (oauthErrorCode === 'already_connected_elsewhere' && attemptedAccountId) {
+      setAccessRequest({ accountId: attemptedAccountId, username: attemptedUsername, status: 'offered', requestId: null })
+    } else if (oauthError) {
+      setError(oauthError)
+    }
 
     if (outcome || oauthError) {
       const url = new URL(window.location.href)
       url.searchParams.delete('instagram')
       url.searchParams.delete('instagram_error')
+      url.searchParams.delete('instagram_connect_error')
       url.searchParams.delete('instagram_previous_username')
       url.searchParams.delete('instagram_new_username')
+      url.searchParams.delete('instagram_attempted_account_id')
+      url.searchParams.delete('instagram_attempted_username')
       router.replace(`${url.pathname}${url.search}`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function handleRequestAccess() {
+    if (!accessRequest) return
+    setIsRequestingAccess(true)
+    setError('')
+    try {
+      const response = await fetch('/api/admin/social/instagram/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: accessRequest.accountId }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to request access')
+      setAccessRequest({ ...accessRequest, status: data.status, requestId: data.requestId || null })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to request access')
+    } finally {
+      setIsRequestingAccess(false)
+    }
+  }
+
+  async function handleCancelAccessRequest() {
+    if (!accessRequest?.requestId) return
+    setIsRequestingAccess(true)
+    setError('')
+    try {
+      const response = await fetch('/api/admin/social/instagram/request-access', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId: accessRequest.requestId }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to cancel request')
+      setAccessRequest(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel request')
+    } finally {
+      setIsRequestingAccess(false)
+    }
+  }
 
   const handleConnect = () => {
     window.location.href = '/api/admin/social/instagram/connect/start'
@@ -171,6 +233,37 @@ export default function InstagramConnectionPanel() {
 
       {banner && <p className="text-xs text-green-400">{banner}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
+
+      {accessRequest && (
+        <div className="mt-3 rounded-lg border border-admin-border bg-admin-surface2 p-4">
+          {accessRequest.status === 'offered' && (
+            <>
+              <p className="mb-2 text-sm">
+                {accessRequest.username ? `@${accessRequest.username}` : 'This Instagram account'} is already connected to another workspace. If
+                you work on this account, request access instead of connecting it again.
+              </p>
+              <Button size="sm" variant="secondary" onClick={handleRequestAccess} disabled={isRequestingAccess}>
+                {isRequestingAccess ? 'Requesting…' : 'Request Access'}
+              </Button>
+            </>
+          )}
+
+          {(accessRequest.status === 'pending' || accessRequest.status === 'already_pending') && (
+            <>
+              <p className="mb-2 text-sm">Request pending — you&apos;ll get access after a workspace owner approves it.</p>
+              {accessRequest.requestId && (
+                <Button size="sm" variant="outline" onClick={handleCancelAccessRequest} disabled={isRequestingAccess}>
+                  {isRequestingAccess ? 'Cancelling…' : 'Cancel Request'}
+                </Button>
+              )}
+            </>
+          )}
+
+          {accessRequest.status === 'already_member' && (
+            <p className="text-sm">You&apos;re already a member of that workspace — switch to it from the workspace switcher above.</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

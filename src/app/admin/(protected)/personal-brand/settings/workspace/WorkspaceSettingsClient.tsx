@@ -22,7 +22,15 @@ interface InviteRow {
   created_at: string
 }
 
+interface AccessRequestRow {
+  id: string
+  requesting_admin_user_id: string
+  requester_email: string | null
+  created_at: string
+}
+
 const ROLE_OPTIONS: SocialWorkspaceRole[] = ['owner', 'manager', 'analyst']
+const GRANTABLE_ROLE_OPTIONS: Extract<SocialWorkspaceRole, 'manager' | 'analyst'>[] = ['manager', 'analyst']
 
 const ROLE_DESCRIPTIONS: Record<SocialWorkspaceRole, string> = {
   owner: 'Everything — connect/disconnect Instagram, manage members, delete content',
@@ -42,11 +50,14 @@ export default function WorkspaceSettingsClient() {
   const [workspace, setWorkspace] = useState<WorkspaceListEntry | null>(null)
   const [members, setMembers] = useState<MemberRow[] | null>(null)
   const [invites, setInvites] = useState<InviteRow[] | null>(null)
+  const [accessRequests, setAccessRequests] = useState<AccessRequestRow[] | null>(null)
+  const [accessRequestRoles, setAccessRequestRoles] = useState<Record<string, 'manager' | 'analyst'>>({})
   const [canManage, setCanManage] = useState(false)
   const [error, setError] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<SocialWorkspaceRole>('analyst')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setError('')
@@ -65,6 +76,7 @@ export default function WorkspaceSettingsClient() {
 
       setMembers(membersJson.members)
       setInvites(membersJson.invites)
+      setAccessRequests(membersJson.accessRequests || [])
       setCanManage(membersJson.canManage)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load workspace')
@@ -149,6 +161,27 @@ export default function WorkspaceSettingsClient() {
     }
   }
 
+  async function handleResolveAccessRequest(requestId: string, decision: 'approved' | 'rejected') {
+    if (!workspace) return
+    setResolvingRequestId(requestId)
+    setError('')
+    try {
+      const role = accessRequestRoles[requestId] || 'analyst'
+      const res = await fetch(`/api/admin/social/workspaces/${workspace.id}/access-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(decision === 'approved' ? { decision, role } : { decision }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to resolve request')
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resolve request')
+    } finally {
+      setResolvingRequestId(null)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
@@ -198,6 +231,54 @@ export default function WorkspaceSettingsClient() {
                   {members && members.length === 0 && <p className="p-4 text-admin-muted">No members yet.</p>}
                 </div>
               </section>
+
+              {canManage && accessRequests && accessRequests.length > 0 && (
+                <section className="mb-10">
+                  <h3 className="mb-4 text-lg font-semibold">Access Requests</h3>
+                  <p className="mb-3 text-sm text-admin-muted">
+                    Someone tried to connect an Instagram account that already belongs to this workspace, and asked to join instead.
+                  </p>
+                  <div className="overflow-hidden rounded-lg border border-admin-border">
+                    {accessRequests.map((req) => (
+                      <div key={req.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border bg-admin-surface p-4 last:border-0">
+                        <div>
+                          <p className="font-medium">{req.requester_email || 'Unknown admin'}</p>
+                          <p className="text-sm text-admin-muted">Requested access to this workspace</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={accessRequestRoles[req.id] || 'analyst'}
+                            onChange={(e) => setAccessRequestRoles((prev) => ({ ...prev, [req.id]: e.target.value as 'manager' | 'analyst' }))}
+                            className="rounded border border-admin-border bg-admin-bg px-2 py-1 text-sm"
+                          >
+                            {GRANTABLE_ROLE_OPTIONS.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={resolvingRequestId === req.id}
+                            onClick={() => handleResolveAccessRequest(req.id, 'approved')}
+                            className="text-sm text-green-400 hover:underline disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={resolvingRequestId === req.id}
+                            onClick={() => handleResolveAccessRequest(req.id, 'rejected')}
+                            className="text-sm text-red-400 hover:underline disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {invites && invites.length > 0 && (
                 <section className="mb-10">

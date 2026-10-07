@@ -74,6 +74,23 @@ export interface SocialWorkspaceInvite {
   expires_at: string
 }
 
+export type SocialWorkspaceAccessRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
+
+/** A request to join a workspace that owns an Instagram account the
+ * requester tried (and failed) to connect elsewhere — see
+ * supabase/migrations/0029_social_workspace_access_requests.sql. */
+export interface SocialWorkspaceAccessRequest {
+  id: string
+  workspace_id: string
+  connected_account_id: string
+  requesting_admin_user_id: string
+  status: SocialWorkspaceAccessRequestStatus
+  resolved_role: 'manager' | 'analyst' | null
+  resolved_at: string | null
+  resolved_by: string | null
+  created_at: string
+}
+
 /** Safe fields only — never the encrypted token itself. Mirrors
  * MessagingTokenStatus in src/lib/instagram/tokenStore.ts. */
 export interface SocialAccountTokenStatus {

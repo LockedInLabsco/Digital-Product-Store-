@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
 import { getSocialWorkspaceScope, canReadWorkspace, canManageWorkspaceMembers } from '@/src/lib/admin/socialWorkspaceScope'
+import { listPendingAccessRequests } from '@/src/lib/social/accessRequests'
 import type { SocialWorkspaceRole } from '@/src/types/social'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -49,11 +50,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   for (const row of adminRows || []) emailByAdminUserId[row.id] = row.email
 
   const membersWithEmail = (members || []).map((m) => ({ ...m, email: emailByAdminUserId[m.admin_user_id] || null }))
+  const canManage = canManageWorkspaceMembers(scope, params.id)
+
+  // Access requests carry the requester's email (see
+  // listPendingAccessRequests) — same privacy boundary as everything
+  // else on this route: only someone who can actually manage this
+  // workspace's membership ever sees who's asking to join it.
+  const accessRequests = canManage ? await listPendingAccessRequests(params.id) : []
 
   return NextResponse.json({
     members: membersWithEmail,
     invites: invites || [],
-    canManage: canManageWorkspaceMembers(scope, params.id),
+    accessRequests,
+    canManage,
   })
 }
 
