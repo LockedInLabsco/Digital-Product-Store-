@@ -17,12 +17,25 @@
  * account, more than one active connected account, no stored content
  * token, a token that fails to decrypt) rather than guessing — there is
  * no "pick the first" branch anywhere in this file.
+ *
+ * Phase G (Direct Instagram Login) addition: a connected account may now
+ * have TWO content-capable tokens — 'instagram_login' (graph.instagram.com,
+ * no Facebook Page involved) and/or 'facebook_login' (graph.facebook.com,
+ * the original flow). Verified against Meta's current Instagram Platform
+ * docs that the Instagram Login product's scopes (instagram_business_basic
+ * + instagram_business_manage_comments) do cover media + insights reads,
+ * not just messaging — so when both exist, 'instagram_login' is preferred
+ * (one fewer product dependency, no Page requirement); 'facebook_login' is
+ * the proven, backwards-compatible fallback. Every existing connected
+ * account (e.g. @alx.lifelogs) has only a 'facebook_login' row and keeps
+ * resolving to it completely unchanged.
  */
 import 'server-only'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { decryptToken } from './tokenCrypto'
 
-const CONTENT_TOKEN_PROVIDER = 'facebook_login'
+const PREFERRED_PROVIDER_ORDER = ['instagram_login', 'facebook_login'] as const
+export type ContentTokenProvider = (typeof PREFERRED_PROVIDER_ORDER)[number]
 
 export interface ResolvedContentAccount {
   connectedAccountId: string
@@ -30,6 +43,10 @@ export interface ResolvedContentAccount {
    * Business Account id used by the content/insights Graph API calls. */
   instagramAccountId: string
   accessToken: string
+  /** Which Graph API host this token is valid against — see
+   * src/lib/instagram/client.ts's fetchAllAccountMedia/fetchMediaInsights,
+   * which route on this field instead of assuming graph.facebook.com. */
+  provider: ContentTokenProvider
 }
 
 export type ContentAccountResolution =
@@ -87,19 +104,21 @@ export async function resolveContentAccountForWorkspace(workspaceId: string): Pr
     }
   }
 
-  const { data: tokenRow, error: tokenError } = await supabaseServer
+  const { data: tokenRows, error: tokenError } = await supabaseServer
     .from('social_account_tokens')
-    .select('encrypted_access_token')
+    .select('provider, encrypted_access_token')
     .eq('connected_account_id', accountRow.id)
-    .eq('provider', CONTENT_TOKEN_PROVIDER)
-    .maybeSingle()
+    .in('provider', PREFERRED_PROVIDER_ORDER)
 
   if (tokenError) {
     console.error('[Instagram Content Account] Token lookup failed', tokenError.message)
     return { ok: false, reason: 'lookup_failed', error: 'Failed to look up this workspace’s Instagram content token' }
   }
 
-  if (!tokenRow) {
+  const tokenByProvider = new Map((tokenRows || []).map((row) => [row.provider, row.encrypted_access_token]))
+  const provider = PREFERRED_PROVIDER_ORDER.find((candidate) => tokenByProvider.has(candidate))
+
+  if (!provider) {
     return {
       ok: false,
       reason: 'token_missing',
@@ -108,13 +127,14 @@ export async function resolveContentAccountForWorkspace(workspaceId: string): Pr
   }
 
   try {
-    const accessToken = decryptToken(tokenRow.encrypted_access_token)
+    const accessToken = decryptToken(tokenByProvider.get(provider)!)
     return {
       ok: true,
       account: {
         connectedAccountId: accountRow.id,
         instagramAccountId: accountRow.external_account_id,
         accessToken,
+        provider,
       },
     }
   } catch (error) {

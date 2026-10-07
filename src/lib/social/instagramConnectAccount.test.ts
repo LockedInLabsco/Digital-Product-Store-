@@ -130,6 +130,32 @@ describe('upsertConnectedInstagramAccount', () => {
 
     expect(result).toMatchObject({ ok: false, reason: 'write_failed' })
   })
+
+  it('Phase G: a direct Instagram Login connection succeeds the same way a facebook_login one does, just tagged with the instagram_login provider', async () => {
+    queue('social_connected_accounts', [
+      { data: null, error: null }, // lookup by external_id — none exists anywhere
+      { data: null, error: null }, // lookup this workspace's active account — none
+      { data: { id: 'connected-ig' }, error: null }, // insert
+    ])
+    queue('social_account_tokens', [{ data: null, error: null }])
+    queue('social_connected_account_identifiers', [{ data: null, error: null }])
+
+    const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED, 'instagram_login')
+
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-ig', reauthorized: false, replacedPreviousAccount: false, previousUsername: null })
+  })
+
+  it('Phase G: already_connected_elsewhere fires for a direct-Instagram-Login attempt exactly like the Facebook flow — dedup is provider-agnostic', async () => {
+    queue('social_connected_accounts', [{ data: { id: 'connected-b', workspace_id: 'workspace-b' }, error: null }])
+
+    const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED, 'instagram_login')
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'already_connected_elsewhere',
+      error: expect.stringContaining('already connected to a different Social Workspace'),
+    })
+  })
 })
 
 describe('disconnectInstagramAccount', () => {

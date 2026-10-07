@@ -1,8 +1,13 @@
 /**
- * Server-side CSRF state for the "Connect Instagram" (Facebook Login for
- * Business) OAuth flow — see supabase/migrations/0027_social_oauth_states.sql
- * for the table and the full reasoning for why this is a DB row rather
- * than a signed cookie/JWT.
+ * Server-side CSRF state for BOTH "Connect Instagram" OAuth flows —
+ * Facebook Login for Business ('instagram_connect') and, as of Phase G,
+ * direct Instagram Login ('instagram_login_connect', see
+ * src/lib/instagram/instagramLoginOAuth.ts and
+ * supabase/migrations/0030_instagram_login_oauth_flow.sql) — see
+ * supabase/migrations/0027_social_oauth_states.sql for the table and the
+ * full reasoning for why this is a DB row rather than a signed
+ * cookie/JWT. Every pre-existing call site omits `flow` and gets the
+ * original 'instagram_connect' behavior unchanged.
  *
  * The security property this provides: a state value is (a) unguessable
  * (32 random bytes), (b) bound server-side to the admin_user_id and
@@ -22,13 +27,15 @@ import { supabaseServer } from '@/src/lib/supabase/server'
 const STATE_TTL_MS = 10 * 60 * 1000 // 10 minutes — generous for a Meta login+consent round trip, short enough that an abandoned flow can't be resurrected later
 const FLOW_INSTAGRAM_CONNECT = 'instagram_connect'
 
+export type OAuthFlow = 'instagram_connect' | 'instagram_login_connect'
+
 export interface OAuthStatePayload {
   adminUserId: string
   workspaceId: string
 }
 
-/** Creates and persists a new single-use state value for the Instagram connect flow. */
-export async function createInstagramOAuthState(payload: OAuthStatePayload): Promise<string> {
+/** Creates and persists a new single-use state value for the given Instagram connect flow — defaults to the original Facebook Login flow for every pre-Phase-G call site. */
+export async function createInstagramOAuthState(payload: OAuthStatePayload, flow: OAuthFlow = FLOW_INSTAGRAM_CONNECT): Promise<string> {
   const id = crypto.randomBytes(32).toString('base64url')
   const expiresAt = new Date(Date.now() + STATE_TTL_MS).toISOString()
 
@@ -36,7 +43,7 @@ export async function createInstagramOAuthState(payload: OAuthStatePayload): Pro
     id,
     admin_user_id: payload.adminUserId,
     workspace_id: payload.workspaceId,
-    flow: FLOW_INSTAGRAM_CONNECT,
+    flow,
     expires_at: expiresAt,
   })
 
@@ -59,7 +66,7 @@ export type ConsumeOAuthStateResult =
  * state — callers must treat all of these as "reject the callback,"
  * never fall back to guessing the admin/workspace another way.
  */
-export async function consumeInstagramOAuthState(stateId: string): Promise<ConsumeOAuthStateResult> {
+export async function consumeInstagramOAuthState(stateId: string, flow: OAuthFlow = FLOW_INSTAGRAM_CONNECT): Promise<ConsumeOAuthStateResult> {
   if (!stateId) {
     return { ok: false, reason: 'missing_or_already_used', error: 'Missing OAuth state' }
   }
@@ -68,7 +75,7 @@ export async function consumeInstagramOAuthState(stateId: string): Promise<Consu
     .from('social_oauth_states')
     .delete()
     .eq('id', stateId)
-    .eq('flow', FLOW_INSTAGRAM_CONNECT)
+    .eq('flow', flow)
     .select('admin_user_id, workspace_id, expires_at')
     .maybeSingle()
 

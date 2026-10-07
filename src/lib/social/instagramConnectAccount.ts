@@ -1,20 +1,43 @@
 /**
- * The DB-writing half of the "Connect Instagram" flow — everything after
- * Meta has already handed back a resolved Instagram professional account
- * + Page Access Token (see src/lib/instagram/facebookOAuth.ts for that
- * part). Writes exclusively to the tables
- * src/lib/instagram/contentAccountResolution.ts already reads:
- * social_connected_accounts, social_account_tokens (provider=
- * 'facebook_login'), social_connected_account_identifiers
- * (identifier_type='graph_business_account_id') — the same identifier
- * type src/lib/social/backfillWorkspace.ts already writes, so a
- * self-serve-connected account and a legacy-backfilled one look
- * identical to every downstream reader.
+ * The DB-writing half of BOTH "Connect Instagram" flows — everything
+ * after Meta has already handed back a resolved Instagram professional
+ * account + access token, whether that came from Facebook Login (see
+ * src/lib/instagram/facebookOAuth.ts) or, as of Phase G, direct
+ * Instagram Login (see src/lib/instagram/instagramLoginOAuth.ts). The
+ * account-dedup/already_connected_elsewhere logic is identical either
+ * way — it operates on social_connected_accounts keyed by
+ * (platform, external_account_id), which has no concept of which OAuth
+ * product resolved that id — so one function serves both, parameterized
+ * only on which token `provider`/identifier type to write:
  *
- * No new identifier types invented here: 'webhook_entry_id' (the other
- * allowed identifier_type, per supabase/migrations/0026) belongs to the
- * separate Instagram Login/messaging OAuth product and isn't produced by
- * this flow — see src/lib/instagram/accountResolution.ts's own header.
+ * - 'facebook_login' (default, unchanged from before Phase G): writes
+ *   social_account_tokens provider='facebook_login' and
+ *   social_connected_account_identifiers identifier_type='graph_business_account_id'
+ *   — the same identifier type src/lib/social/backfillWorkspace.ts
+ *   already writes, so a self-serve-connected account and a
+ *   legacy-backfilled one still look identical to every downstream
+ *   reader.
+ * - 'instagram_login': writes social_account_tokens
+ *   provider='instagram_login' and social_connected_account_identifiers
+ *   identifier_type='webhook_entry_id' — verified against Meta's current
+ *   docs (see instagramLoginOAuth.ts's header) that the Instagram
+ *   professional account id resolved via Instagram Login IS the same id
+ *   Meta sends back as the recipient/entry id on an Instagram-Login-
+ *   routed webhook, so 'webhook_entry_id' (not 'graph_business_account_id')
+ *   is the correct type here — no new identifier type invented, this is
+ *   the other value supabase/migrations/0026 already allows.
+ *
+ * Does NOT assume a Facebook-Login-resolved external_account_id and an
+ * Instagram-Login-resolved one are the same value for what's really the
+ * same Instagram account — src/lib/instagram/client.ts's own file header
+ * documents that Meta does not guarantee this. The lookup below is
+ * exactly as safe either way it turns out: if the ids do match, this
+ * naturally lands on the reauthorize path (adding a second token row,
+ * one per provider, to the SAME connected account — exactly the
+ * consolidation Phase G wants); if they don't, it creates a second,
+ * independent connected_accounts row, the same known limitation this
+ * codebase already lives with via already_connected_elsewhere/Request
+ * Access for any two accidentally-duplicate connections.
  */
 import 'server-only'
 import { supabaseServer } from '@/src/lib/supabase/server'
@@ -30,8 +53,12 @@ import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
  */
 
 const PLATFORM = 'instagram'
-const CONTENT_TOKEN_PROVIDER = 'facebook_login'
-const IDENTIFIER_TYPE = 'graph_business_account_id'
+
+export type ContentConnectionProvider = 'facebook_login' | 'instagram_login'
+
+function identifierTypeFor(provider: ContentConnectionProvider): 'graph_business_account_id' | 'webhook_entry_id' {
+  return provider === 'instagram_login' ? 'webhook_entry_id' : 'graph_business_account_id'
+}
 
 export interface ResolvedInstagramAccount {
   instagramAccountId: string
@@ -74,7 +101,8 @@ export type UpsertConnectedAccountResult =
 export async function upsertConnectedInstagramAccount(
   workspaceId: string,
   adminUserId: string,
-  resolved: ResolvedInstagramAccount
+  resolved: ResolvedInstagramAccount,
+  provider: ContentConnectionProvider = 'facebook_login'
 ): Promise<UpsertConnectedAccountResult> {
   const now = new Date().toISOString()
 
@@ -187,7 +215,7 @@ export async function upsertConnectedInstagramAccount(
   const { error: tokenError } = await supabaseServer.from('social_account_tokens').upsert(
     {
       connected_account_id: connectedAccountId,
-      provider: CONTENT_TOKEN_PROVIDER,
+      provider,
       encrypted_access_token: encryptToken(resolved.pageAccessToken),
       token_type: resolved.tokenExpiresAt ? 'long_lived' : 'unknown',
       expires_at: resolved.tokenExpiresAt,
@@ -207,8 +235,8 @@ export async function upsertConnectedInstagramAccount(
   const { error: identifierError } = await supabaseServer.from('social_connected_account_identifiers').upsert(
     {
       connected_account_id: connectedAccountId,
-      provider: CONTENT_TOKEN_PROVIDER,
-      identifier_type: IDENTIFIER_TYPE,
+      provider,
+      identifier_type: identifierTypeFor(provider),
       external_id: resolved.instagramAccountId,
     },
     // Same convention as backfillWorkspace.ts: the identifier value never

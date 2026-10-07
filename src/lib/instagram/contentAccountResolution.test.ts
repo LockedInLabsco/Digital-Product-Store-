@@ -5,22 +5,23 @@ vi.mock('server-only', () => ({}))
 const mocks = vi.hoisted(() => ({
   accountRow: null as { id: string; external_account_id: string } | null,
   accountError: null as { message: string; code?: string } | null,
-  tokenRow: null as { encrypted_access_token: string } | null,
+  tokenRows: null as { provider: string; encrypted_access_token: string }[] | null,
   tokenError: null as { message: string } | null,
 }))
 
 vi.mock('@/src/lib/supabase/server', () => ({
   supabaseServer: {
     from: vi.fn((table: string) => {
-      const query: Record<string, ReturnType<typeof vi.fn>> = {}
+      const query: Record<string, unknown> = {}
       query.select = vi.fn(() => query)
       query.eq = vi.fn(() => query)
-      query.maybeSingle = vi.fn(async () => {
-        if (table === 'social_connected_accounts') {
-          return { data: mocks.accountRow, error: mocks.accountError }
-        }
-        return { data: mocks.tokenRow, error: mocks.tokenError }
-      })
+      query.in = vi.fn(() => query)
+      query.maybeSingle = vi.fn(async () => ({ data: mocks.accountRow, error: mocks.accountError }))
+      // The token lookup is now a plain array query (no .maybeSingle()) —
+      // awaited directly via this thenable, matching every other
+      // multi-row query mock in this codebase's test suite.
+      query.then = ((resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+        Promise.resolve({ data: mocks.tokenRows, error: mocks.tokenError }).then(resolve, reject)) as unknown
       return query
     }),
   },
@@ -39,13 +40,13 @@ describe('resolveContentAccountForWorkspace', () => {
   beforeEach(() => {
     mocks.accountRow = null
     mocks.accountError = null
-    mocks.tokenRow = null
+    mocks.tokenRows = null
     mocks.tokenError = null
   })
 
   it('CASE 1/2/7: resolves the workspace’s own active connected account + decrypted facebook_login content token', async () => {
     mocks.accountRow = { id: 'account-a', external_account_id: 'ig-business-a' }
-    mocks.tokenRow = { encrypted_access_token: 'enc-token-a' }
+    mocks.tokenRows = [{ provider: 'facebook_login', encrypted_access_token: 'enc-token-a' }]
 
     const result = await resolveContentAccountForWorkspace('workspace-a')
 
@@ -55,6 +56,27 @@ describe('resolveContentAccountForWorkspace', () => {
         connectedAccountId: 'account-a',
         instagramAccountId: 'ig-business-a',
         accessToken: 'decrypted:enc-token-a',
+        provider: 'facebook_login',
+      },
+    })
+  })
+
+  it('Phase G: prefers an instagram_login token over a facebook_login one when both exist on the same connected account', async () => {
+    mocks.accountRow = { id: 'account-a', external_account_id: 'ig-business-a' }
+    mocks.tokenRows = [
+      { provider: 'facebook_login', encrypted_access_token: 'enc-fb' },
+      { provider: 'instagram_login', encrypted_access_token: 'enc-ig' },
+    ]
+
+    const result = await resolveContentAccountForWorkspace('workspace-a')
+
+    expect(result).toEqual({
+      ok: true,
+      account: {
+        connectedAccountId: 'account-a',
+        instagramAccountId: 'ig-business-a',
+        accessToken: 'decrypted:enc-ig',
+        provider: 'instagram_login',
       },
     })
   })
@@ -95,9 +117,9 @@ describe('resolveContentAccountForWorkspace', () => {
     expect(contentAccountFailureStatus('lookup_failed')).toBe(500)
   })
 
-  it('CASE 6: an active connected account with no stored facebook_login token fails closed as token_missing, never tries another account’s token', async () => {
+  it('CASE 6: an active connected account with no stored content token fails closed as token_missing, never tries another account’s token', async () => {
     mocks.accountRow = { id: 'account-a', external_account_id: 'ig-business-a' }
-    mocks.tokenRow = null
+    mocks.tokenRows = []
 
     const result = await resolveContentAccountForWorkspace('workspace-a')
 
@@ -120,7 +142,7 @@ describe('resolveContentAccountForWorkspace', () => {
 
   it('CASE 6: a token that fails to decrypt fails closed as token_missing, never throws out of the resolver', async () => {
     mocks.accountRow = { id: 'account-a', external_account_id: 'ig-business-a' }
-    mocks.tokenRow = { encrypted_access_token: 'undecryptable' }
+    mocks.tokenRows = [{ provider: 'facebook_login', encrypted_access_token: 'undecryptable' }]
 
     const result = await resolveContentAccountForWorkspace('workspace-a')
 

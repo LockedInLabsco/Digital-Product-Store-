@@ -130,8 +130,18 @@ async function apiRequest<T>(
   }
 }
 
-function graphGet<T>(accessToken: string, path: string, params: Record<string, string>): Promise<InstagramResult<T>> {
-  return apiRequest<T>(CONTENT_API_BASE, accessToken, 'Instagram content access token is required', 'GET', path, params)
+/**
+ * `host` routes a content read to the Graph API that issued the token
+ * being used — graph.facebook.com for a facebook_login content token
+ * (the original flow), graph.instagram.com for an instagram_login one
+ * (Phase G/Direct Instagram Login — verified against Meta's current
+ * docs that instagram_business_basic/instagram_business_manage_comments
+ * cover media + insights reads on this host, not just messaging).
+ * Defaults to CONTENT_API_BASE so every pre-Phase-G call site (which
+ * never passed a host) is unchanged.
+ */
+function graphGet<T>(accessToken: string, path: string, params: Record<string, string>, host: string = CONTENT_API_BASE): Promise<InstagramResult<T>> {
+  return apiRequest<T>(host, accessToken, 'Instagram content access token is required', 'GET', path, params)
 }
 
 function graphPost<T>(accessToken: string, path: string, body: unknown): Promise<InstagramResult<T>> {
@@ -178,6 +188,15 @@ export interface InstagramAccountCredentials {
   instagramAccountId: string
   /** The decrypted content/insights token for that same account. */
   accessToken: string
+  /** Which OAuth product issued accessToken — determines which Graph
+   * API host to call (see contentAccountResolution.ts's
+   * ResolvedContentAccount.provider). Defaults to 'facebook_login' so
+   * every pre-Phase-G caller is unchanged. */
+  provider?: 'facebook_login' | 'instagram_login'
+}
+
+function hostForProvider(provider: InstagramAccountCredentials['provider']): string {
+  return provider === 'instagram_login' ? MESSAGING_API_BASE : CONTENT_API_BASE
 }
 
 /**
@@ -192,11 +211,12 @@ export interface InstagramAccountCredentials {
  * resolveContentAccountForWorkspace. This function has no concept of
  * "the" Instagram account and never falls back to one.
  */
-export async function fetchAllAccountMedia({ instagramAccountId, accessToken }: InstagramAccountCredentials): Promise<InstagramResult<InstagramMedia[]>> {
+export async function fetchAllAccountMedia({ instagramAccountId, accessToken, provider }: InstagramAccountCredentials): Promise<InstagramResult<InstagramMedia[]>> {
   const fields =
     'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,views,media_url,thumbnail_url'
   const all: InstagramMedia[] = []
   let after: string | undefined
+  const host = hostForProvider(provider)
 
   for (let page = 0; page < 20; page++) {
     const params: Record<string, string> = { fields, limit: '50' }
@@ -205,7 +225,8 @@ export async function fetchAllAccountMedia({ instagramAccountId, accessToken }: 
     const result = await graphGet<{ data: InstagramMedia[]; paging?: { cursors?: { after?: string }; next?: string } }>(
       accessToken,
       `${instagramAccountId}/media`,
-      params
+      params,
+      host
     )
     if (!result.ok) return result
 
@@ -235,10 +256,17 @@ export interface InstagramMediaInsights {
  * so the caller must pass the token it already resolved for that media's
  * sync run.
  */
-export async function fetchMediaInsights({ mediaId, accessToken }: { mediaId: string; accessToken: string }): Promise<InstagramMediaInsights> {
-  const result = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(accessToken, `${mediaId}/insights`, {
-    metric: 'reach,saved,shares',
-  })
+export async function fetchMediaInsights({
+  mediaId,
+  accessToken,
+  provider,
+}: { mediaId: string; accessToken: string } & Pick<InstagramAccountCredentials, 'provider'>): Promise<InstagramMediaInsights> {
+  const result = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
+    accessToken,
+    `${mediaId}/insights`,
+    { metric: 'reach,saved,shares' },
+    hostForProvider(provider)
+  )
 
   const empty: InstagramMediaInsights = { reach: null, saved: null, shares: null }
   if (!result.ok) return empty

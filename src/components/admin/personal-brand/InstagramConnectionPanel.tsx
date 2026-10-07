@@ -9,7 +9,11 @@ interface ConnectionStatus {
   username: string | null
   displayName: string | null
   connectedAt: string | null
+  connectionMethod: 'instagram_login' | 'facebook_login' | null
 }
+
+const DIRECT_CONNECT_PATH = '/api/admin/social/instagram/connect-direct/start'
+const FACEBOOK_CONNECT_PATH = '/api/admin/social/instagram/connect/start'
 
 const SUCCESS_MESSAGES: Record<string, string> = {
   connected: 'Instagram account connected.',
@@ -140,33 +144,44 @@ export default function InstagramConnectionPanel() {
     }
   }
 
+  // Not yet connected — default to direct Instagram Login (Phase G):
+  // the user authorizes with their own Instagram credentials, no
+  // Facebook Page involved. See DIRECT_CONNECT_PATH's route for the full
+  // flow; the Facebook-based flow (FACEBOOK_CONNECT_PATH) still exists
+  // unchanged underneath, just no longer the default for a fresh
+  // connection.
   const handleConnect = () => {
-    window.location.href = '/api/admin/social/instagram/connect/start'
+    window.location.href = DIRECT_CONNECT_PATH
   }
 
-  // Re-runs the exact same Meta authorization flow as Connect — Meta's
-  // own consent screen re-asks for permissions (auth_type=rerequest,
-  // always on, see facebookOAuth.ts) and re-confirms the SAME account.
-  // No confirmation needed: authorizing the same account again only
+  // Re-runs the SAME flow this connection originally used — re-running
+  // an already-facebook_login-connected account through Instagram Login
+  // instead (or vice versa) risks Meta resolving a different account id
+  // for what is actually the same Instagram account (see
+  // instagramConnectAccount.ts's own doc comment on this), which could
+  // create a confusing extra connection instead of a clean refresh.
+  // Meta's own consent screen re-asks for permissions (auth_type=
+  // rerequest on the Facebook flow) and re-confirms the SAME account —
+  // no confirmation needed, since re-authorizing the same account only
   // ever refreshes its token/permissions in place
-  // (upsertConnectedInstagramAccount's reauthorize path) — it cannot by
-  // itself replace anything.
+  // (upsertConnectedInstagramAccount's reauthorize path), never replaces
+  // anything.
   const handleRefreshPermissions = () => {
-    window.location.href = '/api/admin/social/instagram/connect/start'
+    window.location.href = status?.connectionMethod === 'facebook_login' ? FACEBOOK_CONNECT_PATH : DIRECT_CONNECT_PATH
   }
 
-  // Also the same flow, but framed for "I want to connect a different
-  // account" — confirmed up front since authorizing a different account
-  // this time replaces the current one (the exact account being
-  // replaced is confirmed again, by name, in the success banner once
-  // Meta reports back which account was actually chosen).
+  // Also the same flow as Refresh, but framed for "I want to connect a
+  // different account" — confirmed up front since authorizing a
+  // different account this time replaces the current one (the exact
+  // account being replaced is confirmed again, by name, in the success
+  // banner once Meta reports back which account was actually chosen).
   const handleReconnect = () => {
     if (
       window.confirm(
         'Reconnecting will replace this workspace’s Instagram connection if you authorize a different account. Continue?'
       )
     ) {
-      window.location.href = '/api/admin/social/instagram/connect/start'
+      window.location.href = status?.connectionMethod === 'facebook_login' ? FACEBOOK_CONNECT_PATH : DIRECT_CONNECT_PATH
     }
   }
 

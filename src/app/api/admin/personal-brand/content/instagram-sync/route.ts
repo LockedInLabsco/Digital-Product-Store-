@@ -57,7 +57,7 @@ export async function POST() {
     if (!accountResult.ok) {
       return NextResponse.json({ error: accountResult.error }, { status: contentAccountFailureStatus(accountResult.reason) })
     }
-    const { instagramAccountId, accessToken } = accountResult.account
+    const { instagramAccountId, accessToken, provider } = accountResult.account
 
     // All of THIS workspace's Instagram-platform items that already have
     // a platform_url, in any status — used only to detect which Instagram
@@ -76,7 +76,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to fetch content items' }, { status: 500 })
     }
 
-    const mediaResult = await fetchAllAccountMedia({ instagramAccountId, accessToken })
+    const mediaResult = await fetchAllAccountMedia({ instagramAccountId, accessToken, provider })
     if (!mediaResult.ok) {
       return NextResponse.json({ error: mediaResult.error }, { status: 502 })
     }
@@ -149,7 +149,7 @@ export async function POST() {
         continue
       }
 
-      const insights = await fetchMediaInsights({ mediaId: media.id, accessToken })
+      const insights = await fetchMediaInsights({ mediaId: media.id, accessToken, provider })
 
       const validation = validateContentMetricInput({
         views: media.views,

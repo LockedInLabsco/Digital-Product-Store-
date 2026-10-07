@@ -8,6 +8,13 @@ export interface InstagramConnectionStatus {
   username: string | null
   displayName: string | null
   connectedAt: string | null
+  /** Which OAuth product this connection's content token(s) came from —
+   * lets the UI send Reconnect/Refresh back through the SAME flow that
+   * originally connected the account (see InstagramConnectionPanel.tsx).
+   * 'instagram_login' takes priority if both exist (same preference
+   * contentAccountResolution.ts uses for actually reading content). Null
+   * when not connected. */
+  connectionMethod: 'instagram_login' | 'facebook_login' | null
 }
 
 // GET — safe-fields-only connection status for the caller's ACTIVE
@@ -31,7 +38,7 @@ export async function GET() {
 
     const { data: account, error } = await supabaseServer
       .from('social_connected_accounts')
-      .select('username, display_name, connected_at')
+      .select('id, username, display_name, connected_at')
       .eq('workspace_id', active.context.workspaceId)
       .eq('platform', 'instagram')
       .eq('status', 'active')
@@ -42,9 +49,21 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to look up Instagram connection status' }, { status: 500 })
     }
 
+    let connectionMethod: InstagramConnectionStatus['connectionMethod'] = null
+    if (account) {
+      const { data: tokenRows } = await supabaseServer
+        .from('social_account_tokens')
+        .select('provider')
+        .eq('connected_account_id', account.id)
+        .in('provider', ['instagram_login', 'facebook_login'])
+
+      const providers = new Set((tokenRows || []).map((r) => r.provider))
+      connectionMethod = providers.has('instagram_login') ? 'instagram_login' : providers.has('facebook_login') ? 'facebook_login' : null
+    }
+
     const status: InstagramConnectionStatus = account
-      ? { connected: true, username: account.username, displayName: account.display_name, connectedAt: account.connected_at }
-      : { connected: false, username: null, displayName: null, connectedAt: null }
+      ? { connected: true, username: account.username, displayName: account.display_name, connectedAt: account.connected_at, connectionMethod }
+      : { connected: false, username: null, displayName: null, connectedAt: null, connectionMethod: null }
 
     return NextResponse.json({ status })
   } catch (error) {

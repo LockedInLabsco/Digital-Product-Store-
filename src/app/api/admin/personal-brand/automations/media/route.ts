@@ -43,9 +43,9 @@ export async function GET() {
     if (!accountResult.ok) {
       return NextResponse.json({ error: accountResult.error }, { status: contentAccountFailureStatus(accountResult.reason) })
     }
-    const { instagramAccountId, accessToken } = accountResult.account
+    const { instagramAccountId, accessToken, provider } = accountResult.account
 
-    const result = await fetchAllAccountMedia({ instagramAccountId, accessToken })
+    const result = await fetchAllAccountMedia({ instagramAccountId, accessToken, provider })
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 502 })
     }
