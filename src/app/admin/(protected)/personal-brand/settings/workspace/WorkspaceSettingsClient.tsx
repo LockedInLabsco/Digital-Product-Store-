@@ -356,7 +356,7 @@ export default function WorkspaceSettingsClient() {
                   onClick={() => router.push('/admin/personal-brand')}
                   className="text-sm text-admin-muted underline hover:text-admin-text"
                 >
-                  Back to Personal Brand
+                  Back to Social Media
                 </button>
               </section>
             </>

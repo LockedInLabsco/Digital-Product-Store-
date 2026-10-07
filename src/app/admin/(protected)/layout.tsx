@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getCurrentAdmin } from '@/src/lib/admin/auth'
 import { getSupabaseUser, needsMfaChallenge } from '@/src/lib/supabase/auth'
+import { resolveActiveAdminMode, readAdminModeCookie } from '@/src/lib/admin/adminMode'
 import AdminShell from '@/src/components/admin/AdminShell'
 import AccessDenied from '@/src/components/admin/AccessDenied'
 
@@ -41,5 +42,11 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
     redirect('/admin/mfa-challenge')
   }
 
-  return <AdminShell admin={admin}>{children}</AdminShell>
+  const mode = resolveActiveAdminMode(admin, readAdminModeCookie())
+
+  return (
+    <AdminShell admin={admin} mode={mode}>
+      {children}
+    </AdminShell>
+  )
 }

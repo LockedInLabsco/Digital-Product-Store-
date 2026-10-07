@@ -88,12 +88,12 @@ export async function consumeInstagramOAuthState(stateId: string, flow: OAuthFlo
     return {
       ok: false,
       reason: 'missing_or_already_used',
-      error: 'This Instagram connection link is invalid or has already been used. Start over from Personal Brand.',
+      error: 'This Instagram connection link is invalid or has already been used. Start over from Social Media.',
     }
   }
 
   if (new Date(data.expires_at).getTime() < Date.now()) {
-    return { ok: false, reason: 'expired', error: 'This Instagram connection link has expired. Start over from Personal Brand.' }
+    return { ok: false, reason: 'expired', error: 'This Instagram connection link has expired. Start over from Social Media.' }
   }
 
   return { ok: true, payload: { adminUserId: data.admin_user_id, workspaceId: data.workspace_id } }

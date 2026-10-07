@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     const scope = await getSocialWorkspaceScope()
     if (!scope || scope.adminUserId !== consumed.payload.adminUserId) {
-      return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Personal Brand.")
+      return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Social Media.")
     }
 
     if (!canWriteWorkspace(scope, consumed.payload.workspaceId)) {

@@ -51,7 +51,7 @@ export default function DashboardClient() {
           <PersonalBrandTabs />
 
           <div className="mb-8">
-            <h2 className="mb-2 text-3xl font-bold">Personal Brand Dashboard</h2>
+            <h2 className="mb-2 text-3xl font-bold">Social Media Dashboard</h2>
             <p className="text-admin-muted">What&apos;s working, what changed, what you&apos;re testing, and what to look at next.</p>
           </div>
 

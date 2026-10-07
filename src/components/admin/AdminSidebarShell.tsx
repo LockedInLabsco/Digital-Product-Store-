@@ -26,6 +26,9 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import SignOutButton from './SignOutButton'
+import AdminModeSwitcher, { type AdminModeOption } from './AdminModeSwitcher'
+import { ADMIN_MODE_NAV_ITEMS } from '@/src/lib/admin/adminNav'
+import type { AdminRole } from '@/src/types/admin'
 
 export type AdminNavIconKey =
   | 'dashboard'
@@ -75,9 +78,20 @@ export interface AdminNavItem {
 interface AdminSidebarShellProps {
   navItems: AdminNavItem[]
   email: string
-  roleLabels: string[]
+  currentMode: AdminRole
+  availableModes: AdminModeOption[]
   children: React.ReactNode
 }
+
+/** Each mode's own first nav item — where the mode switcher navigates to
+ * right after switching, so the admin always lands somewhere that
+ * belongs to the mode they just picked rather than staying on a page
+ * the new mode's nav doesn't even list. Every role in this app has
+ * permission for its own mode's first item (see adminNav.ts), so no
+ * extra per-admin filtering is needed here. */
+const HOME_HREF_BY_MODE: Record<AdminRole, string> = Object.fromEntries(
+  Object.entries(ADMIN_MODE_NAV_ITEMS).map(([role, items]) => [role, items[0].href])
+) as Record<AdminRole, string>
 
 /**
  * The admin app shell: a persistent left sidebar on desktop, a slide-
@@ -88,9 +102,13 @@ interface AdminSidebarShellProps {
  * filtering of `navItems` happens server-side in AdminShell before this
  * ever renders, since hasPermission() lives in a server-only module.
  */
-export default function AdminSidebarShell({ navItems, email, roleLabels, children }: AdminSidebarShellProps) {
+export default function AdminSidebarShell({ navItems, email, currentMode, availableModes, children }: AdminSidebarShellProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  // Always present — currentMode is one of admin.roles, and
+  // availableModes is built from exactly those same roles (see
+  // AdminShell.tsx).
+  const currentModeOption = availableModes.find((m) => m.role === currentMode)!
 
   // Close the mobile drawer automatically on navigation.
   useEffect(() => {
@@ -151,6 +169,10 @@ export default function AdminSidebarShell({ navItems, email, roleLabels, childre
           </button>
         </div>
 
+        <div className="border-b border-admin-border/60 px-3 pb-3">
+          <AdminModeSwitcher currentMode={currentModeOption} availableModes={availableModes} homeHrefByMode={HOME_HREF_BY_MODE} />
+        </div>
+
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           {navItems.map((item) => {
             const Icon = ICONS[item.icon]
@@ -174,14 +196,7 @@ export default function AdminSidebarShell({ navItems, email, roleLabels, childre
           <Link href="/admin/account" className="block truncate text-sm text-admin-muted hover:text-admin-text" title={email}>
             {email}
           </Link>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1">
-              {roleLabels.map((label) => (
-                <span key={label} className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-admin-muted">
-                  {label}
-                </span>
-              ))}
-            </div>
+          <div className="mt-2 flex items-center justify-end">
             <SignOutButton />
           </div>
         </div>

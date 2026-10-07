@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
     // that other admin's workspace.
     const scope = await getSocialWorkspaceScope()
     if (!scope || scope.adminUserId !== consumed.payload.adminUserId) {
-      return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Personal Brand.")
+      return redirectWithError(request, 'session_mismatch', "This Instagram connection request doesn't match your current session. Start over from Social Media.")
     }
 
     // Re-checked independently of the state payload itself — role/
