@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isInstagramLoginConnectConfigured()) {
+    // Fail clearly server-side — never silently fall back to the
+    // Facebook App's own credentials (INSTAGRAM_APP_ID/INSTAGRAM_APP_SECRET),
+    // which is exactly the misconfiguration that previously produced
+    // Meta's "Invalid platform app" error. See instagramLoginOAuth.ts's
+    // header for the full story.
+    console.error('[Instagram Login Connect] INSTAGRAM_LOGIN_APP_ID/INSTAGRAM_LOGIN_APP_SECRET is not configured')
     return redirectWithError(request, 'Instagram connection is not configured for this site yet.')
   }
 

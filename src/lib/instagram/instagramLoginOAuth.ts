@@ -17,13 +17,26 @@
  * as client.ts's own file header for why content and messaging must
  * never be merged just because the names sound similar.
  *
- * Same Meta App (INSTAGRAM_APP_ID/INSTAGRAM_APP_SECRET) as the existing
- * Facebook Login flow and the existing messaging-token refresh in
- * tokenStore.ts — one Meta app can carry both the "Instagram Business
- * Login" and "Facebook Login for Business" products at once, so no new
- * app or env vars are required, only a new redirect URI registered on
- * the SAME app (see the Meta Dashboard setup section of the Phase G
- * report).
+ * CREDENTIALS — CORRECTED after a production failure
+ * ("Invalid Request: Request parameters are invalid: Invalid platform
+ * app"): this file previously reused INSTAGRAM_APP_ID/INSTAGRAM_APP_SECRET
+ * (the Facebook/Meta App's own credentials, same ones facebookOAuth.ts
+ * uses) on the assumption that one Meta App's credentials cover every
+ * product attached to it. That assumption is WRONG for this product:
+ * Meta's App Dashboard generates a SEPARATE "Instagram app ID" and
+ * "Instagram app secret" specifically under Instagram → API setup with
+ * Instagram Login → Business login settings — a different client_id
+ * than the one shown at the top of the Dashboard for the parent Meta
+ * App, confirmed by Meta's own current documentation and by the
+ * "Invalid platform app" error being Meta's own documented symptom of
+ * sending the wrong one. This file now reads INSTAGRAM_LOGIN_APP_ID /
+ * INSTAGRAM_LOGIN_APP_SECRET — deliberately separate env vars, never
+ * falling back to INSTAGRAM_APP_ID/INSTAGRAM_APP_SECRET, so a missing
+ * config fails loudly instead of silently reproducing this exact bug.
+ * facebookOAuth.ts and tokenStore.ts are untouched — see the Phase G
+ * credential-fix report for why this file's bug does not necessarily
+ * mean tokenStore.ts's existing messaging token has the same problem
+ * (worth checking separately, not assumed either way here).
  *
  * CRITICAL identifier pitfall (verified against Meta's own docs and
  * confirmed by multiple independent developer write-ups — do not
@@ -62,18 +75,28 @@ const REQUEST_TIMEOUT_MS = 15000
 export const INSTAGRAM_LOGIN_OAUTH_SCOPES = ['instagram_business_basic', 'instagram_business_manage_messages', 'instagram_business_manage_comments']
 
 export function isInstagramLoginConnectConfigured(): boolean {
-  return Boolean(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET)
+  return Boolean(process.env.INSTAGRAM_LOGIN_APP_ID && process.env.INSTAGRAM_LOGIN_APP_SECRET)
 }
 
+/**
+ * The Instagram app ID from Meta's App Dashboard → Instagram → API
+ * setup with Instagram Login → Business login settings — NOT
+ * INSTAGRAM_APP_ID (that's the parent Meta App's own id, used by
+ * facebookOAuth.ts; sending it here is exactly what produced
+ * "Invalid platform app"). No fallback to INSTAGRAM_APP_ID on purpose —
+ * a missing INSTAGRAM_LOGIN_APP_ID must fail loudly here, never
+ * silently reproduce that bug.
+ */
 function requireAppId(): string {
-  const appId = process.env.INSTAGRAM_APP_ID
-  if (!appId) throw new Error('INSTAGRAM_APP_ID is not configured')
+  const appId = process.env.INSTAGRAM_LOGIN_APP_ID
+  if (!appId) throw new Error('INSTAGRAM_LOGIN_APP_ID is not configured (this is the Instagram app ID from Meta App Dashboard → Instagram → API setup with Instagram Login, not INSTAGRAM_APP_ID)')
   return appId
 }
 
+/** The Instagram app secret from the SAME Dashboard section as requireAppId() above — see its doc comment. No fallback to INSTAGRAM_APP_SECRET. */
 function requireAppSecret(): string {
-  const secret = process.env.INSTAGRAM_APP_SECRET
-  if (!secret) throw new Error('INSTAGRAM_APP_SECRET is not configured')
+  const secret = process.env.INSTAGRAM_LOGIN_APP_SECRET
+  if (!secret) throw new Error('INSTAGRAM_LOGIN_APP_SECRET is not configured (this is the Instagram app secret from Meta App Dashboard → Instagram → API setup with Instagram Login, not INSTAGRAM_APP_SECRET)')
   return secret
 }
 
