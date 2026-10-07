@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
-import { ensureWritableSocialWorkspace } from '@/src/lib/social/ensureSocialWorkspace'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse } from '@/src/lib/admin/activeSocialWorkspace'
 
 export interface InstagramConnectionStatus {
   connected: boolean
@@ -11,14 +10,13 @@ export interface InstagramConnectionStatus {
   connectedAt: string | null
 }
 
-// GET — safe-fields-only connection status for the caller's own
+// GET — safe-fields-only connection status for the caller's ACTIVE
 // workspace (never the external_account_id or any token) — backs the
 // "Instagram: connected as @username / Not connected" panel on the
-// Content Library page. Same workspace resolution as every other
-// personal-brand route in this subsystem (instagram-sync, automations
-// POST/media) — see the implementation report for why this route
-// doesn't attempt to support an admin belonging to more than one
-// writable workspace yet.
+// Content Library page. Resolution switches with the active workspace,
+// same as every other personal-brand route — no more auto-provisioning
+// here; PersonalBrandLayout's gate is what ensures an active workspace
+// already exists before this route is ever reached from the UI.
 export async function GET() {
   try {
     const auth = await requirePermission('personal_brand:read')
@@ -26,27 +24,15 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    // Auto-provisions exactly one new Social Workspace the first time a
-    // zero-membership admin (new or pre-existing social_media account)
-    // hits this route — see ensureWritableSocialWorkspace's own doc
-    // comment for why this is safe (only acts when membership is zero,
-    // never when it's ambiguous) and why this route in particular is the
-    // chosen provisioning trigger (it's the first call the Content
-    // Library page makes on load).
-    const workspaceResult = await ensureWritableSocialWorkspace(scope, auth.admin.user.email)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
 
     const { data: account, error } = await supabaseServer
       .from('social_connected_accounts')
       .select('username, display_name, connected_at')
-      .eq('workspace_id', workspaceResult.workspaceId)
+      .eq('workspace_id', active.context.workspaceId)
       .eq('platform', 'instagram')
       .eq('status', 'active')
       .maybeSingle()

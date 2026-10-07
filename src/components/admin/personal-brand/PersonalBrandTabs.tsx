@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSidebarCoversPersonalBrand } from '@/src/components/admin/PersonalBrandNavContext'
+import WorkspaceSwitcher from '@/src/components/admin/social/WorkspaceSwitcher'
 
 const TABS = [
   { href: '/admin/personal-brand', label: 'Dashboard' },
@@ -12,6 +13,7 @@ const TABS = [
   { href: '/admin/personal-brand/experiments', label: 'Experiments' },
   { href: '/admin/personal-brand/planner', label: 'AI Planner' },
   { href: '/admin/personal-brand/automations', label: 'DM Automations' },
+  { href: '/admin/personal-brand/settings/workspace', label: 'Workspace Settings' },
 ]
 
 /**
@@ -28,27 +30,33 @@ export default function PersonalBrandTabs() {
 
   // The sidebar already lists every one of these sections directly for a
   // social-media-only admin — showing the same links again as top tabs
-  // would just be the same navigation twice.
-  if (sidebarCoversPersonalBrand) return null
+  // would just be the same navigation twice. The workspace switcher
+  // itself still renders either way — it isn't a navigation link, it's
+  // the "which workspace am I in" indicator, which belongs on every
+  // Personal Brand page regardless of nav mode.
+  if (sidebarCoversPersonalBrand) return <WorkspaceSwitcher />
 
   return (
-    <div className="mb-8 flex gap-1 overflow-x-auto border-b border-admin-border pb-3 text-sm">
-      {TABS.map((tab) => {
-        const isActive =
-          tab.href === '/admin/personal-brand' ? pathname === tab.href : pathname?.startsWith(tab.href)
+    <div>
+      <WorkspaceSwitcher />
+      <div className="mb-8 flex gap-1 overflow-x-auto border-b border-admin-border pb-3 text-sm">
+        {TABS.map((tab) => {
+          const isActive =
+            tab.href === '/admin/personal-brand' ? pathname === tab.href : pathname?.startsWith(tab.href)
 
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`whitespace-nowrap rounded px-3 py-1.5 font-medium ${
-              isActive ? 'bg-admin-surface2 text-admin-text' : 'text-admin-muted hover:bg-admin-surface2 hover:text-admin-text'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        )
-      })}
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`whitespace-nowrap rounded px-3 py-1.5 font-medium ${
+                isActive ? 'bg-admin-surface2 text-admin-text' : 'text-admin-muted hover:bg-admin-surface2 hover:text-admin-text'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }

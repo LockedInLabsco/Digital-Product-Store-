@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { validateContentItemInput, validateContentMetricInput } from '@/src/lib/personal-brand/validate'
 import { fetchAllAccountMedia, fetchMediaInsights, mapContentType } from '@/src/lib/instagram/client'
 import { resolveContentAccountForWorkspace, contentAccountFailureStatus } from '@/src/lib/instagram/contentAccountResolution'
@@ -39,15 +39,14 @@ export async function POST() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
-    const workspaceId = workspaceResult.workspaceId
+    const workspaceId = active.context.workspaceId
 
     // Resolves THIS workspace's own connected Instagram account + content
     // token — never a global/env-var account. Fails closed (400/409/500,

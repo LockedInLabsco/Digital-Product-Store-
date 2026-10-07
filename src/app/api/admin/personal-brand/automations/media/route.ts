@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse } from '@/src/lib/admin/activeSocialWorkspace'
 import { fetchAllAccountMedia, mapContentType } from '@/src/lib/instagram/client'
 import { resolveContentAccountForWorkspace, contentAccountFailureStatus } from '@/src/lib/instagram/contentAccountResolution'
 
@@ -34,16 +34,12 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
 
-    const accountResult = await resolveContentAccountForWorkspace(workspaceResult.workspaceId)
+    const accountResult = await resolveContentAccountForWorkspace(active.context.workspaceId)
     if (!accountResult.ok) {
       return NextResponse.json({ error: accountResult.error }, { status: contentAccountFailureStatus(accountResult.reason) })
     }

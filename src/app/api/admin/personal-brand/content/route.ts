@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { validateContentItemInput } from '@/src/lib/personal-brand/validate'
 
 const MAX_ITEMS = 2000
 
-// GET all content items the caller's Social Workspace(s) own, each
+// GET all content items in the caller's ACTIVE Social Workspace, each
 // annotated with its latest metrics snapshot (if any) so the library
-// list can show current performance without a per-row round trip. See
-// the Social Media Multi-Workspace Audit — this used to be a plain
-// `select('*')` across every workspace; now every row is explicitly
-// intersected with social_workspace_members-derived scope, never trusted
-// from the client.
+// list can show current performance without a per-row round trip. Scoped
+// to exactly one workspace — the active one — never every workspace the
+// caller happens to belong to; see the Social Media Multi-Workspace
+// Audit's "switching workspace must switch the whole Social Media area,
+// never mix two workspaces' data" requirement.
 export async function GET() {
   try {
     const auth = await requirePermission('personal_brand:read')
@@ -20,18 +20,16 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
-    if (scope.memberWorkspaceIds.length === 0) {
-      return NextResponse.json({ content: [] })
-    }
+    const workspaceId = active.context.workspaceId
 
     const { data: items, error } = await supabaseServer
       .from('pb_content_items')
       .select('*')
-      .in('workspace_id', scope.memberWorkspaceIds)
+      .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
       .limit(MAX_ITEMS)
 
@@ -75,11 +73,9 @@ export async function GET() {
   }
 }
 
-// POST create a new content item, in the caller's one writable Social
-// Workspace (see resolveDefaultWritableWorkspaceId — there is no
-// workspace selector in the UI yet, so this is only unambiguous while an
-// admin belongs to exactly one writable workspace, which matches today's
-// real state).
+// POST create a new content item in the caller's active Social Workspace
+// — requires owner/manager there (an analyst viewing that workspace
+// cannot write to it).
 export async function POST(request: NextRequest) {
   try {
     const auth = await requirePermission('personal_brand:write')
@@ -87,15 +83,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
-    const workspaceId = workspaceResult.workspaceId
+    const workspaceId = active.context.workspaceId
 
     const body = await request.json().catch(() => ({}))
     const result = validateContentItemInput(body)

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { validateIdeaInput } from '@/src/lib/personal-brand/validate'
 
 export async function GET() {
@@ -11,18 +11,15 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-    if (scope.memberWorkspaceIds.length === 0) {
-      return NextResponse.json({ ideas: [] })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
 
     const { data, error } = await supabaseServer
       .from('pb_ideas')
       .select('*')
-      .in('workspace_id', scope.memberWorkspaceIds)
+      .eq('workspace_id', active.context.workspaceId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -44,13 +41,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -61,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabaseServer
       .from('pb_ideas')
-      .insert({ ...result.value, workspace_id: workspaceResult.workspaceId })
+      .insert({ ...result.value, workspace_id: active.context.workspaceId })
       .select()
       .single()
 

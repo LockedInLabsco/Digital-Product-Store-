@@ -61,6 +61,19 @@ export interface SocialConnectedAccountIdentifier {
   created_at: string
 }
 
+/** A pending invite into one workspace's membership — see
+ * supabase/migrations/0028_social_workspace_invites.sql. */
+export interface SocialWorkspaceInvite {
+  id: string
+  workspace_id: string
+  email: string
+  workspace_role: SocialWorkspaceRole
+  status: 'pending' | 'accepted' | 'revoked'
+  invited_by: string | null
+  created_at: string
+  expires_at: string
+}
+
 /** Safe fields only — never the encrypted token itself. Mirrors
  * MessagingTokenStatus in src/lib/instagram/tokenStore.ts. */
 export interface SocialAccountTokenStatus {

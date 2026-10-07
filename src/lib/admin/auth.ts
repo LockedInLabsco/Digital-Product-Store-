@@ -112,12 +112,63 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
 
     if (created) {
       await supabaseServer.from('admin_invites').update({ status: 'accepted' }).eq('id', invite.id)
+      await acceptPendingSocialWorkspaceInvites(created.id, email)
       return toCurrentAdmin(created as AdminUserRow)
     }
   }
 
   return null
 })
+
+/**
+ * Converts every pending Social Workspace invite for this email (see
+ * supabase/migrations/0028_social_workspace_invites.sql and
+ * src/app/api/admin/social/workspaces/[id]/members/route.ts, the only
+ * place rows here are created) into a real social_workspace_members row,
+ * the moment this admin_users identity first exists — whether that's
+ * via a brand-new site-wide admin_invites acceptance (this function's
+ * only caller today) or, in the future, any other path that creates an
+ * admin_users row for an email with workspace invites waiting on it.
+ *
+ * Deliberately NOT inside the same transaction as the admin_users
+ * insert above — Supabase's JS client has no cross-table transaction
+ * here, same constraint every other insert in this file already lives
+ * with. Failure here is non-fatal to login: the admin_users row is the
+ * part that actually matters for auth; a missed workspace membership
+ * leaves the admin simply without that workspace until they're
+ * re-invited or added directly, never signed out or blocked.
+ */
+async function acceptPendingSocialWorkspaceInvites(adminUserId: string, email: string): Promise<void> {
+  const { data: invites, error: invitesError } = await supabaseServer
+    .from('social_workspace_invites')
+    .select('id, workspace_id, workspace_role')
+    .eq('status', 'pending')
+    .eq('email', email)
+    .gt('expires_at', new Date().toISOString())
+
+  if (invitesError) {
+    console.error('[getCurrentAdmin] Failed to look up pending workspace invites', invitesError.message)
+    return
+  }
+  if (!invites || invites.length === 0) return
+
+  for (const invite of invites) {
+    const { error: memberError } = await supabaseServer
+      .from('social_workspace_members')
+      .insert({ workspace_id: invite.workspace_id, admin_user_id: adminUserId, workspace_role: invite.workspace_role })
+
+    // 23505 = already a member of that workspace somehow (e.g. a second
+    // invite accepted twice) — the invite is still marked accepted below
+    // either way, since the end state (a real membership row) is already
+    // true.
+    if (memberError && memberError.code !== '23505') {
+      console.error('[getCurrentAdmin] Failed to create workspace membership from invite', memberError.message)
+      continue
+    }
+
+    await supabaseServer.from('social_workspace_invites').update({ status: 'accepted' }).eq('id', invite.id)
+  }
+}
 
 export function hasPermission(admin: CurrentAdmin | null, permission: AdminPermission): boolean {
   return admin?.permissions.includes(permission) ?? false

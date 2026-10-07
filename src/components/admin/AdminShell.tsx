@@ -36,6 +36,7 @@ const PERSONAL_BRAND_NAV_ITEMS: NavItem[] = [
   { href: '/admin/personal-brand/experiments', label: 'Experiments', permission: 'personal_brand:read', icon: 'experiments' },
   { href: '/admin/personal-brand/planner', label: 'AI Planner', permission: 'personal_brand:read', icon: 'planner' },
   { href: '/admin/personal-brand/automations', label: 'DM Automations', permission: 'personal_brand:read', icon: 'automations' },
+  { href: '/admin/personal-brand/settings/workspace', label: 'Workspace Settings', permission: 'personal_brand:read', icon: 'team' },
   { href: '/admin/account', label: 'Account', permission: 'dashboard:read', icon: 'account' },
 ]
 

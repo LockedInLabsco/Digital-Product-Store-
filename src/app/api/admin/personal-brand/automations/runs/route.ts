@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, canAccessLegacyUnmigratedAutomationData } from '@/src/lib/admin/socialWorkspaceScope'
+import { canAccessLegacyUnmigratedAutomationData } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse } from '@/src/lib/admin/activeSocialWorkspace'
 import { resolveConnectedAccountIdsForWorkspaces } from '@/src/lib/social/automationAccountScope'
 
 const MAX_RUNS = 200
 
-// GET the most recent automation runs belonging to the caller's
-// connected account(s) — what actually fired, matched to which rule,
-// whether it's still mid-sequence, and any send error. This is the only
-// visibility into the webhook receiver and follow-up cron, neither of
-// which an admin ever watches directly.
+// GET the most recent automation runs belonging to the caller's active
+// Social Workspace's connected account — what actually fired, matched to
+// which rule, whether it's still mid-sequence, and any send error. This
+// is the only visibility into the webhook receiver and follow-up cron,
+// neither of which an admin ever watches directly.
 export async function GET() {
   try {
     const auth = await requirePermission('personal_brand:read')
@@ -18,12 +19,13 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
+    const { scope, workspaceId } = active.context
 
-    const accountIds = await resolveConnectedAccountIdsForWorkspaces(scope.memberWorkspaceIds)
+    const accountIds = await resolveConnectedAccountIdsForWorkspaces([workspaceId])
     // TRANSITIONAL — see canAccessLegacyUnmigratedAutomationData's own
     // doc comment. Drop this OR clause once the one-time backfill has run.
     const includeLegacyUnmigrated = canAccessLegacyUnmigratedAutomationData(scope)

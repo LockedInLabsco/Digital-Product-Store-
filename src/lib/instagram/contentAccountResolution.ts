@@ -4,7 +4,7 @@
  * reading INSTAGRAM_ACCESS_TOKEN/INSTAGRAM_BUSINESS_ACCOUNT_ID globally
  * (see src/lib/instagram/client.ts's updated file header). Callers must
  * resolve and authorize `workspaceId` themselves first (e.g. via
- * getSocialWorkspaceScope()/resolveDefaultWritableWorkspaceId()) — this
+ * getActiveWorkspaceContext() in src/lib/admin/activeSocialWorkspace.ts) — this
  * function trusts the id it's given, exactly like
  * resolveConnectedAccountIdsForWorkspaces in
  * src/lib/social/automationAccountScope.ts.

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
-import { ensureWritableSocialWorkspace } from '@/src/lib/social/ensureSocialWorkspace'
+import { getActiveWorkspaceContext, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { createInstagramOAuthState } from '@/src/lib/social/instagramOAuthState'
 import { buildFacebookAuthorizationUrl, isInstagramConnectConfigured } from '@/src/lib/instagram/facebookOAuth'
 import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
@@ -35,21 +34,15 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, 'Instagram connection is not configured for this site yet.')
   }
 
-  const scope = await getSocialWorkspaceScope()
-  if (!scope) {
-    return redirectWithError(request, 'You do not have access to a Social Workspace.')
+  const active = await getActiveWorkspaceContext()
+  if (!active.ok) {
+    return redirectWithError(request, 'Select or create a Social Workspace before connecting Instagram.')
+  }
+  if (!roleCanWrite(active.context.role)) {
+    return redirectWithError(request, 'You do not have permission to connect Instagram for this Social Workspace.')
   }
 
-  // Same auto-provisioning as the status route (see
-  // ensureWritableSocialWorkspace) — belt-and-suspenders for an admin
-  // who lands directly on Connect without the Content page ever having
-  // called /status first.
-  const workspaceResult = await ensureWritableSocialWorkspace(scope, auth.admin.user.email)
-  if (!workspaceResult.ok) {
-    return redirectWithError(request, workspaceResult.error)
-  }
-
-  const state = await createInstagramOAuthState({ adminUserId: scope.adminUserId, workspaceId: workspaceResult.workspaceId })
+  const state = await createInstagramOAuthState({ adminUserId: active.context.scope.adminUserId, workspaceId: active.context.workspaceId })
   const redirectUri = new URL(CALLBACK_PATH, siteOrigin(request)).toString()
 
   let authorizationUrl: string
@@ -60,6 +53,6 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, 'Instagram connection is not configured for this site yet.')
   }
 
-  logConnectStage('oauth_started', { workspaceId: workspaceResult.workspaceId })
+  logConnectStage('oauth_started', { workspaceId: active.context.workspaceId })
   return NextResponse.redirect(authorizationUrl)
 }

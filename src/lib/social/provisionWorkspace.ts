@@ -1,24 +1,24 @@
 /**
- * Self-service provisioning of ONE Social Workspace for an admin who
- * currently has zero social_workspace_members rows — the missing piece
- * identified after the Instagram Connect flow shipped: a brand-new (or
- * pre-existing) social_media admin has personal_brand:write but no
- * workspace membership at all, so resolveDefaultWritableWorkspaceId()
- * correctly fails closed with "not an owner or manager of any Social
- * Workspace" and nothing downstream (Instagram status/connect, content,
- * automations) can ever resolve a workspace for them.
+ * provisionOwnWorkspace: self-service provisioning of ONE deterministically-
+ * named Social Workspace for a given admin — the original fix for the
+ * now-retired "every admin needs a workspace to use Instagram Connect at
+ * all" bootstrapping gap. Superseded in production routes by the
+ * explicit "Create workspace" flow (createSocialWorkspace below, called
+ * from src/app/api/admin/social/workspaces/route.ts) once the Social
+ * Media Multi-Workspace Audit moved this app off the one-admin-one-
+ * workspace assumption entirely — see
+ * src/lib/admin/activeSocialWorkspace.ts. Kept (with its tests) as a
+ * reviewed, working utility rather than deleted outright; it has no
+ * remaining caller in application code.
  *
  * Deliberately separate from src/lib/social/backfillWorkspace.ts, which
  * is the one-time migration of the single ORIGINAL global dataset into
- * one hardcoded, owner-only workspace — this file creates a NEW, empty
- * workspace for whichever admin calls it, every time it's genuinely
- * needed, and is safe to call repeatedly (idempotent, see below).
+ * one hardcoded, owner-only workspace.
  *
- * Never trusts a caller-supplied admin_user_id/workspace_id — see
- * src/lib/social/ensureSocialWorkspace.ts, which is the only caller and
- * always passes the CURRENTLY authenticated admin's own resolved
- * identity (scope.adminUserId, admin.user.email), never anything from
- * the request body/query/params.
+ * Never trusts a caller-supplied admin_user_id/workspace_id — both
+ * exported functions below require the caller to already have resolved
+ * the CURRENTLY authenticated admin's own identity server-side, never
+ * anything from the request body/query/params.
  */
 import 'server-only'
 import { supabaseServer } from '@/src/lib/supabase/server'
@@ -98,4 +98,56 @@ export async function provisionOwnWorkspace(adminUserId: string, adminEmail: str
   }
 
   return { ok: true, workspace: { workspaceId, created: workspaceCreated } }
+}
+
+export type CreateSocialWorkspaceResult = { ok: true; workspaceId: string } | { ok: false; error: string }
+
+/**
+ * Explicit, user-named workspace creation — the "Create workspace"
+ * action in the workspace switcher (see
+ * src/app/api/admin/social/workspaces/route.ts, the only caller). Unlike
+ * provisionOwnWorkspace above, this ALWAYS creates a brand-new workspace
+ * (never dedupes/reuses an existing one by name) and is callable
+ * regardless of how many workspaces the admin already belongs to — an
+ * admin legitimately running several brands (Personal Brand, a client
+ * account, …) must be able to add another one at any time, not just
+ * once while they have zero memberships.
+ *
+ * Name collisions are reported as a normal validation error (the admin
+ * picked a name already in use by ANY workspace, not just their own —
+ * social_workspaces.name is globally unique, matching the one-Instagram-
+ * account-one-workspace philosophy of never silently merging two
+ * same-named things), not treated as "reuse the existing one" the way
+ * provisionOwnWorkspace's own deterministic-name race handling does.
+ */
+export async function createSocialWorkspace(adminUserId: string, name: string): Promise<CreateSocialWorkspaceResult> {
+  const trimmedName = name.trim()
+  if (!trimmedName) {
+    return { ok: false, error: 'Workspace name is required' }
+  }
+
+  const { data: created, error: insertError } = await supabaseServer
+    .from('social_workspaces')
+    .insert({ name: trimmedName, created_by: adminUserId })
+    .select('id')
+    .single()
+
+  if (insertError) {
+    if (insertError.code === UNIQUE_VIOLATION) {
+      return { ok: false, error: 'A workspace with that name already exists' }
+    }
+    console.error('[Create Workspace] Failed to create workspace', insertError.message)
+    return { ok: false, error: 'Failed to create workspace' }
+  }
+
+  const { error: memberError } = await supabaseServer
+    .from('social_workspace_members')
+    .insert({ workspace_id: created.id, admin_user_id: adminUserId, workspace_role: 'owner' })
+
+  if (memberError) {
+    console.error('[Create Workspace] Failed to create workspace membership', memberError.message)
+    return { ok: false, error: 'Created the workspace but failed to add your membership — contact support' }
+  }
+
+  return { ok: true, workspaceId: created.id }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, resolveDefaultWritableWorkspaceId } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { disconnectInstagramAccount } from '@/src/lib/social/instagramConnectAccount'
 
 // POST — called via fetch (ordinary JSON API route, unlike the OAuth
@@ -16,17 +16,15 @@ export async function POST() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
+    }
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
 
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
-    }
-
-    const result = await disconnectInstagramAccount(workspaceResult.workspaceId)
+    const result = await disconnectInstagramAccount(active.context.workspaceId)
     if (!result.ok) {
       const status = result.reason === 'not_connected' ? 400 : 500
       return NextResponse.json({ error: result.error }, { status })

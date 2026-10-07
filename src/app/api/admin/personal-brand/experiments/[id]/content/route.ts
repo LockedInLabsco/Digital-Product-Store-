@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope, canWriteWorkspace } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 
 // POST link a content item to this experiment — { content_id }. Uses the
 // pb_experiment_content join table (composite primary key on
@@ -21,10 +21,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
+    }
+    const workspaceId = active.context.workspaceId
 
     const body = await request.json().catch(() => ({}))
     const contentId = typeof body.content_id === 'string' ? body.content_id.trim() : ''
@@ -37,13 +41,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       supabaseServer.from('pb_content_items').select('id, workspace_id').eq('id', contentId).maybeSingle(),
     ])
 
-    if (!experiment || !experiment.workspace_id || !canWriteWorkspace(scope, experiment.workspace_id)) {
+    if (!experiment || experiment.workspace_id !== workspaceId) {
       return NextResponse.json({ error: 'Experiment not found' }, { status: 404 })
     }
-    if (!content || !content.workspace_id || !canWriteWorkspace(scope, content.workspace_id)) {
-      return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
-    }
-    if (experiment.workspace_id !== content.workspace_id) {
+    if (!content || content.workspace_id !== workspaceId) {
       return NextResponse.json({ error: 'Content item not found' }, { status: 404 })
     }
 
@@ -74,9 +75,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
+    }
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -86,7 +90,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const { data: experiment } = await supabaseServer.from('pb_experiments').select('workspace_id').eq('id', params.id).maybeSingle()
-    if (!experiment || !experiment.workspace_id || !canWriteWorkspace(scope, experiment.workspace_id)) {
+    if (!experiment || experiment.workspace_id !== active.context.workspaceId) {
       return NextResponse.json({ error: 'Experiment not found' }, { status: 404 })
     }
 

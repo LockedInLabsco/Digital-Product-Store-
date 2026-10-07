@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import { getSocialWorkspaceScope } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse } from '@/src/lib/admin/activeSocialWorkspace'
 import { getAllFormatEvidence } from '@/src/lib/personal-brand/formatsAnalytics'
 
-// GET historical evidence for every format in the caller's Social
-// Workspace(s), sorted by median engagement rate — powers the Winning
+// GET historical evidence for every format in the caller's active Social
+// Workspace, sorted by median engagement rate — powers the Winning
 // Formats page. Purely deterministic (see
 // src/lib/personal-brand/formatEvidence.ts) — no AI involvement.
 export async function GET() {
@@ -14,12 +14,12 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
 
-    const evidence = await getAllFormatEvidence(scope.memberWorkspaceIds)
+    const evidence = await getAllFormatEvidence([active.context.workspaceId])
     return NextResponse.json({ evidence })
   } catch (error) {
     console.error('[Personal Brand Formats Evidence] Exception in GET', error)

@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
-import {
-  getSocialWorkspaceScope,
-  resolveDefaultWritableWorkspaceId,
-  canAccessLegacyUnmigratedAutomationData,
-} from '@/src/lib/admin/socialWorkspaceScope'
+import { canAccessLegacyUnmigratedAutomationData } from '@/src/lib/admin/socialWorkspaceScope'
+import { getActiveWorkspaceContext, activeWorkspaceErrorResponse, roleCanWrite } from '@/src/lib/admin/activeSocialWorkspace'
 import { resolveConnectedAccountIdsForWorkspaces } from '@/src/lib/social/automationAccountScope'
 import { validateAutomationRuleInput } from '@/src/lib/instagram/validate'
 
-// GET all automation rules the caller's connected account(s) own, each
-// with its follow-up sequence attached, oldest first (matching the order
-// the matching engine uses when more than one rule could fire for the
-// same trigger).
+// GET all automation rules belonging to the caller's active Social
+// Workspace's connected account, each with its follow-up sequence
+// attached, oldest first (matching the order the matching engine uses
+// when more than one rule could fire for the same trigger).
 export async function GET() {
   try {
     const auth = await requirePermission('personal_brand:read')
@@ -20,12 +17,13 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
+    const { scope, workspaceId } = active.context
 
-    const accountIds = await resolveConnectedAccountIdsForWorkspaces(scope.memberWorkspaceIds)
+    const accountIds = await resolveConnectedAccountIdsForWorkspaces([workspaceId])
     // TRANSITIONAL — see canAccessLegacyUnmigratedAutomationData's own
     // doc comment. Drop this OR clause once the one-time backfill has
     // run with INSTAGRAM_BUSINESS_ACCOUNT_ID configured.
@@ -84,19 +82,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const scope = await getSocialWorkspaceScope()
-    if (!scope) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const active = await getActiveWorkspaceContext()
+    if (!active.ok) {
+      return activeWorkspaceErrorResponse(active.reason)
     }
-    const workspaceResult = resolveDefaultWritableWorkspaceId(scope)
-    if (!workspaceResult.ok) {
-      return NextResponse.json({ error: workspaceResult.error }, { status: 400 })
+    if (!roleCanWrite(active.context.role)) {
+      return NextResponse.json({ error: 'You do not have write access to this Social Workspace' }, { status: 403 })
     }
 
     const { data: connectedAccount } = await supabaseServer
       .from('social_connected_accounts')
       .select('id')
-      .eq('workspace_id', workspaceResult.workspaceId)
+      .eq('workspace_id', active.context.workspaceId)
       .eq('platform', 'instagram')
       .eq('status', 'active')
       .maybeSingle()
