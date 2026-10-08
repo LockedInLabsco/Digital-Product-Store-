@@ -128,16 +128,24 @@ export async function GET(request: NextRequest) {
     if (!shortLived.ok) {
       return redirectWithError(request, 'token_exchange_failed', 'Instagram authorization failed while exchanging the authorization code. Please try connecting again.')
     }
+    logConnectStage('instagram_short_lived_exchange_success')
 
     const longLived = await exchangeForLongLivedInstagramLoginToken(shortLived.data.accessToken)
     if (!longLived.ok) {
+      // longLived.error is already Meta's own sanitized error message
+      // (never a token/secret — see instagramLoginOAuth.ts's callMeta)
+      // and safe to log, same as the message/type/code/fbtrace_id set
+      // callMeta itself already logs on every Meta-side failure.
+      logConnectStage('instagram_long_lived_exchange_failure', { reason: longLived.error })
       return redirectWithError(request, 'long_lived_exchange_failed', 'Instagram authorization failed while confirming your access. Please try connecting again.')
     }
+    logConnectStage('instagram_long_lived_exchange_success')
 
     const profile = await fetchInstagramLoginProfile(longLived.data.accessToken)
     if (!profile.ok) {
       return redirectWithError(request, 'profile_fetch_failed', 'Failed to look up your Instagram account. Please try connecting again.')
     }
+    logConnectStage('instagram_profile_lookup_success')
 
     // Defense-in-depth only — Meta's own consent screen for this product
     // should never let a Personal account reach this point (see

@@ -55,12 +55,23 @@ import { GRAPH_API_VERSION } from './client'
 
 const AUTHORIZE_BASE = 'https://www.instagram.com'
 const SHORT_LIVED_TOKEN_URL = 'https://api.instagram.com/oauth/access_token'
+// PRODUCTION FIX — see exchangeForLongLivedInstagramLoginToken's own
+// comment below. This file used to also keep an UNVERSIONED_GRAPH_BASE
+// (no /v21.0/ segment) for the long-lived exchange call specifically,
+// on the claim that tokenStore.ts's unversioned call to this same host
+// "proves that works in production" — that claim was never actually
+// verified against this file's own call, and production disagreed:
+// Meta returned `Unsupported request - method type: get` (IGApiException,
+// code 100) for the unversioned call. GET is still the correct method —
+// verified directly against Meta's current reference page
+// (developers.facebook.com/docs/instagram-platform/reference/access_token/,
+// which lists Creating/Updating/Deleting as "not supported" and GET as
+// the only Reading method) — so the fix is NOT switching to POST, it's
+// using the SAME explicit, already-working API version this file's own
+// fetchInstagramLoginProfile() call below uses, instead of leaving this
+// one call unversioned and at the mercy of whatever Meta's implicit
+// default-version resolution currently does.
 const GRAPH_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`
-// Deliberately unversioned, matching src/lib/instagram/tokenStore.ts's
-// already-working callExchangeEndpoint — Meta's own documented example
-// for ig_exchange_token calls this host directly with no version
-// segment, and tokenStore.ts proves that works in production today.
-const UNVERSIONED_GRAPH_BASE = 'https://graph.instagram.com'
 const REQUEST_TIMEOUT_MS = 15000
 
 /**
@@ -185,14 +196,29 @@ export async function exchangeCodeForInstagramLoginToken({
   return { ok: true, data: { accessToken: result.data.access_token } }
 }
 
-/** Step 2 — `ig_exchange_token`, converting the short-lived token into a long-lived one (~60 days). Identical mechanics to tokenStore.ts's callExchangeEndpoint, duplicated rather than imported: that file owns the separate messaging-token singleton's lifecycle and is deliberately not a dependency of the content-connect path (see this file's header). */
+/**
+ * Step 2 — `ig_exchange_token`, converting the short-lived token into a
+ * long-lived one (~60 days). GET with query-string parameters — this IS
+ * the current, verified-correct shape (Meta's own reference page lists
+ * only GET as supported for this endpoint; POST falls under
+ * "Creating," explicitly marked "not supported"). The production bug
+ * this fixes was never the method — it was this call being the one
+ * unversioned graph.instagram.com call in this file (see GRAPH_BASE's
+ * own comment above); it now uses the exact same explicit API version
+ * fetchInstagramLoginProfile() already uses successfully below.
+ *
+ * client_secret here is ALWAYS requireAppSecret() — INSTAGRAM_LOGIN_APP_SECRET,
+ * never INSTAGRAM_APP_SECRET (the Facebook/Meta App's own secret,
+ * facebookOAuth.ts's and tokenStore.ts's credential — see this file's
+ * header for why that split is load-bearing, not cosmetic).
+ */
 export async function exchangeForLongLivedInstagramLoginToken(shortLivedToken: string): Promise<OAuthHttpResult<{ accessToken: string; expiresAt: string | null }>> {
-  const url = new URL(`${UNVERSIONED_GRAPH_BASE}/access_token`)
+  const url = new URL(`${GRAPH_BASE}/access_token`)
   url.searchParams.set('grant_type', 'ig_exchange_token')
   url.searchParams.set('client_secret', requireAppSecret())
   url.searchParams.set('access_token', shortLivedToken)
 
-  const result = await callMeta<{ access_token: string; expires_in?: number }>('long_lived_exchange', (signal) => fetch(url.toString(), { signal }))
+  const result = await callMeta<{ access_token: string; expires_in?: number }>('long_lived_exchange', (signal) => fetch(url.toString(), { method: 'GET', signal }))
 
   if (!result.ok) return result
   const expiresAt = typeof result.data.expires_in === 'number' ? new Date(Date.now() + result.data.expires_in * 1000).toISOString() : null
