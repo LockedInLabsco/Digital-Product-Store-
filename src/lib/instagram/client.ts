@@ -56,7 +56,17 @@
 import 'server-only'
 import { getMessagingTokenForAccount } from './tokenStore'
 
-export const GRAPH_API_VERSION = 'v21.0'
+// v21.0 was the real root cause of "views never syncs" (reported after
+// the Issue 2 fix below): Meta did not introduce the `views` INSIGHTS
+// metric until v22.0 (2025-01-21) — v21.0 simply has no such metric, so
+// the combined insights request's per-metric fallback correctly
+// recovered reach/saved/shares but always got views=null, no matter how
+// correctly it was requested. v23.0 postdates v22.0 (so `views` exists),
+// has no breaking changes for Instagram media/OAuth/webhooks between
+// v21.0 and here (verified against Meta's own v22.0/v23.0 Graph API
+// changelogs), and isn't due to expire until 2027-10-08 — plenty of
+// runway. Do not revert this without re-confirming `views` support.
+export const GRAPH_API_VERSION = 'v23.0'
 const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
 const MESSAGING_API_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`
 const REQUEST_TIMEOUT_MS = 15000
