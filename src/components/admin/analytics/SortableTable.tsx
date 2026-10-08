@@ -9,6 +9,14 @@ export interface ColumnDef<T> {
   accessor: (row: T) => ReactNode
   sortValue?: (row: T) => number | string
   align?: 'left' | 'right'
+  /** Pins this column to the left edge while the table scrolls
+   * horizontally — use for the one or two columns that identify the
+   * row (e.g. title), never for metric columns, which are exactly what
+   * the admin is scrolling sideways TO see. At most one sticky column
+   * is supported today (the common case — a title/name column); adding
+   * more would need cumulative left-offset math this component doesn't
+   * do yet. */
+  sticky?: boolean
 }
 
 interface SortableTableProps<T> {
@@ -20,6 +28,14 @@ interface SortableTableProps<T> {
   emptyMessage?: string
   defaultSortKey?: string
   defaultSortDirection?: 'asc' | 'desc'
+  /** Caps the table's own height so both its scrollbars stay reachable
+   * near the top of the viewport instead of requiring a scroll past
+   * however many rows exist to reach the bottom-edge native scrollbar —
+   * the actual UX bug this fixes. Omit for a short table that's fine
+   * growing with the page (e.g. under ~10 rows) — defaults to capped,
+   * since every real content/automation list in this app can grow
+   * past a screenful. */
+  maxHeightClassName?: string
 }
 
 function LoadingSkeleton({ columnCount }: { columnCount: number }) {
@@ -45,6 +61,7 @@ export default function SortableTable<T>({
   emptyMessage = 'No data for this period',
   defaultSortKey,
   defaultSortDirection = 'desc',
+  maxHeightClassName = 'max-h-[70vh]',
 }: SortableTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | undefined>(defaultSortKey)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection)
@@ -91,17 +108,30 @@ export default function SortableTable<T>({
     )
   }
 
+  const stickyKey = columns.find((c) => c.sticky)?.key
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-admin-border bg-admin-surface2/60">
+    // A single box that scrolls BOTH axes within a capped height,
+    // instead of letting the table grow to its full row count and
+    // relying on the page's own scroll to reach a horizontal scrollbar
+    // that only renders at the table's true (often off-screen) bottom
+    // edge. Capping the height means that scrollbar sits a bounded,
+    // small distance below wherever the table starts — reachable right
+    // away, exactly what "Option A/B" in the UX report were both
+    // trying to achieve, without a second hand-synced scrollbar widget
+    // to build and maintain. `thead` can be position:sticky relative to
+    // THIS box specifically because this box (not the page) is now the
+    // real vertical scrolling container.
+    <div className={`overflow-auto rounded-lg border border-admin-border ${maxHeightClassName}`}>
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-20 bg-admin-surface2">
+          <tr className="border-b border-admin-border">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={`whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-muted ${
                   col.align === 'right' ? 'text-right' : 'text-left'
-                }`}
+                } ${col.sticky ? 'sticky left-0 z-30 bg-admin-surface2' : ''}`}
               >
                 {col.sortValue ? (
                   <button
@@ -129,11 +159,13 @@ export default function SortableTable<T>({
         </thead>
         <tbody>
           {sortedRows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-admin-border transition-colors last:border-0 hover:bg-admin-surface2">
+            <tr key={rowKey(row)} className="group border-b border-admin-border transition-colors last:border-0 hover:bg-admin-surface2">
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={`whitespace-nowrap px-4 py-3 ${col.align === 'right' ? 'text-right tabular-nums' : ''}`}
+                  className={`whitespace-nowrap px-4 py-3 ${col.align === 'right' ? 'text-right tabular-nums' : ''} ${
+                    col.key === stickyKey ? 'sticky left-0 z-10 bg-admin-bg group-hover:bg-admin-surface2' : ''
+                  }`}
                 >
                   {col.accessor(row)}
                 </td>

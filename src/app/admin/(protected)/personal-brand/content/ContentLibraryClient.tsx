@@ -112,6 +112,7 @@ export default function ContentLibraryClient() {
         </Link>
       ),
       sortValue: (row) => row.title || '',
+      sticky: true,
     },
     {
       key: 'content_type',
@@ -154,6 +155,34 @@ export default function ContentLibraryClient() {
       header: 'Likes',
       accessor: (row) => row.latest_metric?.likes?.toLocaleString() ?? '—',
       sortValue: (row) => row.latest_metric?.likes ?? -1,
+      align: 'right',
+    },
+    {
+      key: 'comments',
+      header: 'Comments',
+      accessor: (row) => row.latest_metric?.comments?.toLocaleString() ?? '—',
+      sortValue: (row) => row.latest_metric?.comments ?? -1,
+      align: 'right',
+    },
+    {
+      key: 'saves',
+      header: 'Saves',
+      accessor: (row) => row.latest_metric?.saves?.toLocaleString() ?? '—',
+      sortValue: (row) => row.latest_metric?.saves ?? -1,
+      align: 'right',
+    },
+    {
+      key: 'shares',
+      header: 'Shares',
+      accessor: (row) => row.latest_metric?.shares?.toLocaleString() ?? '—',
+      sortValue: (row) => row.latest_metric?.shares ?? -1,
+      align: 'right',
+    },
+    {
+      key: 'reach',
+      header: 'Reach',
+      accessor: (row) => row.latest_metric?.reach?.toLocaleString() ?? '—',
+      sortValue: (row) => row.latest_metric?.reach ?? -1,
       align: 'right',
     },
     {

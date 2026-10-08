@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { AdminRole } from '@/src/types/admin'
 import type { AdminNavIconKey } from './AdminSidebarShell'
 
@@ -35,7 +34,6 @@ export default function AdminModeSwitcher({
   availableModes: AdminModeOption[]
   homeHrefByMode: Record<AdminRole, string>
 }) {
-  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isSwitching, setIsSwitching] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -48,6 +46,27 @@ export default function AdminModeSwitcher({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  /**
+   * ROOT CAUSE of "switching sometimes doesn't take effect without a
+   * manual refresh": this used to call router.push(homeHrefByMode[role])
+   * immediately followed by router.refresh(). Next.js 14's App Router
+   * does not guarantee those two calls land in a deterministic order —
+   * refresh() refreshes whatever route is current AT THE MOMENT it
+   * runs, and if push()'s navigation hasn't committed yet (a real,
+   * observed race, not hypothetical — the intermittent, direction-
+   * sensitive symptom reported matches exactly this), refresh() can end
+   * up invalidating the OLD route instead of the new one, or get
+   * coalesced away entirely by React's automatic batching. The shared
+   * sidebar lives in the parent (protected) layout, which only re-reads
+   * the mode cookie when ITS OWN segment is actually re-fetched from
+   * the server — a soft client-side navigation can serve it straight
+   * from Next's Router Cache instead, exactly the "stale Server
+   * Component cache" failure mode. A hard navigation has no such race:
+   * the entire tree, including the shared layout, is always freshly
+   * rendered server-side against the now-updated cookie — the same
+   * fix already proven for src/components/admin/social/WorkspaceSwitcher.tsx,
+   * which hit this identical class of bug first.
+   */
   async function handleSwitch(role: AdminRole) {
     setIsOpen(false)
     if (role === currentMode.role) return
@@ -59,8 +78,7 @@ export default function AdminModeSwitcher({
         body: JSON.stringify({ mode: role }),
       })
       if (!res.ok) throw new Error('Failed to switch mode')
-      router.push(homeHrefByMode[role])
-      router.refresh()
+      window.location.href = homeHrefByMode[role]
     } catch {
       setIsSwitching(false)
     }
