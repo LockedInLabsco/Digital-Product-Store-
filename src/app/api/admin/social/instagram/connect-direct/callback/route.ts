@@ -146,6 +146,11 @@ export async function GET(request: NextRequest) {
       return redirectWithError(request, 'profile_fetch_failed', 'Failed to look up your Instagram account. Please try connecting again.')
     }
     logConnectStage('instagram_profile_lookup_success')
+    // account_type (e.g. "Business"/"Media_Creator") is Meta's own
+    // public field on the professional account being connected — never
+    // a token/secret — and directly useful for diagnosing account-type
+    // vs. app-access-level failures separately going forward.
+    logConnectStage('instagram_account_type', { accountType: profile.data.accountType })
 
     // Defense-in-depth only — Meta's own consent screen for this product
     // should never let a Personal account reach this point (see
