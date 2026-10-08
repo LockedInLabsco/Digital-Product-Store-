@@ -58,6 +58,9 @@ export default function WorkspaceSettingsClient() {
   const [inviteRole, setInviteRole] = useState<SocialWorkspaceRole>('analyst')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+  const [isSavingRename, setIsSavingRename] = useState(false)
 
   const load = useCallback(async () => {
     setError('')
@@ -182,6 +185,34 @@ export default function WorkspaceSettingsClient() {
     }
   }
 
+  async function handleStartRename() {
+    if (!workspace) return
+    setRenameValue(workspace.name)
+    setIsRenaming(true)
+  }
+
+  async function handleSaveRename(e: React.FormEvent) {
+    e.preventDefault()
+    if (!workspace) return
+    setIsSavingRename(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/social/workspaces/${workspace.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: renameValue }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to rename workspace')
+      setIsRenaming(false)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rename workspace')
+    } finally {
+      setIsSavingRename(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-admin-bg">
       <Container className="py-12">
@@ -190,7 +221,37 @@ export default function WorkspaceSettingsClient() {
 
           <div className="mb-8">
             <h2 className="mb-2 text-3xl font-bold">Workspace Settings</h2>
-            <p className="text-admin-muted">{workspace ? workspace.name : 'Loading…'}</p>
+            {isRenaming && workspace ? (
+              <form onSubmit={handleSaveRename} className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  autoFocus
+                  required
+                  className="rounded-lg border border-admin-border bg-admin-surface px-3 py-1.5 text-admin-muted"
+                />
+                <button
+                  type="submit"
+                  disabled={isSavingRename || !renameValue.trim()}
+                  className="rounded-lg bg-admin-text px-3 py-1.5 text-sm font-medium text-admin-bg disabled:opacity-50"
+                >
+                  {isSavingRename ? 'Saving…' : 'Save'}
+                </button>
+                <button type="button" onClick={() => setIsRenaming(false)} className="text-sm text-admin-muted underline hover:text-admin-text">
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-admin-muted">{workspace ? workspace.name : 'Loading…'}</p>
+                {workspace && canManage && (
+                  <button type="button" onClick={handleStartRename} className="text-sm text-admin-muted underline hover:text-admin-text">
+                    Rename
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {error && <div className="mb-8 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-400">{error}</div>}

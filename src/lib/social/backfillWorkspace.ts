@@ -2,9 +2,22 @@ import 'server-only'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { encryptToken } from '@/src/lib/instagram/tokenCrypto'
 
-const WORKSPACE_NAME = 'Darshana Personal Brand'
 const LEGACY_PROVIDER = 'instagram_login'
 const LEGACY_ACCOUNT_ID = 'default'
+
+// No hardcoded brand name here on purpose — this used to be a fixed
+// literal ('Darshana Personal Brand', left over from this function's
+// original write-up and never meaningfully tied to any admin, env var,
+// or config). Workspaces are renameable now (see
+// src/app/api/admin/social/workspaces/[id]/route.ts), but a brand-new
+// run of this one-time migration should never invent a brand name on
+// anyone's behalf — derived from the resolved owner's own email
+// instead, same deterministic convention src/lib/social/provisionWorkspace.ts's
+// provisionOwnWorkspace() already uses for the same "owner has none yet"
+// case.
+function defaultWorkspaceName(ownerEmail: string): string {
+  return `${ownerEmail} Social Workspace`
+}
 
 export interface BackfillResult {
   ok: boolean
@@ -55,12 +68,13 @@ export async function backfillSocialWorkspace(): Promise<BackfillResult> {
     }
   }
   const ownerAdminUserId = owners[0].id
+  const workspaceName = defaultWorkspaceName(owners[0].email)
 
   // 2. Idempotent workspace creation.
   const { data: existingWorkspace } = await supabaseServer
     .from('social_workspaces')
     .select('id, name')
-    .ilike('name', WORKSPACE_NAME)
+    .ilike('name', workspaceName)
     .maybeSingle()
 
   let workspaceId: string
@@ -71,7 +85,7 @@ export async function backfillSocialWorkspace(): Promise<BackfillResult> {
   } else {
     const { data: created, error: createError } = await supabaseServer
       .from('social_workspaces')
-      .insert({ name: WORKSPACE_NAME, created_by: ownerAdminUserId })
+      .insert({ name: workspaceName, created_by: ownerAdminUserId })
       .select('id')
       .single()
     if (createError || !created) {
@@ -262,7 +276,7 @@ export async function backfillSocialWorkspace(): Promise<BackfillResult> {
 
   return {
     ok: true,
-    workspace: { id: workspaceId, name: WORKSPACE_NAME, created: workspaceCreated },
+    workspace: { id: workspaceId, name: workspaceName, created: workspaceCreated },
     membership: { created: membershipCreated },
     contentBackfilled,
     connectedAccount: connectedAccountResult,
