@@ -13,7 +13,7 @@ vi.mock('@/src/lib/supabase/server', () => ({
   },
 }))
 
-import { fetchMediaInsights, sendDirectMessage, sendPrivateReplyToComment } from './client'
+import { fetchMediaInsights, sendDirectMessage, sendPrivateReplyToComment, subscribeInstagramAccountToWebhooks } from './client'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -92,5 +92,31 @@ describe('sendDirectMessage / sendPrivateReplyToComment — per-account token ro
   it('sendPrivateReplyToComment also requires a connectedAccountId and fails the same safe way without one', async () => {
     const result = await sendPrivateReplyToComment('account-with-no-token', 'comment-1', 'hello')
     expect(result.ok).toBe(false)
+  })
+})
+
+describe('subscribeInstagramAccountToWebhooks', () => {
+  it('POSTs to graph.instagram.com/me/subscribed_apps with both comments and messages in subscribed_fields', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ success: true }))
+
+    const result = await subscribeInstagramAccountToWebhooks('ig-login-token')
+
+    const [requestUrl, requestInit] = vi.mocked(fetch).mock.calls[0]
+    const url = new URL(String(requestUrl))
+    expect(url.host).toBe('graph.instagram.com')
+    expect(url.pathname).toContain('/me/subscribed_apps')
+    expect(url.searchParams.get('subscribed_fields')).toBe('comments,messages')
+    expect((requestInit as RequestInit)?.method).toBe('POST')
+    expect(result).toEqual({ ok: true, data: { success: true } })
+  })
+
+  it('fails cleanly (never throws) when Meta rejects the subscription, without leaking the access token', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ error: { message: 'Invalid OAuth access token', code: 190 } }, 400))
+
+    const result = await subscribeInstagramAccountToWebhooks('secret-ig-login-token')
+
+    expect(result.ok).toBe(false)
+    const loggedText = vi.mocked(console.error).mock.calls.map((call) => call.join(' ')).join(' ')
+    expect(loggedText).not.toContain('secret-ig-login-token')
   })
 })

@@ -8,6 +8,7 @@ import {
   fetchInstagramLoginProfile,
 } from '@/src/lib/instagram/instagramLoginOAuth'
 import { upsertConnectedInstagramAccount } from '@/src/lib/social/instagramConnectAccount'
+import { subscribeInstagramAccountToWebhooks } from '@/src/lib/instagram/client'
 import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
 
 const RETURN_PATH = '/admin/personal-brand/content'
@@ -196,6 +197,21 @@ export async function GET(request: NextRequest) {
 
     logConnectStage(upsertResult.reauthorized ? 'instagram_account_reauthorized' : 'instagram_account_connected', {
       connectedAccountId: upsertResult.connectedAccountId,
+    })
+
+    // Required on top of the app-level Dashboard field checkboxes —
+    // see subscribeInstagramAccountToWebhooks's own doc comment. Runs
+    // on every successful connect AND reauthorize/reconnect, so simply
+    // clicking "Reconnect" on an already-connected account retroactively
+    // applies this to accounts that connected before this existed.
+    // Never fatal: a transient failure here must not undo an otherwise
+    // successful connect — it's reported, and the existing webhook
+    // automations just won't fire for this account until it succeeds
+    // (retried on the next reconnect).
+    const subscribeResult = await subscribeInstagramAccountToWebhooks(longLived.data.accessToken)
+    logConnectStage(subscribeResult.ok ? 'instagram_webhook_subscribe_success' : 'instagram_webhook_subscribe_failure', {
+      connectedAccountId: upsertResult.connectedAccountId,
+      ...(subscribeResult.ok ? {} : { reason: subscribeResult.error }),
     })
 
     if (upsertResult.replacedPreviousAccount) {

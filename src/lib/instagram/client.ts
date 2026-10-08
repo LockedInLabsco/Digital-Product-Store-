@@ -444,3 +444,39 @@ export async function sendDirectMessage(
     message: buildMessagePayload(message, button),
   })
 }
+
+/** The webhook fields this app actually consumes — see
+ * src/app/api/webhooks/instagram/route.ts's own entry.changes[]/
+ * entry.messaging[] handling. Keep this list and that route in sync;
+ * subscribing to a field we don't parse just means Meta calls the
+ * webhook for events we silently ignore. */
+export const INSTAGRAM_WEBHOOK_SUBSCRIBED_FIELDS = ['comments', 'messages']
+
+/**
+ * Per-account webhook opt-in, required by Meta on top of (and separate
+ * from) the app-level field checkboxes in the Dashboard's Webhooks
+ * product — verified against Meta's current Instagram Platform docs
+ * (developers.facebook.com/docs/instagram-platform/instagram-api-with-
+ * instagram-login/webhooks): "Your app must enable subscriptions by
+ * sending a POST request to the /me/subscribed_apps endpoint with the
+ * subscribed_fields parameter". Checking a field in the Dashboard only
+ * declares what the APP is capable of receiving; Meta still won't
+ * deliver events for a given professional account until that
+ * account's own token has called this. This was the missing step for
+ * Direct Instagram Login — the connect flow exchanged tokens and saved
+ * the account but never called this, which is exactly consistent with
+ * why `messages` never arrived while `comments` did (an earlier,
+ * narrower subscription already existed for comments; messages never
+ * got one). Takes the account's own long-lived Instagram Login access
+ * token — `/me` resolves to whichever account the token belongs to.
+ */
+export async function subscribeInstagramAccountToWebhooks(accessToken: string): Promise<InstagramResult<{ success: boolean }>> {
+  return apiRequest<{ success: boolean }>(
+    MESSAGING_API_BASE,
+    accessToken,
+    'Instagram messaging access token is required to subscribe to webhooks',
+    'POST',
+    'me/subscribed_apps',
+    { subscribed_fields: INSTAGRAM_WEBHOOK_SUBSCRIBED_FIELDS.join(',') }
+  )
+}
