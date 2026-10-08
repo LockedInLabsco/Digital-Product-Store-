@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyWebhookSignature } from '@/src/lib/instagram/webhookVerify'
+import { verifyInstagramWebhookSignature } from '@/src/lib/instagram/webhookVerify'
 import { processTrigger } from '@/src/lib/instagram/processTrigger'
 import { resolveConnectedAccountFromWebhookEntryId, type ResolvedWebhookAccount } from '@/src/lib/instagram/accountResolution'
 import { maskId, previewText, webhookDebug } from '@/src/lib/instagram/webhookDebug'
@@ -51,14 +51,24 @@ export async function GET(request: NextRequest) {
 // Meta retry the same event, and de-duping is handled downstream anyway
 // by processTrigger's unique constraint, not by the HTTP status here.
 export async function POST(request: NextRequest) {
+  // Raw bytes, read exactly once, BEFORE any JSON parsing — the HMAC
+  // must be computed over what Meta actually sent, never a
+  // parse-then-restringify round-trip (which can silently reorder keys
+  // or change whitespace and break the signature). request.json() is
+  // never called on this request for exactly that reason.
   const rawBody = await request.text()
   const signature = request.headers.get('x-hub-signature-256')
-  const appSecret = process.env.INSTAGRAM_APP_SECRET || ''
 
-  if (!verifyWebhookSignature(rawBody, signature, appSecret)) {
+  // Tries both Meta Apps this project can be configured under (see
+  // verifyInstagramWebhookSignature's own doc comment) — never assumes
+  // the webhook subscription lives on the legacy Facebook Login app.
+  const signatureResult = verifyInstagramWebhookSignature(rawBody, signature)
+  if (!signatureResult.ok) {
+    logConnectStage('instagram_webhook_signature_invalid', {})
     console.error('[Instagram Webhook] Invalid signature — rejecting request')
     return new NextResponse('Invalid signature', { status: 401 })
   }
+  logConnectStage('instagram_webhook_signature_valid', { verifier: signatureResult.verifier })
 
   const payload = JSON.parse(rawBody)
   const entries: any[] = payload.entry || []
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
 
     for (const change of entry.changes || []) {
       if (change.field === 'comments') {
+        logConnectStage('instagram_webhook_event_type', { type: 'comment' })
         const value = change.value as CommentValue
         if (!value?.id || !value.from?.id) continue
         await processTrigger({
@@ -110,11 +121,13 @@ export async function POST(request: NextRequest) {
           connectedAccountId: resolved.connectedAccountId,
         })
       } else if (change.field === 'messages') {
+        logConnectStage('instagram_webhook_event_type', { type: 'message' })
         await handleMessageEnvelope(change.value as MessageEnvelope, 'changes.messages', resolved)
       }
     }
 
     for (const item of entry.messaging || []) {
+      logConnectStage('instagram_webhook_event_type', { type: 'message' })
       await handleMessageEnvelope(item as MessageEnvelope, 'messaging', resolved)
     }
   }

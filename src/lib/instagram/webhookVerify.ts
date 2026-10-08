@@ -22,3 +22,41 @@ export function verifyWebhookSignature(rawBody: string, signatureHeader: string 
 
   return timingSafeEqual(provided, expected)
 }
+
+export type WebhookSignatureVerifier = 'instagram_login' | 'facebook_login'
+
+export interface WebhookSignatureResult {
+  ok: boolean
+  verifier?: WebhookSignatureVerifier
+}
+
+/**
+ * Meta signs every webhook payload with the App Secret of whichever
+ * Meta App the subscription was actually registered under — never one
+ * fixed, shared secret (developers.facebook.com/docs/graph-api/webhooks/
+ * getting-started: "Generate a SHA256 signature using the payload and
+ * your app's App Secret"). This project runs two genuinely separate
+ * Meta Apps, confirmed in production the same way instagramLoginOAuth.ts
+ * already found for the OAuth token exchange (see that file's own doc
+ * comment): the legacy Facebook-Login-linked app (INSTAGRAM_APP_SECRET)
+ * and the standalone Direct Instagram Login app (INSTAGRAM_LOGIN_APP_SECRET).
+ * The webhook subscription could legitimately be registered under
+ * either one's dashboard, so both are tried — Instagram Login first,
+ * since that's the current primary connection method post-migration —
+ * and the caller is told which one matched (for logging) without ever
+ * being told which one(s) failed.
+ */
+export function verifyInstagramWebhookSignature(rawBody: string, signatureHeader: string | null): WebhookSignatureResult {
+  const candidates: [WebhookSignatureVerifier, string | undefined][] = [
+    ['instagram_login', process.env.INSTAGRAM_LOGIN_APP_SECRET],
+    ['facebook_login', process.env.INSTAGRAM_APP_SECRET],
+  ]
+
+  for (const [verifier, secret] of candidates) {
+    if (secret && verifyWebhookSignature(rawBody, signatureHeader, secret)) {
+      return { ok: true, verifier }
+    }
+  }
+
+  return { ok: false }
+}
