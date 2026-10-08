@@ -40,6 +40,23 @@ export async function GET(request: NextRequest) {
   let failed = 0
 
   for (const run of dueRuns || []) {
+    // Each run carries its own connected_account_id (set when the rule
+    // was created — see /api/admin/personal-brand/automations) — a
+    // follow-up must send from the SAME account the original reply did,
+    // never a global token. A legacy run with no connected_account_id
+    // (pre-dating the Social Workspace model) can't be sent safely
+    // without guessing which account owns it, so it's recorded as
+    // failed rather than attempted — the same fail-closed convention
+    // used throughout this codebase for unmigrated NULL rows.
+    if (!run.connected_account_id) {
+      failed++
+      await supabaseServer
+        .from('ig_automation_runs')
+        .update({ completed: true, last_error: 'No connected account recorded for this run — cannot determine which Instagram account to send from', updated_at: new Date().toISOString() })
+        .eq('id', run.id)
+      continue
+    }
+
     const { data: step } = await supabaseServer
       .from('ig_automation_followups')
       .select('*')
@@ -56,7 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     const button = step.button_url && step.button_label ? { url: step.button_url, label: step.button_label } : null
-    const result = await sendDirectMessage(run.recipient_ig_id, step.message, button)
+    const result = await sendDirectMessage(run.connected_account_id, run.recipient_ig_id, step.message, button)
 
     if (!result.ok) {
       failed++

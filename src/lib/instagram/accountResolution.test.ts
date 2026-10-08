@@ -2,25 +2,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
+interface CannedResponse {
+  data: unknown
+  error: unknown
+}
+
 const mocks = vi.hoisted(() => ({
-  identifierRow: null as { connected_account_id: string } | null,
-  identifierError: null as { message: string } | null,
-  accountRow: null as { id: string; workspace_id: string; status: string } | null,
-  accountError: null as { message: string } | null,
+  script: {} as Record<string, CannedResponse[]>,
+  counters: {} as Record<string, number>,
 }))
+
+function queue(table: string, responses: CannedResponse[]) {
+  mocks.script[table] = responses
+}
 
 vi.mock('@/src/lib/supabase/server', () => ({
   supabaseServer: {
     from: vi.fn((table: string) => {
-      const query: Record<string, ReturnType<typeof vi.fn>> = {}
+      const idx = mocks.counters[table] ?? 0
+      mocks.counters[table] = idx + 1
+      const response = mocks.script[table]?.[idx] ?? { data: null, error: null }
+
+      const query: Record<string, unknown> = {}
       query.select = vi.fn(() => query)
       query.eq = vi.fn(() => query)
-      query.maybeSingle = vi.fn(async () => {
-        if (table === 'social_connected_account_identifiers') {
-          return { data: mocks.identifierRow, error: mocks.identifierError }
-        }
-        return { data: mocks.accountRow, error: mocks.accountError }
-      })
+      query.maybeSingle = vi.fn(async () => response)
       return query
     }),
   },
@@ -28,36 +34,65 @@ vi.mock('@/src/lib/supabase/server', () => ({
 
 import { resolveConnectedAccountFromWebhookEntryId } from './accountResolution'
 
+beforeEach(() => {
+  mocks.script = {}
+  mocks.counters = {}
+})
+
 describe('resolveConnectedAccountFromWebhookEntryId', () => {
-  beforeEach(() => {
-    mocks.identifierRow = null
-    mocks.identifierError = null
-    mocks.accountRow = null
-    mocks.accountError = null
+  it('1. resolves directly via external_account_id — covers either connect method, since both populate it identically', async () => {
+    queue('social_connected_accounts', [{ data: { id: 'account-a', workspace_id: 'workspace-a', status: 'active' }, error: null }])
+
+    const result = await resolveConnectedAccountFromWebhookEntryId('entry-a')
+
+    expect(result).toEqual({ connectedAccountId: 'account-a', workspaceId: 'workspace-a' })
   })
 
-  it('3. an unknown entry.id resolves to null — zero automation runs', async () => {
-    mocks.identifierRow = null
+  it('2. falls back to social_connected_account_identifiers when entry.id does not match external_account_id directly', async () => {
+    queue('social_connected_accounts', [
+      { data: null, error: null }, // no direct external_account_id match
+      { data: { id: 'account-a', workspace_id: 'workspace-a', status: 'active' }, error: null }, // lookup by id after identifier match
+    ])
+    queue('social_connected_account_identifiers', [{ data: { connected_account_id: 'account-a' }, error: null }])
+
+    const result = await resolveConnectedAccountFromWebhookEntryId('webhook-entry-id-a')
+
+    expect(result).toEqual({ connectedAccountId: 'account-a', workspaceId: 'workspace-a' })
+  })
+
+  it('3. an unknown entry.id resolves to null — zero automation runs, never a guess', async () => {
+    queue('social_connected_accounts', [{ data: null, error: null }])
+    queue('social_connected_account_identifiers', [{ data: null, error: null }])
+
     expect(await resolveConnectedAccountFromWebhookEntryId('unknown-entry-id')).toBeNull()
   })
 
-  it('1/2. resolves a known entry.id to its connected account + workspace', async () => {
-    mocks.identifierRow = { connected_account_id: 'account-a' }
-    mocks.accountRow = { id: 'account-a', workspace_id: 'workspace-a', status: 'active' }
-    expect(await resolveConnectedAccountFromWebhookEntryId('entry-a')).toEqual({
-      connectedAccountId: 'account-a',
-      workspaceId: 'workspace-a',
-    })
-  })
+  it('9. a disconnected account resolves to null even when external_account_id matches directly', async () => {
+    queue('social_connected_accounts', [{ data: { id: 'account-a', workspace_id: 'workspace-a', status: 'disconnected' }, error: null }])
 
-  it('9. a disconnected account resolves to null even if the identifier matches', async () => {
-    mocks.identifierRow = { connected_account_id: 'account-a' }
-    mocks.accountRow = { id: 'account-a', workspace_id: 'workspace-a', status: 'disconnected' }
     expect(await resolveConnectedAccountFromWebhookEntryId('entry-a')).toBeNull()
   })
 
-  it('fails closed (null, never throws) on a lookup error — never falls back to a guess', async () => {
-    mocks.identifierError = { message: 'db unavailable' }
+  it('a disconnected account resolves to null via the identifier-fallback path too', async () => {
+    queue('social_connected_accounts', [
+      { data: null, error: null },
+      { data: { id: 'account-a', workspace_id: 'workspace-a', status: 'disconnected' }, error: null },
+    ])
+    queue('social_connected_account_identifiers', [{ data: { connected_account_id: 'account-a' }, error: null }])
+
+    expect(await resolveConnectedAccountFromWebhookEntryId('webhook-entry-id-a')).toBeNull()
+  })
+
+  it('fails closed (null, never throws) on an external_account_id lookup error, never falls through to a guess', async () => {
+    queue('social_connected_accounts', [{ data: null, error: { message: 'db unavailable' } }])
+
+    await expect(resolveConnectedAccountFromWebhookEntryId('entry-a')).resolves.toBeNull()
+  })
+
+  it('fails closed (null, never throws) on an identifier lookup error', async () => {
+    queue('social_connected_accounts', [{ data: null, error: null }])
+    queue('social_connected_account_identifiers', [{ data: null, error: { message: 'db unavailable' } }])
+
     await expect(resolveConnectedAccountFromWebhookEntryId('entry-a')).resolves.toBeNull()
   })
 

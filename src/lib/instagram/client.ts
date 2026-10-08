@@ -27,21 +27,34 @@
  *   instead. The legacy env vars still exist only as a one-time seed for
  *   that table (src/lib/social/backfillWorkspace.ts) — never consulted on
  *   a normal request path anymore.
- * - MESSAGING_API_BASE (graph.instagram.com) + a token from
- *   src/lib/instagram/tokenStore.ts — Instagram API with Instagram
- *   Login, a separate product with its own `instagram_business_*`
- *   permissions. Used only for outbound messaging (private replies, DMs,
- *   follow-ups). Every messaging call addresses the literal id `me`
- *   rather than an explicit business account id — that id comes from the
- *   Facebook Login flow's Page→Instagram link and is not guaranteed to
- *   be the same value under Instagram Login (Meta's own docs distinguish
- *   the two), so reusing it here would just reintroduce the same kind of
- *   cross-flow mismatch. `me` is Meta's own documented pattern for this
- *   API and sidesteps the question entirely. NOT part of this refactor —
- *   still single-account/global, see tokenStore.ts's own Phase F note.
+ * - MESSAGING_API_BASE (graph.instagram.com) + a per-connected-account
+ *   token from src/lib/instagram/tokenStore.ts's getMessagingTokenForAccount()
+ *   — Instagram API with Instagram Login, a separate product with its
+ *   own `instagram_business_*` permissions. Used only for outbound
+ *   messaging (private replies, DMs, follow-ups). Every messaging call
+ *   addresses the literal id `me` rather than an explicit business
+ *   account id — that id comes from the Facebook Login flow's
+ *   Page→Instagram link and is not guaranteed to be the same value under
+ *   Instagram Login (Meta's own docs distinguish the two), so reusing it
+ *   here would just reintroduce the same kind of cross-flow mismatch.
+ *   `me` is Meta's own documented pattern for this API and sidesteps the
+ *   question entirely — it resolves to whichever account the TOKEN BEING
+ *   USED belongs to, which is exactly why every send function below
+ *   requires an explicit `connectedAccountId` rather than ever falling
+ *   back to one global token (see messagingPostForAccount). The OLD
+ *   global-singleton send path (tokenStore.ts's getCurrentMessagingToken/
+ *   refreshAfterAuthFailure, with its auto-refresh-on-401 retry) is no
+ *   longer used by any send function here — automation execution
+ *   (processTrigger.ts, the follow-up cron) now always resolves a
+ *   specific connected account's own token. tokenStore.ts itself, and
+ *   its status/reconnect endpoints for the legacy row, are untouched —
+ *   this is purely about which token a SEND actually uses. No automatic
+ *   refresh-on-401 exists yet for a per-account token; a failure here is
+ *   simply reported, not retried — a future per-account refresh cron is
+ *   a known, separately-scoped gap, not built here.
  */
 import 'server-only'
-import { getCurrentMessagingToken, refreshAfterAuthFailure } from './tokenStore'
+import { getMessagingTokenForAccount } from './tokenStore'
 
 export const GRAPH_API_VERSION = 'v21.0'
 const CONTENT_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
@@ -55,13 +68,19 @@ export interface InstagramMedia {
   permalink: string | null
   caption: string | null
   media_type: string | null
+  /** KNOWN LIMITATION, verified against Meta's current IG Media
+   * reference: this field is "Available for Instagram API with
+   * Facebook Login only" — an Instagram-Login-sourced media list (see
+   * `provider` on InstagramAccountCredentials) will never populate
+   * this, so mapContentType() below silently falls through to
+   * media_type-only classification for those accounts (a Reel
+   * misclassified as a generic 'post'). Not fixed here — this phase's
+   * scope is the metrics themselves (Issue 2), not content-type
+   * labeling; flagged for separate follow-up rather than guessed at. */
   media_product_type: string | null
   timestamp: string | null
   like_count: number | null
   comments_count: number | null
-  /** Not exposed for every media type/age — Meta only backfills this on
-   * the media list endpoint, not on a per-media insights lookup. */
-  views: number | null
   /** The playable/full-res file — absent for video-ish types where
    * Instagram only exposes a thumbnail instead (see thumbnail_url). */
   media_url: string | null
@@ -75,7 +94,8 @@ export interface InstagramMedia {
  * content_type enum — best-effort only, since neither an auto-created
  * content item nor the automation media picker has any way to know which
  * of "reel"/"post" the admin would call it beyond what Instagram itself
- * reports.
+ * reports. See InstagramMedia.media_product_type's own doc comment for
+ * the Facebook-Login-only limitation this inherits.
  */
 export function mapContentType(media: Pick<InstagramMedia, 'media_type' | 'media_product_type'>): 'reel' | 'story' | 'carousel' | 'post' | 'other' {
   if (media.media_product_type === 'REELS') return 'reel'
@@ -148,36 +168,30 @@ function graphPost<T>(accessToken: string, path: string, body: unknown): Promise
   return apiRequest<T>(CONTENT_API_BASE, accessToken, 'Instagram content access token is required', 'POST', path, {}, body)
 }
 
-/** Meta's OAuthException code for an invalid/expired access token — the signal to try a refresh-and-retry. */
-const AUTH_ERROR_CODE = 190
-
 /**
- * POSTs to the messaging API using whatever token tokenStore currently
- * considers current — never process.env directly, so a refreshed token
- * takes effect on the very next send with no redeploy. If the send fails
- * with Meta's "invalid/expired access token" error, attempts exactly one
- * refresh + one retry (never more, so a genuinely dead token can't loop):
- * the retry either succeeds on the freshly refreshed token, or the
- * caller gets back a sanitized message telling the owner to reconnect —
- * the real Meta error/token is never included.
+ * POSTs to the messaging API using the token stored for ONE specific
+ * connected account (social_account_tokens, provider='instagram_login')
+ * — never a global/env-var singleton. Each connected Instagram account
+ * sends from its own token, which is the whole point: a workspace's
+ * automation must never be able to send as a different workspace's
+ * account. No facebook_login fallback exists (or should exist) here —
+ * that provider's token is only ever valid against graph.facebook.com
+ * for read-only content/insights, never graph.instagram.com for
+ * messaging; see this file's own header.
+ *
+ * No auto-refresh-on-401 retry (unlike the legacy singleton's
+ * messagingPost, which this replaces) — there is no per-account refresh
+ * mechanism yet (see tokenStore.ts's getMessagingTokenForAccount doc
+ * comment); an auth failure here is simply reported on the run, same as
+ * every other send failure, rather than retried.
  */
-async function messagingPost<T>(path: string, body: unknown): Promise<InstagramResult<T>> {
-  const current = await getCurrentMessagingToken()
+async function messagingPostForAccount<T>(connectedAccountId: string, path: string, body: unknown): Promise<InstagramResult<T>> {
+  const current = await getMessagingTokenForAccount(connectedAccountId)
   if (!current) {
-    return { ok: false, error: 'Instagram messaging is not configured' }
+    return { ok: false, error: 'No Instagram messaging token is stored for this connected account. Reconnect Instagram for this workspace.' }
   }
 
-  const result = await apiRequest<T>(MESSAGING_API_BASE, current.token, 'Instagram messaging is not configured', 'POST', path, {}, body)
-  if (result.ok || result.code !== AUTH_ERROR_CODE || !current.rowId) {
-    return result
-  }
-
-  const refreshedToken = await refreshAfterAuthFailure(current.rowId)
-  if (!refreshedToken) {
-    return { ok: false, error: 'Instagram messaging authorization requires reconnection.' }
-  }
-
-  return apiRequest<T>(MESSAGING_API_BASE, refreshedToken, 'Instagram messaging is not configured', 'POST', path, {}, body)
+  return apiRequest<T>(MESSAGING_API_BASE, current.token, 'Instagram messaging is not configured for this connected account', 'POST', path, {}, body)
 }
 
 export interface InstagramAccountCredentials {
@@ -201,10 +215,12 @@ function hostForProvider(provider: InstagramAccountCredentials['provider']): str
 
 /**
  * Fetches every media item on the given account, newest first, following
- * pagination. `views` is requested directly on the media object (not via
- * /insights) — Meta stopped reliably returning view counts from a single
- * media's /insights lookup in 2026, but it's still available on the media
- * list itself.
+ * pagination. Views are NOT requested here — verified against Meta's
+ * current IG Media reference that the base-field equivalent
+ * (`view_count`) is "Available for Business Discovery API only" (i.e.
+ * never for our own account's own media); the real current source for
+ * this number is the `views` INSIGHTS metric, fetched per-media by
+ * fetchMediaInsights below.
  *
  * Takes the account/token explicitly — the caller (a workspace-scoped API
  * route) is responsible for resolving which account that is, via
@@ -212,8 +228,7 @@ function hostForProvider(provider: InstagramAccountCredentials['provider']): str
  * "the" Instagram account and never falls back to one.
  */
 export async function fetchAllAccountMedia({ instagramAccountId, accessToken, provider }: InstagramAccountCredentials): Promise<InstagramResult<InstagramMedia[]>> {
-  const fields =
-    'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,views,media_url,thumbnail_url'
+  const fields = 'id,permalink,caption,media_type,media_product_type,timestamp,like_count,comments_count,media_url,thumbnail_url'
   const all: InstagramMedia[] = []
   let after: string | undefined
   const host = hostForProvider(provider)
@@ -242,14 +257,38 @@ export interface InstagramMediaInsights {
   reach: number | null
   saved: number | null
   shares: number | null
+  /** Was a base media field (`fields=...,views,...`) until this fix —
+   * verified against Meta's current IG Media reference that the
+   * equivalent base field is actually `view_count`, and is documented
+   * as "Available for Business Discovery API only" (i.e. not for our
+   * own account's own media at all). `views` the INSIGHTS metric,
+   * requested here, is Meta's real current source for this number —
+   * confirmed current (per Meta's Insights guide) as universally
+   * available across Feed and Reels media, the same as reach/shares. */
+  views: number | null
 }
 
+/** Verified against Meta's current Instagram Platform Insights guide:
+ * these four are each valid for every media type this app ever syncs
+ * (Feed — IMAGE/VIDEO/CAROUSEL_ALBUM — and REELS); `saved` specifically
+ * is Feed+Reels-only but that already covers everything we sync (we
+ * never sync ephemeral Stories as pb_content_items). Kept as one list
+ * — rather than branching by media type — because every entry here is
+ * already valid for every type we have; INSIGHTS_METRICS_INDIVIDUAL
+ * below exists only as the per-metric fallback if Meta ever rejects the
+ * combined request for a specific media (e.g. a future media type, or a
+ * metric Meta changes/retires again) — see fetchMediaInsights. */
+const INSIGHTS_METRICS = ['reach', 'saved', 'shares', 'views']
+
 /**
- * Best-effort fetch of the engagement metrics that are only available
- * via /insights, not on the media object itself. Returns nulls (never
- * throws past this point) on failure — a missing insight for one post
- * must not abort syncing the rest, since Meta's supported metric set
- * varies by media type and has changed release to release.
+ * Fetch of the engagement metrics that are only available via
+ * /insights, not on the media object itself. Never throws — a missing
+ * insight for one post must not abort syncing the rest, since Meta's
+ * supported metric set varies by media type and has changed release to
+ * release — but UNLIKE before, a failure is now logged with safe
+ * structured diagnostics (never silently converted to zero without a
+ * trace) and, on a combined-request failure, retried one metric at a
+ * time so a single Meta-rejected metric can't zero out the other three.
  *
  * Takes the access token explicitly, same as fetchAllAccountMedia — a
  * media id alone doesn't reveal which workspace's account it belongs to,
@@ -260,27 +299,49 @@ export async function fetchMediaInsights({
   mediaId,
   accessToken,
   provider,
-}: { mediaId: string; accessToken: string } & Pick<InstagramAccountCredentials, 'provider'>): Promise<InstagramMediaInsights> {
+  mediaType,
+}: { mediaId: string; accessToken: string; mediaType?: string | null } & Pick<InstagramAccountCredentials, 'provider'>): Promise<InstagramMediaInsights> {
+  const host = hostForProvider(provider)
+  const empty: InstagramMediaInsights = { reach: null, saved: null, shares: null, views: null }
+
   const result = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(
     accessToken,
     `${mediaId}/insights`,
-    { metric: 'reach,saved,shares' },
-    hostForProvider(provider)
+    { metric: INSIGHTS_METRICS.join(',') },
+    host
   )
 
-  const empty: InstagramMediaInsights = { reach: null, saved: null, shares: null }
-  if (!result.ok) return empty
-
-  const byName: Record<string, number | null> = {}
-  for (const metric of result.data.data || []) {
-    byName[metric.name] = metric.values?.[0]?.value ?? null
+  if (result.ok) {
+    const byName: Record<string, number | null> = {}
+    for (const metric of result.data.data || []) {
+      byName[metric.name] = metric.values?.[0]?.value ?? null
+    }
+    return { reach: byName.reach ?? null, saved: byName.saved ?? null, shares: byName.shares ?? null, views: byName.views ?? null }
   }
 
-  return {
-    reach: byName.reach ?? null,
-    saved: byName.saved ?? null,
-    shares: byName.shares ?? null,
+  console.error('[Instagram Insights]', 'instagram_insights_metric_unsupported', JSON.stringify({ mediaId, mediaType: mediaType ?? 'unknown', requestedMetrics: INSIGHTS_METRICS, error: result.error, code: result.code }))
+
+  // Fall back to one metric at a time — Meta's combined-request
+  // behavior rejects the WHOLE call if even one requested metric isn't
+  // valid for this specific media, so this is what actually salvages
+  // the metrics that ARE valid instead of returning every one as null.
+  const recovered: Record<string, number | null> = {}
+  for (const metric of INSIGHTS_METRICS) {
+    const single = await graphGet<{ data: { name: string; values: { value: number }[] }[] }>(accessToken, `${mediaId}/insights`, { metric }, host)
+    if (single.ok) {
+      recovered[metric] = single.data.data?.[0]?.values?.[0]?.value ?? null
+    } else {
+      recovered[metric] = null
+    }
   }
+
+  const anyRecovered = Object.values(recovered).some((v) => v !== null)
+  if (!anyRecovered) {
+    console.error('[Instagram Insights]', 'instagram_insights_fetch_failure', JSON.stringify({ mediaId, mediaType: mediaType ?? 'unknown', requestedMetrics: INSIGHTS_METRICS }))
+    return empty
+  }
+
+  return { reach: recovered.reach ?? null, saved: recovered.saved ?? null, shares: recovered.shares ?? null, views: recovered.views ?? null }
 }
 
 export interface MessageButton {
@@ -317,16 +378,17 @@ function buildMessagePayload(text: string, button: MessageButton | null) {
  * rejects a second attempt, which the caller never gets to make anyway
  * since src/lib/instagram/automations.ts de-dupes by comment id before
  * this is ever called). Goes through the Instagram API with Instagram
- * Login (graph.instagram.com, via messagingPost's tokenStore-backed
- * token), not the Facebook Login content API above — see the file-level
- * comment.
+ * Login (graph.instagram.com), using `connectedAccountId`'s OWN stored
+ * token — never a global token — not the Facebook Login content API
+ * above; see the file-level comment.
  */
 export async function sendPrivateReplyToComment(
+  connectedAccountId: string,
   commentId: string,
   message: string,
   button: MessageButton | null = null
 ): Promise<InstagramResult<{ id: string }>> {
-  return messagingPost('me/messages', {
+  return messagingPostForAccount(connectedAccountId, 'me/messages', {
     recipient: { comment_id: commentId },
     message: buildMessagePayload(message, button),
   })
@@ -340,12 +402,12 @@ export async function sendPrivateReplyToComment(
  * distinct Instagram capabilities, and Meta only allows one Private
  * Reply per comment — this call is unaffected by whether a private
  * reply was already sent (or fails) for the same comment. Same
- * Instagram Login messaging path (graph.instagram.com, via
- * messagingPost) as the rest of this section, since
- * `instagram_business_manage_comments` is part of that token's scope.
+ * per-account Instagram Login messaging path (graph.instagram.com) as
+ * the rest of this section, since `instagram_business_manage_comments`
+ * is part of that token's scope.
  */
-export async function replyToComment(commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {
-  return messagingPost(`${commentId}/replies`, { message })
+export async function replyToComment(connectedAccountId: string, commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {
+  return messagingPostForAccount(connectedAccountId, `${commentId}/replies`, { message })
 }
 
 /**
@@ -356,15 +418,18 @@ export async function replyToComment(commentId: string, message: string): Promis
  * follow-up scheduled further out than that will fail at send time (see
  * docs/INSTAGRAM_AUTOMATIONS_SETUP.md) — this function surfaces that as
  * an ordinary `{ ok: false }` result rather than throwing, so the
- * follow-up cron can record it on the run and move on. Same Instagram
- * Login messaging path as sendPrivateReplyToComment above.
+ * follow-up cron can record it on the run and move on. Same per-account
+ * Instagram Login messaging path as sendPrivateReplyToComment above —
+ * `connectedAccountId` determines whose token (and therefore whose
+ * Instagram account) actually sends this message.
  */
 export async function sendDirectMessage(
+  connectedAccountId: string,
   recipientIgId: string,
   message: string,
   button: MessageButton | null = null
 ): Promise<InstagramResult<{ id: string }>> {
-  return messagingPost('me/messages', {
+  return messagingPostForAccount(connectedAccountId, 'me/messages', {
     recipient: { id: recipientIgId },
     message: buildMessagePayload(message, button),
   })

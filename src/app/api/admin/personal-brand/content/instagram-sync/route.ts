@@ -149,10 +149,10 @@ export async function POST() {
         continue
       }
 
-      const insights = await fetchMediaInsights({ mediaId: media.id, accessToken, provider })
+      const insights = await fetchMediaInsights({ mediaId: media.id, accessToken, provider, mediaType: media.media_type })
 
       const validation = validateContentMetricInput({
-        views: media.views,
+        views: insights.views,
         likes: media.like_count,
         comments: media.comments_count,
         shares: insights.shares,

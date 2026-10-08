@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/src/lib/instagram/webhookVerify'
 import { processTrigger } from '@/src/lib/instagram/processTrigger'
+import { resolveConnectedAccountFromWebhookEntryId, type ResolvedWebhookAccount } from '@/src/lib/instagram/accountResolution'
 import { maskId, previewText, webhookDebug } from '@/src/lib/instagram/webhookDebug'
+import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
+import type { IgTriggerType } from '@/src/types/instagramAutomation'
 
 interface CommentValue {
   id: string
@@ -70,6 +73,28 @@ export async function POST(request: NextRequest) {
       changeFields: (entry.changes || []).map((c: any) => c?.field),
       messagingCount: (entry.messaging || []).length,
     })
+    logConnectStage('instagram_webhook_received', {
+      entryId: entry?.id ?? null,
+      changeFields: (entry.changes || []).map((c: any) => c?.field),
+      messagingCount: (entry.messaging || []).length,
+    })
+
+    // Multi-account/multi-workspace routing — resolves Meta's entry.id
+    // to the ONE connected account this event belongs to, server-side,
+    // from the event itself (never the browser/workspace cookie — this
+    // is a server-to-server callback with no session at all). An
+    // unresolved entry.id means zero automation execution for this
+    // entry — never a global/first-account fallback. See
+    // src/lib/instagram/accountResolution.ts for the full contract.
+    const resolved: ResolvedWebhookAccount | null = await resolveConnectedAccountFromWebhookEntryId(entry?.id)
+    if (!resolved) {
+      logConnectStage('instagram_webhook_account_unresolved', { entryId: entry?.id ?? null })
+      continue
+    }
+    logConnectStage('instagram_webhook_account_resolved', {
+      connectedAccountId: resolved.connectedAccountId,
+      workspaceId: resolved.workspaceId,
+    })
 
     for (const change of entry.changes || []) {
       if (change.field === 'comments') {
@@ -82,21 +107,22 @@ export async function POST(request: NextRequest) {
           recipientIgId: value.from.id,
           text: value.text ?? null,
           mediaId: value.media?.id ?? null,
+          connectedAccountId: resolved.connectedAccountId,
         })
       } else if (change.field === 'messages') {
-        await handleMessageEnvelope(change.value as MessageEnvelope, 'changes.messages')
+        await handleMessageEnvelope(change.value as MessageEnvelope, 'changes.messages', resolved)
       }
     }
 
     for (const item of entry.messaging || []) {
-      await handleMessageEnvelope(item as MessageEnvelope, 'messaging')
+      await handleMessageEnvelope(item as MessageEnvelope, 'messaging', resolved)
     }
   }
 
   return NextResponse.json({ received: true })
 }
 
-async function handleMessageEnvelope(envelope: MessageEnvelope, source: string): Promise<void> {
+async function handleMessageEnvelope(envelope: MessageEnvelope, source: string, account: ResolvedWebhookAccount): Promise<void> {
   const message = envelope.message
   const senderId = envelope.sender?.id
 
@@ -126,15 +152,25 @@ async function handleMessageEnvelope(envelope: MessageEnvelope, source: string):
   }
 
   const isStoryReply = Boolean(message.reply_to?.story)
-  const triggerType = isStoryReply ? 'story_reply' : 'dm_keyword'
+  const triggerType: IgTriggerType = isStoryReply ? 'story_reply' : 'dm_keyword'
 
   webhookDebug('dispatch', { source, triggerType, isStoryReply, sender: maskId(senderId) })
-
-  await processTrigger({
+  logConnectStage('instagram_dm_received', {
+    connectedAccountId: account.connectedAccountId,
+    messageId: message.mid,
     triggerType,
-    sourceType: isStoryReply ? 'story_reply' : 'dm',
+    isStoryReply,
+  })
+
+  const event = {
+    triggerType,
+    sourceType: isStoryReply ? ('story_reply' as const) : ('dm' as const),
     sourceId: message.mid,
     recipientIgId: senderId,
     text: message.text ?? null,
-  })
+    connectedAccountId: account.connectedAccountId,
+  }
+  logConnectStage('instagram_dm_trigger_created', { connectedAccountId: account.connectedAccountId, messageId: message.mid, triggerType })
+
+  await processTrigger(event)
 }

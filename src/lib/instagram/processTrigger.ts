@@ -4,6 +4,7 @@ import { sendDirectMessage, sendPrivateReplyToComment, replyToComment } from './
 import { findMatchingRule } from './automations'
 import { pickPublicReplyVariationIndex } from './publicReply'
 import { maskId, previewText, sanitizeError, webhookDebug } from './webhookDebug'
+import { logConnectStage } from './connectDiagnostics'
 import type { IgAutomationRule, IgRunSourceType, IgTriggerType } from '@/src/types/instagramAutomation'
 
 export interface TriggerEvent {
@@ -18,6 +19,15 @@ export interface TriggerEvent {
   /** The Instagram media id the comment was made on — only present for
    * comment_keyword events — used to filter rules scoped to one post. */
   mediaId?: string | null
+  /** The connected account this event was resolved to BEFORE processTrigger
+   * was ever called (see src/lib/instagram/accountResolution.ts and
+   * src/app/api/webhooks/instagram/route.ts, the only caller) — rules
+   * are matched ONLY within this account, and the eventual send uses
+   * ONLY this account's own stored token. Required, never optional:
+   * there is no "global" rule-matching or sending left in this
+   * function — an event the webhook couldn't resolve to a real
+   * connected account never reaches processTrigger at all. */
+  connectedAccountId: string
 }
 
 /**
@@ -34,6 +44,7 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     .select('*')
     .eq('trigger_type', event.triggerType)
     .eq('is_active', true)
+    .eq('connected_account_id', event.connectedAccountId)
     .order('created_at', { ascending: true })
 
   if (rulesError) {
@@ -59,6 +70,18 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     matched: Boolean(rule),
     ruleId: rule ? rule.id.slice(0, 8) : 'none',
   })
+
+  // DM-specific structured logs (permanent, unlike webhookDebug above —
+  // see connectDiagnostics.ts) — scoped to non-comment event types so
+  // the existing comment_keyword path's own logging/behavior is
+  // unchanged.
+  if (event.sourceType !== 'comment') {
+    if (rule) {
+      logConnectStage('instagram_dm_rule_matched', { connectedAccountId: event.connectedAccountId, ruleId: rule.id, triggerType: event.triggerType })
+    } else {
+      logConnectStage('instagram_dm_no_matching_rule', { connectedAccountId: event.connectedAccountId, triggerType: event.triggerType })
+    }
+  }
 
   if (!rule) return
 
@@ -106,7 +129,7 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     }
 
     publicReplyVariationIndex = pickPublicReplyVariationIndex(rule.public_reply_variations.length, lastUsedIndex)
-    const publicReplyResult = await replyToComment(event.sourceId, rule.public_reply_variations[publicReplyVariationIndex])
+    const publicReplyResult = await replyToComment(event.connectedAccountId, event.sourceId, rule.public_reply_variations[publicReplyVariationIndex])
     if (!publicReplyResult.ok) {
       publicReplyError = publicReplyResult.error
       console.error('[Instagram Webhook] Public comment reply failed — private DM still proceeds', publicReplyResult.error)
@@ -125,8 +148,17 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
 
   const sendResult =
     event.sourceType === 'comment'
-      ? await sendPrivateReplyToComment(event.sourceId, rule.reply_message, button)
-      : await sendDirectMessage(event.recipientIgId, rule.reply_message, button)
+      ? await sendPrivateReplyToComment(event.connectedAccountId, event.sourceId, rule.reply_message, button)
+      : await sendDirectMessage(event.connectedAccountId, event.recipientIgId, rule.reply_message, button)
+
+  if (event.sourceType !== 'comment') {
+    logConnectStage(sendResult.ok ? 'instagram_dm_send_success' : 'instagram_dm_send_failure', {
+      connectedAccountId: event.connectedAccountId,
+      ruleId: rule.id,
+      messageId: event.sourceId,
+      ...(sendResult.ok ? {} : { reason: sanitizeError(sendResult.error) }),
+    })
+  }
 
   webhookDebug('sendResult', {
     sourceType: event.sourceType,
