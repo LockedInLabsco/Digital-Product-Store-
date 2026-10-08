@@ -29,17 +29,43 @@ interface MessageEnvelope {
 
 // GET — Meta's one-time webhook verification handshake: echo back
 // hub.challenge if hub.verify_token matches what's configured in the
-// Meta app. Runs once, when the webhook URL is first registered (or
-// re-registered).
+// Meta app. Fires whenever a webhook config is registered/re-verified
+// in the Meta Dashboard — for EITHER Meta app this project uses, since
+// both point their Webhooks product at this same callback URL. There
+// is deliberately only one INSTAGRAM_WEBHOOK_VERIFY_TOKEN (unlike the
+// two app secrets used for POST signature verification): the verify
+// token is an arbitrary string the admin types into the Dashboard
+// themselves, not something Meta assigns per-app, so the fix for a
+// mismatch is entering the SAME value in both apps' Webhooks config —
+// never adding a second accepted token here.
 export async function GET(request: NextRequest) {
   const mode = request.nextUrl.searchParams.get('hub.mode')
   const token = request.nextUrl.searchParams.get('hub.verify_token')
   const challenge = request.nextUrl.searchParams.get('hub.challenge')
+  const expectedToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
 
-  if (mode === 'subscribe' && token && token === process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN && challenge) {
+  // Distinguishes "Meta sent a real challenge with the wrong token" from
+  // "INSTAGRAM_WEBHOOK_VERIFY_TOKEN isn't even configured in this
+  // environment" from "this wasn't a Meta challenge at all" (no hub.*
+  // params — e.g. a scanner hitting the public endpoint, where 403 is
+  // correct) — none of which show up as a distinct signal in a plain
+  // "GET .../instagram → 403" line in Vercel's own request log. Never
+  // logs the token values themselves, only these booleans.
+  const tokenMatched = Boolean(token && expectedToken && token === expectedToken)
+  logConnectStage('instagram_webhook_verify_attempt', {
+    mode,
+    tokenPresent: Boolean(token),
+    expectedTokenConfigured: Boolean(expectedToken),
+    tokenMatched,
+    challengePresent: Boolean(challenge),
+  })
+
+  if (mode === 'subscribe' && tokenMatched && challenge) {
+    logConnectStage('instagram_webhook_verify_success')
     return new NextResponse(challenge, { status: 200 })
   }
 
+  logConnectStage('instagram_webhook_verify_failure')
   return new NextResponse('Forbidden', { status: 403 })
 }
 

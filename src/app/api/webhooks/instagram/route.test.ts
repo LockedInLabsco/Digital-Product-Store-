@@ -15,7 +15,7 @@ vi.mock('@/src/lib/instagram/processTrigger', () => ({
   processTrigger: mocks.processTrigger,
 }))
 
-import { POST } from './route'
+import { GET, POST } from './route'
 
 const INSTAGRAM_LOGIN_SECRET = 'instagram-login-secret'
 const FACEBOOK_LOGIN_SECRET = 'facebook-login-secret'
@@ -121,5 +121,77 @@ describe('POST /api/webhooks/instagram — signature verification', () => {
     const loggedText = [...logSpy.mock.calls, ...errorSpy.mock.calls].flat().map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(' ')
     expect(loggedText).not.toContain(INSTAGRAM_LOGIN_SECRET)
     expect(loggedText).not.toContain(FACEBOOK_LOGIN_SECRET)
+  })
+})
+
+function makeVerifyRequest(params: Record<string, string>) {
+  const url = new URL('http://localhost/api/webhooks/instagram')
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
+  return new NextRequest(url)
+}
+
+describe('GET /api/webhooks/instagram — Meta verification handshake', () => {
+  const VERIFY_TOKEN = 'configured-verify-token'
+  const originalVerifyToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
+
+  beforeEach(() => {
+    process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN = VERIFY_TOKEN
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN = originalVerifyToken
+    vi.restoreAllMocks()
+  })
+
+  it('returns the challenge with 200 when mode/token/challenge are all correct', async () => {
+    const response = await GET(
+      makeVerifyRequest({ 'hub.mode': 'subscribe', 'hub.verify_token': VERIFY_TOKEN, 'hub.challenge': 'challenge-123' })
+    )
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('challenge-123')
+  })
+
+  it('rejects with 403 when the token does not match, without ever logging either token value', async () => {
+    const logSpy = vi.spyOn(console, 'log')
+    const response = await GET(
+      makeVerifyRequest({ 'hub.mode': 'subscribe', 'hub.verify_token': 'wrong-token', 'hub.challenge': 'challenge-123' })
+    )
+    expect(response.status).toBe(403)
+
+    const loggedText = logSpy.mock.calls.flat().map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(' ')
+    expect(loggedText).toContain('tokenMatched":false')
+    expect(loggedText).toContain('tokenPresent":true')
+    expect(loggedText).not.toContain(VERIFY_TOKEN)
+    expect(loggedText).not.toContain('wrong-token')
+  })
+
+  it('rejects with 403 and reports the env var as unconfigured when INSTAGRAM_WEBHOOK_VERIFY_TOKEN is missing', async () => {
+    delete process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
+    const logSpy = vi.spyOn(console, 'log')
+    const response = await GET(
+      makeVerifyRequest({ 'hub.mode': 'subscribe', 'hub.verify_token': VERIFY_TOKEN, 'hub.challenge': 'challenge-123' })
+    )
+    expect(response.status).toBe(403)
+
+    const loggedText = logSpy.mock.calls.flat().map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(' ')
+    expect(loggedText).toContain('expectedTokenConfigured":false')
+  })
+
+  it('rejects with 403 for a request with none of the hub.* params (e.g. a scanner, not a real Meta challenge)', async () => {
+    const logSpy = vi.spyOn(console, 'log')
+    const response = await GET(makeVerifyRequest({}))
+    expect(response.status).toBe(403)
+
+    const loggedText = logSpy.mock.calls.flat().map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(' ')
+    expect(loggedText).toContain('tokenPresent":false')
+    expect(loggedText).toContain('challengePresent":false')
+  })
+
+  it('rejects with 403 when hub.mode is not "subscribe", even with a correct token', async () => {
+    const response = await GET(
+      makeVerifyRequest({ 'hub.mode': 'unsubscribe', 'hub.verify_token': VERIFY_TOKEN, 'hub.challenge': 'challenge-123' })
+    )
+    expect(response.status).toBe(403)
   })
 })
