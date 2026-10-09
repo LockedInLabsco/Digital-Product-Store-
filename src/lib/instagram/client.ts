@@ -480,3 +480,31 @@ export async function subscribeInstagramAccountToWebhooks(accessToken: string): 
     { subscribed_fields: INSTAGRAM_WEBHOOK_SUBSCRIBED_FIELDS.join(',') }
   )
 }
+
+export interface InstagramWebhookSubscriptionEntry {
+  /** The Meta App id this subscription belongs to — safe to return (not
+   * a secret), and the only way to tell whether the account's current
+   * subscription is actually tied to the Direct Instagram Login app vs.
+   * a stale one from the legacy Facebook Login app. */
+  id: string
+  subscribed_fields?: string[]
+}
+
+/**
+ * GET counterpart to subscribeInstagramAccountToWebhooks — Meta's own
+ * record of which field(s) this account's token is CURRENTLY subscribed
+ * to, per app. Read-only diagnostic only (never called from the
+ * send/automation hot path): lets a "messages never arrives" report be
+ * checked against Meta's live state directly instead of trusting a past
+ * log line or assuming success from a 200 response alone.
+ */
+export async function getInstagramAccountWebhookSubscriptions(accessToken: string): Promise<InstagramResult<{ data: InstagramWebhookSubscriptionEntry[] }>> {
+  return apiRequest<{ data: InstagramWebhookSubscriptionEntry[] }>(
+    MESSAGING_API_BASE,
+    accessToken,
+    'Instagram messaging access token is required to check webhook subscriptions',
+    'GET',
+    'me/subscribed_apps',
+    {}
+  )
+}
