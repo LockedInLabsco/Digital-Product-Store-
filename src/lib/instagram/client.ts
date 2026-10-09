@@ -508,3 +508,62 @@ export async function getInstagramAccountWebhookSubscriptions(accessToken: strin
     {}
   )
 }
+
+export interface InstagramAccountProfile {
+  id: string
+  username?: string
+  /** 'BUSINESS' | 'MEDIA_CREATOR' (Creator) | 'PERSONAL' — diagnostic
+   * read only, same field the connect callback already validates at
+   * connect time (see connect-direct/callback/route.ts), just not
+   * persisted anywhere, so a live re-check has to go back to Meta. */
+  account_type?: string
+}
+
+/** GET /me?fields=id,username,account_type — diagnostic-only profile
+ * read on the Instagram Login host, never called from a send/automation
+ * path (every send already treats `me` as whichever account owns the
+ * token without needing this). */
+export async function getInstagramAccountProfile(accessToken: string): Promise<InstagramResult<InstagramAccountProfile>> {
+  return apiRequest<InstagramAccountProfile>(
+    MESSAGING_API_BASE,
+    accessToken,
+    'Instagram messaging access token is required to read the account profile',
+    'GET',
+    'me',
+    { fields: 'id,username,account_type' }
+  )
+}
+
+export interface InstagramConversationMessage {
+  id: string
+  created_time?: string
+  from?: { id: string; username?: string }
+  message?: string
+}
+
+export interface InstagramConversation {
+  id: string
+  messages?: { data: InstagramConversationMessage[] }
+}
+
+/**
+ * GET /me/conversations?platform=instagram — diagnostic-only read of
+ * recent conversations/messages. Every documented example of this
+ * endpoint Meta publishes uses a Facebook Page id on graph.facebook.com
+ * (the Facebook Login product) — nothing in Meta's current docs confirms
+ * this shape is even supported for an Instagram Login token against
+ * graph.instagram.com. This function exists to test that empirically,
+ * not because it's assumed to work: callers must treat a non-ok result
+ * as "this read may simply not exist for this product", not a hard
+ * failure of anything else.
+ */
+export async function getRecentInstagramConversations(accessToken: string, messageLimit = 5): Promise<InstagramResult<{ data: InstagramConversation[] }>> {
+  return apiRequest<{ data: InstagramConversation[] }>(
+    MESSAGING_API_BASE,
+    accessToken,
+    'Instagram messaging access token is required to read conversations',
+    'GET',
+    'me/conversations',
+    { platform: 'instagram', fields: `messages.limit(${messageLimit}){message,created_time,from}` }
+  )
+}

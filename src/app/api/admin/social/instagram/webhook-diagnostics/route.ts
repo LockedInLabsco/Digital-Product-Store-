@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/src/lib/supabase/server'
 import { requirePermission } from '@/src/lib/admin/auth'
 import { getActiveWorkspaceContext, activeWorkspaceErrorResponse } from '@/src/lib/admin/activeSocialWorkspace'
 import { getMessagingTokenForAccount } from '@/src/lib/instagram/tokenStore'
-import { getInstagramAccountWebhookSubscriptions, INSTAGRAM_WEBHOOK_SUBSCRIBED_FIELDS } from '@/src/lib/instagram/client'
+import {
+  getInstagramAccountWebhookSubscriptions,
+  getInstagramAccountProfile,
+  getRecentInstagramConversations,
+  INSTAGRAM_WEBHOOK_SUBSCRIBED_FIELDS,
+} from '@/src/lib/instagram/client'
 
 // GET — read-only production diagnostic for "is this account's webhook
 // subscription actually live on Meta's side". Answers from Meta's own
@@ -11,7 +16,15 @@ import { getInstagramAccountWebhookSubscriptions, INSTAGRAM_WEBHOOK_SUBSCRIBED_F
 // token), never from a log line or an assumption that a past 200
 // response stuck. Returns ONLY safe metadata — app id, subscribed field
 // names, booleans — the access token itself never leaves tokenStore.ts.
-export async function GET() {
+//
+// Optional ?marker=<text> — when present, also checks whether Meta's own
+// Conversations API (if it even supports this product — see
+// getRecentInstagramConversations's doc comment) shows a message
+// containing that exact text, WITHOUT ever returning message content:
+// only booleans/timestamps, so this can be safely used to confirm "did
+// Meta receive this DM at all" without logging/exposing anyone's actual
+// message text.
+export async function GET(request: NextRequest) {
   try {
     const auth = await requirePermission('personal_brand:read')
     if (!auth.ok) {
@@ -93,14 +106,51 @@ export async function GET() {
     const subscribedFieldsByApp = entries.map((entry) => ({ appId: entry.id, subscribedFields: entry.subscribed_fields || [] }))
     const allSubscribedFields = new Set(entries.flatMap((entry) => entry.subscribed_fields || []))
 
+    const profile = await getInstagramAccountProfile(current.token)
+    const accountType = profile.ok ? profile.data.account_type ?? null : null
+
+    const marker = request.nextUrl.searchParams.get('marker')
+    let conversationsCheck: Record<string, unknown> | null = null
+    if (marker) {
+      const convos = await getRecentInstagramConversations(current.token)
+      if (!convos.ok) {
+        conversationsCheck = { supported: false, error: convos.error, code: convos.code ?? null }
+      } else {
+        const conversations = convos.data.data || []
+        let markerFound = false
+        let markerTimestamp: string | null = null
+        let senderScopedIdPresent = false
+        for (const convo of conversations) {
+          for (const msg of convo.messages?.data || []) {
+            if (typeof msg.message === 'string' && msg.message.includes(marker)) {
+              markerFound = true
+              markerTimestamp = msg.created_time ?? null
+              senderScopedIdPresent = Boolean(msg.from?.id)
+              break
+            }
+          }
+          if (markerFound) break
+        }
+        conversationsCheck = {
+          supported: true,
+          conversationFound: conversations.length > 0,
+          markerFound,
+          markerTimestamp,
+          senderScopedIdPresent,
+        }
+      }
+    }
+
     return NextResponse.json({
       ...base,
+      accountType,
       metaSubscriptionCheck: {
         ok: true,
         subscribedFieldsByApp,
         messagesSubscribed: allSubscribedFields.has('messages'),
         commentsSubscribed: allSubscribedFields.has('comments'),
       },
+      conversationsCheck,
     })
   } catch (error) {
     console.error('[Instagram Webhook Diagnostics] Exception in GET', error)
