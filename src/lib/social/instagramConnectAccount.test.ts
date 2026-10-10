@@ -156,6 +156,33 @@ describe('upsertConnectedInstagramAccount', () => {
       error: expect.stringContaining('already connected to a different Social Workspace'),
     })
   })
+
+  it('N4N DM Automations: a NEW account connected via the "instagram_dm" provider succeeds the same way, just a third allowed provider value', async () => {
+    queue('social_connected_accounts', [
+      { data: null, error: null }, // lookup by external_id — none exists anywhere
+      { data: null, error: null }, // lookup this workspace's active account — none
+      { data: { id: 'connected-dm' }, error: null }, // insert
+    ])
+    queue('social_account_tokens', [{ data: null, error: null }])
+    queue('social_connected_account_identifiers', [{ data: null, error: null }])
+
+    const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED, 'instagram_dm')
+
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-dm', reauthorized: false, replacedPreviousAccount: false, previousUsername: null })
+  })
+
+  it('N4N DM Automations: an instagram_dm connect for an account ALREADY connected (any provider) to THIS workspace lands on the reauthorize path — attaches a second token to the SAME canonical account, never a duplicate', async () => {
+    queue('social_connected_accounts', [
+      { data: { id: 'connected-existing', workspace_id: 'workspace-a' }, error: null }, // lookup by external_id — same workspace, already connected (e.g. via instagram_login)
+      { data: null, error: null }, // update (reauthorize)
+    ])
+    queue('social_account_tokens', [{ data: null, error: null }])
+    queue('social_connected_account_identifiers', [{ data: null, error: null }])
+
+    const result = await upsertConnectedInstagramAccount('workspace-a', 'admin-a', BASE_RESOLVED, 'instagram_dm')
+
+    expect(result).toEqual({ ok: true, connectedAccountId: 'connected-existing', reauthorized: true, replacedPreviousAccount: false, previousUsername: null })
+  })
 })
 
 describe('disconnectInstagramAccount', () => {

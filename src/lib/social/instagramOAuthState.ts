@@ -1,9 +1,12 @@
 /**
- * Server-side CSRF state for BOTH "Connect Instagram" OAuth flows —
- * Facebook Login for Business ('instagram_connect') and, as of Phase G,
- * direct Instagram Login ('instagram_login_connect', see
+ * Server-side CSRF state for ALL THREE "Connect Instagram" OAuth flows —
+ * Facebook Login for Business ('instagram_connect'), direct Instagram
+ * Login ('instagram_login_connect', Phase G, see
  * src/lib/instagram/instagramLoginOAuth.ts and
- * supabase/migrations/0030_instagram_login_oauth_flow.sql) — see
+ * supabase/migrations/0030_instagram_login_oauth_flow.sql), and the N4N
+ * DM Automations app ('instagram_dm_connect', see
+ * src/lib/instagram/instagramDmOAuth.ts and
+ * supabase/migrations/0032_instagram_dm_provider.sql) — see
  * supabase/migrations/0027_social_oauth_states.sql for the table and the
  * full reasoning for why this is a DB row rather than a signed
  * cookie/JWT. Every pre-existing call site omits `flow` and gets the
@@ -27,7 +30,7 @@ import { supabaseServer } from '@/src/lib/supabase/server'
 const STATE_TTL_MS = 10 * 60 * 1000 // 10 minutes — generous for a Meta login+consent round trip, short enough that an abandoned flow can't be resurrected later
 const FLOW_INSTAGRAM_CONNECT = 'instagram_connect'
 
-export type OAuthFlow = 'instagram_connect' | 'instagram_login_connect'
+export type OAuthFlow = 'instagram_connect' | 'instagram_login_connect' | 'instagram_dm_connect'
 
 export interface OAuthStatePayload {
   adminUserId: string

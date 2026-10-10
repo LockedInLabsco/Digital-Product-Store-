@@ -100,7 +100,11 @@ describe('processTrigger — DM keyword (TEST A)', () => {
 
     await processTrigger(dmEvent())
 
-    expect(sendDirectMessage).toHaveBeenCalledWith('account-a', 'igsid-sender', 'hey!', null)
+    // Omitting TriggerEvent.provider keeps the existing, unchanged
+    // default: every pre-existing caller (the current
+    // /api/webhooks/instagram route, the follow-up cron) still sends
+    // through the instagram_login token.
+    expect(sendDirectMessage).toHaveBeenCalledWith('account-a', 'igsid-sender', 'hey!', null, 'instagram_login')
     // The rules query scoped itself to this event's own connected
     // account — the actual account-isolation mechanism (CASE/Test B
     // below proves the OUTCOME; this proves the QUERY itself does it).
@@ -149,7 +153,38 @@ describe('processTrigger — comment automation (TEST D, unaffected by this chan
       connectedAccountId: 'account-a',
     })
 
-    expect(sendPrivateReplyToComment).toHaveBeenCalledWith('account-a', 'comment-123', 'hey!', null)
+    expect(sendPrivateReplyToComment).toHaveBeenCalledWith('account-a', 'comment-123', 'hey!', null, 'instagram_login')
     expect(replyToComment).not.toHaveBeenCalled() // public_reply_enabled is false on COMMENT_RULE
+  })
+})
+
+describe('processTrigger — N4N DM Automations provider threading (additive)', () => {
+  it('an event tagged provider: "instagram_dm" sends with that provider explicitly, never silently using instagram_login', async () => {
+    queue('ig_automation_rules', [{ data: [DM_RULE], error: null }])
+    queue('ig_automation_runs', [{ data: { id: 'run-3' }, error: null }])
+    sendDirectMessage.mockResolvedValue({ ok: true, data: { id: 'sent-3' } })
+
+    await processTrigger(dmEvent({ provider: 'instagram_dm' }))
+
+    expect(sendDirectMessage).toHaveBeenCalledWith('account-a', 'igsid-sender', 'hey!', null, 'instagram_dm')
+  })
+
+  it('a comment event tagged provider: "instagram_dm" sends the private reply with that provider explicitly', async () => {
+    queue('ig_automation_rules', [{ data: [COMMENT_RULE], error: null }])
+    queue('ig_automation_runs', [{ data: { id: 'run-4' }, error: null }])
+    sendPrivateReplyToComment.mockResolvedValue({ ok: true, data: { id: 'sent-4' } })
+
+    await processTrigger({
+      triggerType: 'comment_keyword',
+      sourceType: 'comment',
+      sourceId: 'comment-456',
+      recipientIgId: 'igsid-commenter-2',
+      text: 'slowday',
+      mediaId: null,
+      connectedAccountId: 'account-a',
+      provider: 'instagram_dm',
+    })
+
+    expect(sendPrivateReplyToComment).toHaveBeenCalledWith('account-a', 'comment-456', 'hey!', null, 'instagram_dm')
   })
 })

@@ -450,19 +450,29 @@ export interface AccountScopedMessagingToken {
   rowId: string
 }
 
+/** The set of providers social_account_tokens can hold a messaging-capable token under — see supabase/migrations/0032_instagram_dm_provider.sql. */
+export type MessagingTokenProvider = 'instagram_login' | 'instagram_dm'
+
 /**
  * The messaging token for ONE specific connected account — no env-var
  * bootstrap/fallback (that concept only applies to the legacy singleton
- * row above); a connected account with no migrated token row simply
- * returns null. Not yet called by any live send path — see the file
- * header comment.
+ * row above); a connected account with no row for the requested
+ * `provider` simply returns null — deliberately NO fallback to a
+ * different provider here. This matters for the new N4N DM Automations
+ * app: callers validating that app independently must pass
+ * `provider: 'instagram_dm'` explicitly and get a clean null (never a
+ * silent fall-through to the existing instagram_login token) when that
+ * app's own token is missing or broken — see client.ts's
+ * messagingPostForAccount, the one call site that threads this through.
+ * Every pre-existing call site omits `provider` and keeps getting the
+ * original instagram_login-only behavior, completely unchanged.
  */
-export async function getMessagingTokenForAccount(connectedAccountId: string): Promise<AccountScopedMessagingToken | null> {
+export async function getMessagingTokenForAccount(connectedAccountId: string, provider: MessagingTokenProvider = 'instagram_login'): Promise<AccountScopedMessagingToken | null> {
   const { data, error } = await supabaseServer
     .from('social_account_tokens')
     .select('id, encrypted_access_token')
     .eq('connected_account_id', connectedAccountId)
-    .eq('provider', PROVIDER)
+    .eq('provider', provider)
     .maybeSingle()
 
   if (error || !data) {

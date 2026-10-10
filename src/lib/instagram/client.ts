@@ -54,7 +54,7 @@
  *   a known, separately-scoped gap, not built here.
  */
 import 'server-only'
-import { getMessagingTokenForAccount } from './tokenStore'
+import { getMessagingTokenForAccount, type MessagingTokenProvider } from './tokenStore'
 
 // v21.0 was the real root cause of "views never syncs" (reported after
 // the Issue 2 fix below): Meta did not introduce the `views` INSIGHTS
@@ -194,11 +194,20 @@ function graphPost<T>(accessToken: string, path: string, body: unknown): Promise
  * mechanism yet (see tokenStore.ts's getMessagingTokenForAccount doc
  * comment); an auth failure here is simply reported on the run, same as
  * every other send failure, rather than retried.
+ *
+ * `provider` defaults to 'instagram_login' — every pre-existing caller
+ * that omits it keeps sending through the existing Direct Instagram
+ * Login token, completely unchanged. The N4N DM Automations webhook path
+ * passes `provider: 'instagram_dm'` explicitly (see processTrigger.ts's
+ * TriggerEvent.provider) — there is deliberately NO fallback to
+ * 'instagram_login' when an instagram_dm token is missing/broken, since
+ * proving the new app works independently requires it to fail cleanly
+ * on its own, not silently ride on the old app's token.
  */
-async function messagingPostForAccount<T>(connectedAccountId: string, path: string, body: unknown): Promise<InstagramResult<T>> {
-  const current = await getMessagingTokenForAccount(connectedAccountId)
+async function messagingPostForAccount<T>(connectedAccountId: string, path: string, body: unknown, provider: MessagingTokenProvider = 'instagram_login'): Promise<InstagramResult<T>> {
+  const current = await getMessagingTokenForAccount(connectedAccountId, provider)
   if (!current) {
-    return { ok: false, error: 'No Instagram messaging token is stored for this connected account. Reconnect Instagram for this workspace.' }
+    return { ok: false, error: `No Instagram messaging token is stored for this connected account under provider '${provider}'. Reconnect Instagram for this workspace.` }
   }
 
   return apiRequest<T>(MESSAGING_API_BASE, current.token, 'Instagram messaging is not configured for this connected account', 'POST', path, {}, body)
@@ -390,18 +399,25 @@ function buildMessagePayload(text: string, button: MessageButton | null) {
  * this is ever called). Goes through the Instagram API with Instagram
  * Login (graph.instagram.com), using `connectedAccountId`'s OWN stored
  * token — never a global token — not the Facebook Login content API
- * above; see the file-level comment.
+ * above; see the file-level comment. `provider` defaults to
+ * 'instagram_login' — see messagingPostForAccount's own doc comment.
  */
 export async function sendPrivateReplyToComment(
   connectedAccountId: string,
   commentId: string,
   message: string,
-  button: MessageButton | null = null
+  button: MessageButton | null = null,
+  provider: MessagingTokenProvider = 'instagram_login'
 ): Promise<InstagramResult<{ id: string }>> {
-  return messagingPostForAccount(connectedAccountId, 'me/messages', {
-    recipient: { comment_id: commentId },
-    message: buildMessagePayload(message, button),
-  })
+  return messagingPostForAccount(
+    connectedAccountId,
+    'me/messages',
+    {
+      recipient: { comment_id: commentId },
+      message: buildMessagePayload(message, button),
+    },
+    provider
+  )
 }
 
 /**
@@ -414,10 +430,16 @@ export async function sendPrivateReplyToComment(
  * reply was already sent (or fails) for the same comment. Same
  * per-account Instagram Login messaging path (graph.instagram.com) as
  * the rest of this section, since `instagram_business_manage_comments`
- * is part of that token's scope.
+ * is part of that token's scope. `provider` defaults to
+ * 'instagram_login' — see messagingPostForAccount's own doc comment.
  */
-export async function replyToComment(connectedAccountId: string, commentId: string, message: string): Promise<InstagramResult<{ id: string }>> {
-  return messagingPostForAccount(connectedAccountId, `${commentId}/replies`, { message })
+export async function replyToComment(
+  connectedAccountId: string,
+  commentId: string,
+  message: string,
+  provider: MessagingTokenProvider = 'instagram_login'
+): Promise<InstagramResult<{ id: string }>> {
+  return messagingPostForAccount(connectedAccountId, `${commentId}/replies`, { message }, provider)
 }
 
 /**
@@ -431,18 +453,25 @@ export async function replyToComment(connectedAccountId: string, commentId: stri
  * follow-up cron can record it on the run and move on. Same per-account
  * Instagram Login messaging path as sendPrivateReplyToComment above —
  * `connectedAccountId` determines whose token (and therefore whose
- * Instagram account) actually sends this message.
+ * Instagram account) actually sends this message. `provider` defaults
+ * to 'instagram_login' — see messagingPostForAccount's own doc comment.
  */
 export async function sendDirectMessage(
   connectedAccountId: string,
   recipientIgId: string,
   message: string,
-  button: MessageButton | null = null
+  button: MessageButton | null = null,
+  provider: MessagingTokenProvider = 'instagram_login'
 ): Promise<InstagramResult<{ id: string }>> {
-  return messagingPostForAccount(connectedAccountId, 'me/messages', {
-    recipient: { id: recipientIgId },
-    message: buildMessagePayload(message, button),
-  })
+  return messagingPostForAccount(
+    connectedAccountId,
+    'me/messages',
+    {
+      recipient: { id: recipientIgId },
+      message: buildMessagePayload(message, button),
+    },
+    provider
+  )
 }
 
 /** The webhook fields this app actually consumes — see

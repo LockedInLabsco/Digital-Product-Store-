@@ -67,6 +67,25 @@ export async function GET(request: NextRequest) {
       .eq('provider', 'instagram_login')
       .maybeSingle()
 
+    // N4N DM Automations app — same shape as the instagram_login rows
+    // above, queried separately so the existing instagram_login fields
+    // are completely unaffected whether or not this account has an
+    // instagram_dm connection yet. No raw token values in any of this —
+    // same safe-metadata-only contract as the rest of this route.
+    const { data: dmIdentifierRow } = await supabaseServer
+      .from('social_connected_account_identifiers')
+      .select('identifier_type, external_id, provider')
+      .eq('connected_account_id', account.id)
+      .eq('provider', 'instagram_dm')
+      .maybeSingle()
+
+    const { data: dmTokenRow } = await supabaseServer
+      .from('social_account_tokens')
+      .select('provider, token_type, expires_at, last_refreshed_at, refresh_status, last_refresh_error')
+      .eq('connected_account_id', account.id)
+      .eq('provider', 'instagram_dm')
+      .maybeSingle()
+
     const base = {
       connected: true,
       connectedAccountId: account.id,
@@ -84,12 +103,41 @@ export async function GET(request: NextRequest) {
         legacyFacebookLoginAppSecretConfigured: Boolean(process.env.INSTAGRAM_APP_SECRET),
         webhookVerifyTokenConfigured: Boolean(process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN),
       },
+      // N4N DM Automations app — additive, never authoritative over the
+      // instagram_login fields above (neither table is the legacy
+      // instagram_integration_credentials singleton; both read the
+      // per-account social_* tables only).
+      instagramDm: {
+        webhookEntryIdentifier: dmIdentifierRow ?? null,
+        token: dmTokenRow ?? null,
+        appConfig: {
+          instagramDmAppIdConfigured: Boolean(process.env.INSTAGRAM_DM_APP_ID),
+          instagramDmAppSecretConfigured: Boolean(process.env.INSTAGRAM_DM_APP_SECRET),
+          instagramDmWebhookVerifyTokenConfigured: Boolean(process.env.INSTAGRAM_DM_WEBHOOK_VERIFY_TOKEN),
+        },
+      },
     }
+
+    const dmCurrent = dmTokenRow ? await getMessagingTokenForAccount(account.id, 'instagram_dm') : null
+    const dmMetaSubscriptionCheck = dmCurrent
+      ? await getInstagramAccountWebhookSubscriptions(dmCurrent.token).then((subs) =>
+          subs.ok
+            ? {
+                ok: true,
+                subscribedFieldsByApp: (subs.data.data || []).map((entry) => ({ appId: entry.id, subscribedFields: entry.subscribed_fields || [] })),
+                messagesSubscribed: new Set((subs.data.data || []).flatMap((entry) => entry.subscribed_fields || [])).has('messages'),
+                commentsSubscribed: new Set((subs.data.data || []).flatMap((entry) => entry.subscribed_fields || [])).has('comments'),
+              }
+            : { ok: false, error: subs.error, code: subs.code ?? null }
+        )
+      : { ok: false, error: 'No instagram_dm messaging token is stored for this connected account — connect via connect-dm/start first.' }
+
+    const responseWithDm = { ...base, instagramDm: { ...base.instagramDm, metaSubscriptionCheck: dmMetaSubscriptionCheck } }
 
     const current = await getMessagingTokenForAccount(account.id)
     if (!current) {
       return NextResponse.json({
-        ...base,
+        ...responseWithDm,
         metaSubscriptionCheck: { ok: false, error: 'No instagram_login messaging token is stored for this connected account — reconnect required.' },
       })
     }
@@ -97,7 +145,7 @@ export async function GET(request: NextRequest) {
     const subs = await getInstagramAccountWebhookSubscriptions(current.token)
     if (!subs.ok) {
       return NextResponse.json({
-        ...base,
+        ...responseWithDm,
         metaSubscriptionCheck: { ok: false, error: subs.error, code: subs.code ?? null },
       })
     }
@@ -142,7 +190,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      ...base,
+      ...responseWithDm,
       accountType,
       metaSubscriptionCheck: {
         ok: true,

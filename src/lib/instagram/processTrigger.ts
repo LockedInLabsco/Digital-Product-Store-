@@ -5,6 +5,7 @@ import { findMatchingRule } from './automations'
 import { pickPublicReplyVariationIndex } from './publicReply'
 import { maskId, previewText, sanitizeError, webhookDebug } from './webhookDebug'
 import { logConnectStage } from './connectDiagnostics'
+import type { MessagingTokenProvider } from './tokenStore'
 import type { IgAutomationRule, IgRunSourceType, IgTriggerType } from '@/src/types/instagramAutomation'
 
 export interface TriggerEvent {
@@ -28,6 +29,16 @@ export interface TriggerEvent {
    * function — an event the webhook couldn't resolve to a real
    * connected account never reaches processTrigger at all. */
   connectedAccountId: string
+  /** Which connected-account messaging token (social_account_tokens
+   * provider) the eventual reply/DM send must use — defaults to
+   * 'instagram_login' when omitted, so the existing
+   * /api/webhooks/instagram route (which never sets this) is completely
+   * unchanged. The new N4N DM Automations webhook route
+   * (/api/webhooks/instagram/dm) sets this to 'instagram_dm' explicitly
+   * on every event it builds, so that path's sends fail cleanly if the
+   * instagram_dm token is missing/broken rather than silently falling
+   * back to the instagram_login token. */
+  provider?: MessagingTokenProvider
 }
 
 /**
@@ -39,6 +50,7 @@ export interface TriggerEvent {
  * complexity than a personal-brand-scale volume of DMs needs.
  */
 export async function processTrigger(event: TriggerEvent): Promise<void> {
+  const provider: MessagingTokenProvider = event.provider ?? 'instagram_login'
   const { data: rules, error: rulesError } = await supabaseServer
     .from('ig_automation_rules')
     .select('*')
@@ -129,7 +141,7 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
     }
 
     publicReplyVariationIndex = pickPublicReplyVariationIndex(rule.public_reply_variations.length, lastUsedIndex)
-    const publicReplyResult = await replyToComment(event.connectedAccountId, event.sourceId, rule.public_reply_variations[publicReplyVariationIndex])
+    const publicReplyResult = await replyToComment(event.connectedAccountId, event.sourceId, rule.public_reply_variations[publicReplyVariationIndex], provider)
     if (!publicReplyResult.ok) {
       publicReplyError = publicReplyResult.error
       console.error('[Instagram Webhook] Public comment reply failed — private DM still proceeds', publicReplyResult.error)
@@ -148,8 +160,8 @@ export async function processTrigger(event: TriggerEvent): Promise<void> {
 
   const sendResult =
     event.sourceType === 'comment'
-      ? await sendPrivateReplyToComment(event.connectedAccountId, event.sourceId, rule.reply_message, button)
-      : await sendDirectMessage(event.connectedAccountId, event.recipientIgId, rule.reply_message, button)
+      ? await sendPrivateReplyToComment(event.connectedAccountId, event.sourceId, rule.reply_message, button, provider)
+      : await sendDirectMessage(event.connectedAccountId, event.recipientIgId, rule.reply_message, button, provider)
 
   if (event.sourceType !== 'comment') {
     logConnectStage(sendResult.ok ? 'instagram_dm_send_success' : 'instagram_dm_send_failure', {

@@ -49,6 +49,13 @@ describe('createInstagramOAuthState', () => {
     mocks.insertError = { message: 'db unavailable' }
     await expect(createInstagramOAuthState({ adminUserId: 'admin-a', workspaceId: 'workspace-a' })).rejects.toThrow(/db unavailable/)
   })
+
+  it('N4N DM Automations: accepts the new "instagram_dm_connect" flow value, additive alongside the existing two', async () => {
+    const state = await createInstagramOAuthState({ adminUserId: 'admin-a', workspaceId: 'workspace-a' }, 'instagram_dm_connect')
+
+    expect(state.length).toBeGreaterThanOrEqual(32)
+    expect(mocks.lastInsertPayload).toMatchObject({ admin_user_id: 'admin-a', workspace_id: 'workspace-a', flow: 'instagram_dm_connect' })
+  })
 })
 
 describe('consumeInstagramOAuthState', () => {

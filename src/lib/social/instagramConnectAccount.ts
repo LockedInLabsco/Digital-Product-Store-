@@ -26,6 +26,14 @@
  *   routed webhook, so 'webhook_entry_id' (not 'graph_business_account_id')
  *   is the correct type here — no new identifier type invented, this is
  *   the other value supabase/migrations/0026 already allows.
+ * - 'instagram_dm': the N4N DM Automations app (see
+ *   src/lib/instagram/instagramDmOAuth.ts and
+ *   supabase/migrations/0032_instagram_dm_provider.sql) — same OAuth
+ *   product family as 'instagram_login' (Instagram Login consent
+ *   screen), just a separate Meta App credential pair, so it writes
+ *   social_account_tokens provider='instagram_dm' and
+ *   social_connected_account_identifiers identifier_type='webhook_entry_id',
+ *   identically to 'instagram_login'.
  *
  * Does NOT assume a Facebook-Login-resolved external_account_id and an
  * Instagram-Login-resolved one are the same value for what's really the
@@ -54,10 +62,10 @@ import { logConnectStage } from '@/src/lib/instagram/connectDiagnostics'
 
 const PLATFORM = 'instagram'
 
-export type ContentConnectionProvider = 'facebook_login' | 'instagram_login'
+export type ContentConnectionProvider = 'facebook_login' | 'instagram_login' | 'instagram_dm'
 
 function identifierTypeFor(provider: ContentConnectionProvider): 'graph_business_account_id' | 'webhook_entry_id' {
-  return provider === 'instagram_login' ? 'webhook_entry_id' : 'graph_business_account_id'
+  return provider === 'instagram_login' || provider === 'instagram_dm' ? 'webhook_entry_id' : 'graph_business_account_id'
 }
 
 export interface ResolvedInstagramAccount {
